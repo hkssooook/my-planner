@@ -1,6 +1,7 @@
 import ColorPicker from '../common/ColorPicker';
 import DeleteIcon from '../icons/DeleteIcon';
 import ModalShell from '../common/ModalShell';
+import Button from '../common/Button';
 
 // 상세 일정 관리 팝업: 위쪽은 종일 일정, 아래쪽은 시간대별(0~23시) 24줄.
 // 입력값은 모두 부모(App)가 들고 있고, 이 부품은 보여 주고 "바뀌었다"고 알리기만 한다.
@@ -64,8 +65,8 @@ export default function DailyDetailModal({
       </div>
           
       <div className="p-4 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-xl">
-        <button onClick={onClose} className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50">취소</button>
-        <button onClick={onSave} className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600">통합 저장</button>
+        <Button variant="outline" onClick={onClose} className="flex-1">취소</Button>
+        <Button onClick={onSave} className="flex-1">통합 저장</Button>
       </div>
     </ModalShell>
   );

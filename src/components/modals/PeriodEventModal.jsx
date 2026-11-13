@@ -1,6 +1,7 @@
 import ColorPicker from '../common/ColorPicker';
 import DeleteIcon from '../icons/DeleteIcon';
 import ModalShell from '../common/ModalShell';
+import Button from '../common/Button';
 
 // 기간 일정 등록 팝업. 입력값은 부모(App)가 들고 있고, 이 부품은 보여 주고 "바뀌었다"고 알리기만 한다.
 // onChange는 바뀐 부분만 받는다. 예: onChange({ title: '새 제목' })
@@ -31,8 +32,8 @@ export default function PeriodEventModal({ event, onChange, onClose, onSave }) {
         </div>
       </div>
       <div className="p-4 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-xl">
-        <button onClick={onClose} className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50">취소</button>
-        <button onClick={onSave} className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600">저장</button>
+        <Button variant="outline" onClick={onClose} className="flex-1">취소</Button>
+        <Button onClick={onSave} className="flex-1">저장</Button>
       </div>
     </ModalShell>
   );
