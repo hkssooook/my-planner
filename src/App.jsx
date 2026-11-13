@@ -6,6 +6,7 @@ import ColorPicker from './components/common/ColorPicker';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import MoreEventsModal from './components/modals/MoreEventsModal';
+import PeriodEventModal from './components/modals/PeriodEventModal';
 
 export default function App() {
   const [events, setEvents] = useState([]);
@@ -223,37 +224,12 @@ export default function App() {
 
       {/* --- 기간 일정 등록 모달 --- */}
       {showPeriodModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onMouseUp={(e) => e.stopPropagation()}>
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm flex flex-col">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">기간 일정 등록</h2>
-                <p className="text-sm text-gray-600 mt-1">{newEvent.start_date} ~ {newEvent.end_date}</p>
-              </div>
-              <button onClick={closePeriodModal} className="text-gray-400 hover:text-gray-600"><DeleteIcon /></button>
-            </div>
-            <div className="p-5 flex flex-col gap-5">
-              <div>
-                <input 
-                  type="text" placeholder="일정명 입력" value={newEvent.title} 
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-2 block">지정색</label>
-                <ColorPicker
-                  value={newEvent.color}
-                  onChange={(color) => setNewEvent(prev => ({ ...prev, color }))}
-                />
-              </div>
-            </div>
-            <div className="p-4 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-xl">
-              <button onClick={closePeriodModal} className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50">취소</button>
-              <button onClick={savePeriodEvent} className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600">저장</button>
-            </div>
-          </div>
-        </div>
+        <PeriodEventModal
+          event={newEvent}
+          onChange={(changes) => setNewEvent(prev => ({ ...prev, ...changes }))}
+          onClose={closePeriodModal}
+          onSave={savePeriodEvent}
+        />
       )}
 
       {/* --- 상세 일정 모달 (종일 + 개별 타임블록) --- */}
