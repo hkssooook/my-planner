@@ -145,6 +145,13 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
   });
 
+  it('연도 드롭다운은 shadcn 기본 크기다 (높이 36px, 글자 14px 보통 굵기)', () => {
+    render(<App />);
+    const select = screen.getByDisplayValue('2026년 기준');
+    expect(select).toHaveClass('h-9', 'px-3', 'py-2', 'text-sm', 'rounded-md', 'border');
+    expect(select).not.toHaveClass('text-2xl', 'font-bold'); // 예전의 큰 글자 크기가 돌아오지 않게
+  });
+
   it('화면 맞춤 상태에서 연도를 바꿔도 보기 방식이 유지된다', async () => {
     const user = setup();
     await user.click(screen.getByText('화면 맞춤'));

@@ -4,10 +4,11 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
   return (
     <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-lg shadow-sm gap-4 md:gap-0">
       <div className="flex items-center gap-4">
+        {/* 크기는 shadcn Select의 기본값(높이 36px, 글자 14px). 진짜 shadcn Select는 shadcn 도입 단계에서 교체한다 */}
         <select 
           value={year} 
           onChange={(e) => onYearChange(Number(e.target.value))}
-          className="text-2xl font-bold text-gray-900 border border-gray-300 rounded-md px-2 py-1 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+          className="h-9 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
         >
           {years.map(y => (
             <option key={y} value={y}>{`${y}년 기준`}</option>
