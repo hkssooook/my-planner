@@ -59,7 +59,7 @@ src/
 │   ├── calendar/                  달력 표: YearSection(한 해) → MonthRow(한 달) → DayCell(하루)
 │   ├── modals/                    팝업: 기간 등록 / 상세 일정 / 더보기 / 수정 / 삭제 확인
 │   ├── common/                    공통 부품: PopupDialog (모든 팝업의 shadcn Dialog 한 겹) · ColorPicker
-│   ├── ui/                        shadcn이 만들어 준 부품: button · dialog · select (아직 앱 화면에서는 쓰지 않음)
+│   ├── ui/                        shadcn이 만들어 준 부품: button · dialog · select
 │   └── icons/                     연필, X, + 아이콘
 ├── hooks/
 │   ├── usePlannerData.js      일정 데이터를 들고 추가·수정·삭제·저장을 맡음
