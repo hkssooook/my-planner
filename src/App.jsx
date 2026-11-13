@@ -7,6 +7,7 @@ import { getDaysInMonth, getDayOfWeek } from './utils/date';
 import EditIcon from './components/icons/EditIcon';
 import DeleteIcon from './components/icons/DeleteIcon';
 import PlusIcon from './components/icons/PlusIcon';
+import ColorPicker from './components/common/ColorPicker';
 
 export default function App() {
   const [events, setEvents] = useState([]);
@@ -350,15 +351,10 @@ export default function App() {
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-2 block">지정색</label>
-                <div className="flex gap-2.5">
-                  {COLOR_PALETTE.map(color => (
-                    <button 
-                      key={color.value} onClick={() => setNewEvent(prev => ({ ...prev, color: color.value }))}
-                      style={{ backgroundColor: color.value }}
-                      className={`w-7 h-7 rounded-full border-2 ${newEvent.color === color.value ? 'border-gray-900 shadow-md ring-2 ring-offset-1 ring-gray-900' : 'border-transparent'}`}
-                    />
-                  ))}
-                </div>
+                <ColorPicker
+                  value={newEvent.color}
+                  onChange={(color) => setNewEvent(prev => ({ ...prev, color }))}
+                />
               </div>
             </div>
             <div className="p-4 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-xl">
@@ -390,15 +386,7 @@ export default function App() {
                     onChange={(e) => setSingleDayEventTitle(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
                   />
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    {COLOR_PALETTE.map(color => (
-                      <button 
-                        key={color.value} onClick={() => setSingleDayEventColor(color.value)}
-                        style={{ backgroundColor: color.value }}
-                        className={`w-6 h-6 rounded-full border-2 ${singleDayEventColor === color.value ? 'border-gray-900 ring-1 ring-offset-1 ring-gray-900' : 'border-transparent'}`}
-                      />
-                    ))}
-                  </div>
+                  <ColorPicker size="md" value={singleDayEventColor} onChange={setSingleDayEventColor} />
                 </div>
               </section>
 
@@ -416,16 +404,7 @@ export default function App() {
                         onChange={(e) => handleTempDailyChange(item.hour, 'content', e.target.value)}
                         className="flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-400 min-w-0"
                       />
-                      <div className="flex gap-1 items-center px-1 flex-shrink-0">
-                        {COLOR_PALETTE.map(color => (
-                          <button 
-                            key={color.value} onClick={() => handleTempDailyChange(item.hour, 'color', color.value)}
-                            style={{ backgroundColor: color.value }}
-                            className={`w-3.5 h-3.5 rounded-full border border-gray-200 ${item.color === color.value ? 'ring-1 ring-offset-1 ring-gray-900' : ''}`}
-                            title={color.name}
-                          />
-                        ))}
-                      </div>
+                      <ColorPicker size="sm" value={item.color} onChange={(color) => handleTempDailyChange(item.hour, 'color', color)} />
                       <label className="flex items-center gap-1 cursor-pointer w-12 justify-end flex-shrink-0">
                         <input 
                           type="checkbox" checked={item.is_important}
@@ -511,15 +490,10 @@ export default function App() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">지정색</label>
-              <div className="flex gap-2.5">
-                {COLOR_PALETTE.map(color => (
-                  <button 
-                    key={color.value} onClick={() => setSelectedEvent(prev => ({ ...prev, color: color.value }))}
-                    style={{ backgroundColor: color.value }}
-                    className={`w-7 h-7 rounded-full border-2 ${selectedEvent.color === color.value ? 'border-gray-900 shadow-md ring-2 ring-offset-1 ring-gray-900' : 'border-transparent'}`}
-                  />
-                ))}
-              </div>
+              <ColorPicker
+                value={selectedEvent.color}
+                onChange={(color) => setSelectedEvent(prev => ({ ...prev, color }))}
+              />
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowDeleteModal(true)} className="px-4 py-2 bg-red-50 text-red-700 rounded-md text-sm font-medium hover:bg-red-100">삭제</button>
