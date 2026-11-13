@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
 import EditIcon from './components/icons/EditIcon';
 import DeleteIcon from './components/icons/DeleteIcon';
 import ColorPicker from './components/common/ColorPicker';
-import DayCell from './components/calendar/DayCell';
+import YearSection from './components/calendar/YearSection';
 
 export default function App() {
   const [events, setEvents] = useState([]);
@@ -169,6 +169,16 @@ export default function App() {
   // 기준 연도와 그 다음 연도를 동시 렌더링하기 위한 배열
   const displayYears = [currentYear, currentYear + 1];
 
+  // 달력 날짜 칸(DayCell)까지 전달할 값 묶음
+  const cellProps = {
+    events, dailySchedules,
+    selectionStart, selectionEnd,
+    onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
+    onAddDaily: handleAddDailyClick,
+    onEditEvent: openEditModal, onDeleteEvent: openDeleteModal,
+    onShowMore: setShowMoreDate,
+  };
+
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-lg shadow-sm gap-4 md:gap-0">
@@ -205,42 +215,7 @@ export default function App() {
         <div className={`flex flex-col ${isWrapMode ? '' : 'min-w-max'}`}>
           {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
           {displayYears.map(year => (
-            <React.Fragment key={year}>
-              
-              {/* 연도 구분선 (Year Divider) */}
-              <div className={`flex ${isWrapMode ? 'border-b-2 border-gray-300 bg-gray-200 text-lg font-bold' : 'min-w-max border-b-2 border-gray-300 bg-gray-200'}`}>
-                <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 flex-shrink-0 sticky left-0 z-20 bg-gray-300 flex items-center justify-center font-bold text-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
-                  {year}
-                </div>
-                {!isWrapMode && (
-                  <div className="p-3 font-bold text-gray-800 sticky left-16 z-10">
-                    {year}년 연간 일정
-                  </div>
-                )}
-              </div>
-
-              {/* 해당 연도의 1~12월 렌더링 */}
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                <div key={`${year}-${month}`} className={`flex ${isWrapMode ? 'flex-wrap border-b border-gray-200 bg-white' : 'min-w-max'}`}>
-                  <div className={`${isWrapMode ? 'w-full px-4 py-2 bg-gray-50 border-b border-gray-200 text-left' : 'w-16 flex-shrink-0 sticky left-0 z-10 border-r border-b border-gray-200 bg-gray-100 flex items-center justify-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'} font-semibold text-gray-700`}>
-                    {month}월
-                  </div>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <DayCell
-                      key={`${year}-${month}-${day}`}
-                      year={year} month={month} day={day}
-                      isWrapMode={isWrapMode}
-                      events={events} dailySchedules={dailySchedules}
-                      selectionStart={selectionStart} selectionEnd={selectionEnd}
-                      onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter}
-                      onAddDaily={handleAddDailyClick}
-                      onEditEvent={openEditModal} onDeleteEvent={openDeleteModal}
-                      onShowMore={setShowMoreDate}
-                    />
-                  ))}
-                </div>
-              ))}
-            </React.Fragment>
+            <YearSection key={year} year={year} isWrapMode={isWrapMode} cellProps={cellProps} />
           ))}
         </div>
       </div>
