@@ -1,6 +1,8 @@
 import { useState } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
+import { YEAR_RANGE } from './constants/calendar';
+import { getCurrentYear, getYearOptions } from './utils/date';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
@@ -14,7 +16,10 @@ import DailyDetailModal from './components/modals/DailyDetailModal';
 export default function App() {
   const { events, dailySchedules, addEvent, changeEvent, removeEvent, saveDaySchedule } = usePlannerData();
 
-  const [currentYear, setCurrentYear] = useState(2026);
+  // 앱을 연 해(올해)를 한 번 읽어 고정하고, 그 해로 시작한다. 선택 칸의 연도 목록도 이 해를 기준으로 만든다.
+  const [thisYear] = useState(getCurrentYear);
+  const [currentYear, setCurrentYear] = useState(thisYear);
+  const yearOptions = getYearOptions(thisYear, YEAR_RANGE);
   const [isWrapMode, setIsWrapMode] = useState(false);
 
   const [showPeriodModal, setShowPeriodModal] = useState(false);
@@ -138,7 +143,7 @@ export default function App() {
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <Header
-        year={currentYear} onYearChange={setCurrentYear}
+        year={currentYear} onYearChange={setCurrentYear} years={yearOptions}
         isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode}
       />
 
