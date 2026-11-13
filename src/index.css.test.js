@@ -85,6 +85,11 @@ describe('src/index.css의 색 변수 (docs/design-tokens.md와 같아야 한다
     expect([1, 2, 3, 4, 5].map((i) => rootValue(`chart-${i}`))).toEqual(doc);
   });
 
+  it('모서리 둥글기 기준(--radius)은 15px이다 (shadcn이 sm·md·lg·xl을 이 값의 비율로 만든다)', () => {
+    expect(rootValue('radius')).toBe('15px');
+    expect(css).toContain('--radius-lg: var(--radius);');
+  });
+
   it('추가 이름(success·warning·info·holiday·selection)도 문서의 값이다', () => {
     expect(rootValue('success')).toBe('#7ac4a4');
     expect(rootValue('success-text')).toBe('#25805d');
