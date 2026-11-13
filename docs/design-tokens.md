@@ -119,14 +119,15 @@ WCAG 기준: 일반 글자 **4.5:1 이상**, 입력칸 경계·포커스 링 같
 
 색을 코드에 넣는 시점은 **shadcn 도입 단계**입니다. Tailwind 3 방식으로 임시 정의하면 Tailwind 4로 올릴 때 다시 써야 해서, 먼저 Tailwind 4로 전환한 뒤에 넣기로 했습니다.
 
-진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → shadcn 설치 → 팝업·버튼을 shadcn 것으로 교체 → **이 문서의 색을 CSS 변수로 반영**
+진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 팝업·버튼·드롭다운을 shadcn 것으로 교체 → **이 문서의 색을 CSS 변수로 반영**
 
-**현재 상태 (Tailwind 4 전환 직후):** 화면은 전환 전과 똑같고 이 문서의 새 색은 아직 적용되지 않았습니다. `src/index.css`에 전환 전 모습을 유지하려는 **임시 설정**이 들어 있고, shadcn 적용 때 정리합니다.
+**현재 상태 (shadcn 설치 직후):** shadcn(`base-nova`: Base UI + nova 스타일, 기준 색 `neutral`)이 설치되어 있고, `src/index.css`의 `:root`에는 **shadcn 기본(neutral) 색 변수**가 들어 있습니다. 이 문서의 새 색은 아직 적용되지 않았고, 앱 화면은 아직 shadcn 부품(`src/components/ui/`)을 쓰지 않습니다. 화면에 영향이 있는 것은 shadcn 기본 규칙(테두리·글자 색, 모서리 기준 `--radius`, Geist 글꼴)뿐입니다.
 
-| `src/index.css`의 임시 설정 | 이유 | 새 색 적용 때 |
+| `src/index.css`의 설정 | 이유 | 새 색 적용 때 |
 |---|---|---|
-| `@theme`의 색 18가지 고정 (`gray`, `blue`, `red`) | Tailwind 4가 기본 색상표를 바꿔서, 전환 전 색을 유지하려고 Tailwind 3의 값으로 고정 | 이 문서의 색으로 **교체** |
-| 버튼 커서(`pointer`), 입력칸 흰 바탕·안내 글자 회색, 기본 테두리 색 | Tailwind 4가 기본값을 바꿔서 전환 전 모습을 유지 | shadcn의 기본값으로 **정리** |
+| `:root`의 shadcn 기본 색 변수 (`--primary`, `--destructive`, `--border` 등) | shadcn 부품이 이 변수를 읽는다 (지금은 neutral 기본값) | 이 문서의 색으로 **교체** (위 "shadcn 변수 이름과 이 문서의 이름" 표 참고) |
+| `@theme`의 색 18가지 고정 (`gray`, `blue`, `red`) | 기존 부품이 `bg-blue-500` 같은 Tailwind 색을 쓰고 있어서, Tailwind 4의 새 색상표 대신 Tailwind 3의 값으로 고정 | 기존 부품을 shadcn으로 교체한 뒤 **삭제** |
+| 버튼 커서(`pointer`), 입력칸 흰 바탕·안내 글자 회색 | Tailwind 4가 기본값을 바꿔서 전환 전 모습을 유지 | shadcn 부품으로 교체한 뒤 **정리** |
 
 ### shadcn 변수 이름과 이 문서의 이름
 

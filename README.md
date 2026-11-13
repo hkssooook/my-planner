@@ -58,7 +58,8 @@ src/
 │   ├── layout/Header.jsx          맨 위 연도 선택 + 보기 방식 버튼
 │   ├── calendar/                  달력 표: YearSection(한 해) → MonthRow(한 달) → DayCell(하루)
 │   ├── modals/                    팝업: 기간 등록 / 상세 일정 / 더보기 / 수정 / 삭제 확인
-│   ├── common/ColorPicker.jsx     여러 팝업이 함께 쓰는 색 선택 버튼
+│   ├── common/                    지금 팝업이 쓰는 공통 부품: ModalShell · ModalHeader · ModalFooter · Button · ColorPicker (shadcn 부품으로 교체 예정)
+│   ├── ui/                        shadcn이 만들어 준 부품: button · dialog · select (아직 앱 화면에서는 쓰지 않음)
 │   └── icons/                     연필, X, + 아이콘
 ├── hooks/
 │   ├── usePlannerData.js      일정 데이터를 들고 추가·수정·삭제·저장을 맡음
@@ -66,10 +67,15 @@ src/
 ├── utils/
 │   ├── storage.js             브라우저 저장소 읽기·쓰기 (깨진 데이터에도 앱이 멈추지 않음)
 │   └── date.js                날짜 계산 (한 달의 일수, 요일, 올해, 연도 목록)
+├── lib/utils.js               cn(): 여러 클래스 이름을 합치고 충돌을 정리하는 도우미 (shadcn)
 ├── constants/                 색 팔레트, 요일 이름, 연도 선택 범위
 ├── data/holidays.js           공휴일 데이터
+├── index.css                  Tailwind 4 설정 + shadcn 기본 테마(색·모서리 변수)
+├── shadcn.css                 shadcn 부품이 쓰는 Tailwind 규칙 (shadcn 패키지에서 복사해 온 파일)
 └── test/                      시험 공통 설정(setup.js)과 도우미(helpers.jsx)
 ```
+
+프로젝트 맨 위의 `components.json`은 shadcn 설정(스타일 `base-nova`, JavaScript, 기준 색 `neutral`)이고, `jsconfig.json`은 `@/`가 `src/` 폴더를 가리키게 하는 경로 별칭입니다.
 
 시험 파일(`*.test.js`, `*.test.jsx`)은 시험하는 파일 바로 옆에 있습니다. 예를 들어 `utils/storage.js`의 시험은 `utils/storage.test.js`입니다.
 
@@ -118,7 +124,7 @@ src/
 
 ## 기술 스택
 
-React 19 · Vite 8 · Tailwind CSS 4 · ESLint · Vitest + Testing Library (시험)
+React 19 · Vite 8 · Tailwind CSS 4 · shadcn/ui (base-nova, Base UI) · ESLint · Vitest + Testing Library (시험)
 
 ## 개발 규칙
 
