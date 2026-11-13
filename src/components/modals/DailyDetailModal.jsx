@@ -1,6 +1,7 @@
 import ColorPicker from '../common/ColorPicker';
-import DeleteIcon from '../icons/DeleteIcon';
 import ModalShell from '../common/ModalShell';
+import ModalHeader from '../common/ModalHeader';
+import ModalFooter from '../common/ModalFooter';
 import Button from '../common/Button';
 
 // 상세 일정 관리 팝업: 위쪽은 종일 일정, 아래쪽은 시간대별(0~23시) 24줄.
@@ -13,16 +14,10 @@ export default function DailyDetailModal({
   onSave, onClose,
 }) {
   return (
-    <ModalShell width="lg" panelClassName="flex flex-col max-h-[90vh]">
-      <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">상세 일정 관리</h2>
-          <p className="text-sm text-gray-600 mt-1">{date}</p>
-        </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><DeleteIcon /></button>
-      </div>
-          
-      <div className="p-5 overflow-y-auto flex flex-col gap-6">
+    <ModalShell width="lg" maxHeight="90vh">
+      <ModalHeader title="상세 일정 관리" description={date} onClose={onClose} />
+
+      <div className="overflow-y-auto flex flex-col gap-6">
         <section>
           <h3 className="text-sm font-semibold text-gray-800 mb-3">전체(종일) 일정 추가 <span className="font-normal text-gray-400 text-xs ml-1">(선택 사항)</span></h3>
           <div className="flex gap-3 items-center">
@@ -63,11 +58,11 @@ export default function DailyDetailModal({
           </div>
         </section>
       </div>
-          
-      <div className="p-4 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-xl">
-        <Button variant="outline" onClick={onClose} className="flex-1">취소</Button>
-        <Button onClick={onSave} className="flex-1">통합 저장</Button>
-      </div>
+
+      <ModalFooter>
+        <Button variant="outline" onClick={onClose}>취소</Button>
+        <Button onClick={onSave}>통합 저장</Button>
+      </ModalFooter>
     </ModalShell>
   );
 }

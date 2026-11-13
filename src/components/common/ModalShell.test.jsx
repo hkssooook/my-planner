@@ -63,9 +63,22 @@ describe('ModalShell (팝업의 배경 + 흰 상자)', () => {
     expect(zOf('edit')).toBeLessThan(zOf('confirm'));
   });
 
-  it('panelClassName은 흰 상자에 덧붙는다 (기본 모양은 유지)', () => {
-    const { panel } = renderShell({ panelClassName: 'p-6 flex flex-col max-h-[80vh]' });
-    expect(panel).toHaveClass('p-6', 'flex', 'flex-col', 'max-h-[80vh]', 'bg-white', 'rounded-xl');
+  it('흰 상자는 안쪽 여백(p-6)을 갖고 안쪽 내용을 위에서 아래로 gap-4 간격으로 쌓는다', () => {
+    const { panel } = renderShell();
+    expect(panel).toHaveClass('p-6', 'flex', 'flex-col', 'gap-4');
+  });
+
+  it('최대 높이를 정하지 않으면 높이 제한이 없다', () => {
+    const { panel } = renderShell();
+    expect([...panel.classList].some((c) => c.startsWith('max-h-'))).toBe(false);
+  });
+
+  it.each([
+    ['80vh', 'max-h-[80vh]'],
+    ['90vh', 'max-h-[90vh]'],
+  ])('maxHeight %s → %s (기본 모양은 유지)', (maxHeight, expected) => {
+    const { panel } = renderShell({ maxHeight });
+    expect(panel).toHaveClass(expected, 'bg-white', 'rounded-xl', 'p-6');
   });
 });
 

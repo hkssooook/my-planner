@@ -1,15 +1,13 @@
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
 import ModalShell from '../common/ModalShell';
+import ModalHeader from '../common/ModalHeader';
 
 // 한 날짜의 전체 일정 목록 팝업. 보일지 말지는 부모가 정한다.
 export default function MoreEventsModal({ date, events, dailySchedules, onClose, onEditEvent, onDeleteEvent }) {
   return (
-    <ModalShell layer="more" panelClassName="p-6 flex flex-col max-h-[80vh]">
-      <div className="flex justify-between items-center mb-5">
-        <h3 className="text-lg font-bold text-gray-900">{date} 전체 일정</h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><DeleteIcon /></button>
-      </div>
+    <ModalShell layer="more" maxHeight="80vh">
+      <ModalHeader title={`${date} 전체 일정`} onClose={onClose} />
       <div className="overflow-y-auto flex flex-col gap-2.5 pr-1">
         {events.filter(e => e.start_date <= date && e.end_date >= date).map(evt => (
           <div key={evt.id} style={{ backgroundColor: evt.color }} className="text-white text-xs px-2.5 py-1.5 rounded flex justify-between items-center shadow-sm font-medium w-full min-w-0">
