@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
-import { STORAGE_KEYS, loadJSON, saveJSON } from './utils/storage';
 import useDragSelect from './hooks/useDragSelect';
+import usePlannerData from './hooks/usePlannerData';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import MoreEventsModal from './components/modals/MoreEventsModal';
@@ -11,9 +11,8 @@ import EditEventModal from './components/modals/EditEventModal';
 import DailyDetailModal from './components/modals/DailyDetailModal';
 
 export default function App() {
-  const [events, setEvents] = useState([]);
-  const [dailySchedules, setDailySchedules] = useState({});
-  
+  const { events, dailySchedules, addEvent, changeEvent, removeEvent, saveDaySchedule } = usePlannerData();
+
   const [currentYear, setCurrentYear] = useState(2026);
   const [isWrapMode, setIsWrapMode] = useState(false);
   
@@ -38,13 +37,6 @@ export default function App() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-
-  useEffect(() => {
-    const savedEvents = loadJSON(STORAGE_KEYS.events);
-    const savedDaily = loadJSON(STORAGE_KEYS.daily);
-    if (savedEvents) setEvents(savedEvents);
-    if (savedDaily) setDailySchedules(savedDaily);
-  }, []);
 
 
   const handleAddDailyClick = (e, dateString) => {
@@ -71,33 +63,23 @@ export default function App() {
   };
 
   const savePeriodEvent = () => {
-    if (newEvent.title.trim()) {
-      const updatedEvents = [...events, { ...newEvent, id: Date.now() }];
-      setEvents(updatedEvents);
-      saveJSON(STORAGE_KEYS.events, updatedEvents);
-    }
+    if (newEvent.title.trim()) addEvent(newEvent);
     closePeriodModal();
   };
 
   const saveDailySchedules = () => {
     if (singleDayEventTitle.trim()) {
-      const newSingleEvent = {
-        id: Date.now() + Math.random(),
+      addEvent({
         title: singleDayEventTitle,
         start_date: dailyModalDate,
         end_date: dailyModalDate,
-        color: singleDayEventColor
-      };
-      const updatedEvents = [...events, newSingleEvent];
-      setEvents(updatedEvents);
-      saveJSON(STORAGE_KEYS.events, updatedEvents);
+        color: singleDayEventColor,
+      });
     }
 
     const validSchedules = tempDaily.filter(item => item.content.trim() !== '');
-    const updatedDaily = { ...dailySchedules, [dailyModalDate]: validSchedules };
-    setDailySchedules(updatedDaily);
-    saveJSON(STORAGE_KEYS.daily, updatedDaily);
-    
+    saveDaySchedule(dailyModalDate, validSchedules);
+
     closeDailyModal();
   };
 
@@ -122,9 +104,7 @@ export default function App() {
 
   const updateEvent = () => {
     if (!selectedEvent.title.trim()) return alert('일정명을 입력해주세요.');
-    const updatedEvents = events.map(evt => evt.id === selectedEvent.id ? selectedEvent : evt);
-    setEvents(updatedEvents);
-    saveJSON(STORAGE_KEYS.events, updatedEvents);
+    changeEvent(selectedEvent);
     setShowEditModal(false);
     setSelectedEvent(null);
   };
@@ -136,9 +116,7 @@ export default function App() {
   };
 
   const deleteEvent = () => {
-    const updatedEvents = events.filter(evt => evt.id !== selectedEvent.id);
-    setEvents(updatedEvents);
-    saveJSON(STORAGE_KEYS.events, updatedEvents);
+    removeEvent(selectedEvent.id);
     setShowDeleteModal(false);
     setShowEditModal(false);
     setSelectedEvent(null);
