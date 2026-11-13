@@ -1,16 +1,108 @@
-# React + Vite
+# my-planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+한 화면에서 두 해 분량을 이어서 볼 수 있는 **연간 달력형 플래너**입니다.
+날짜를 마우스로 끌어 기간 일정을 만들고, 날짜마다 시간대별 일정을 적을 수 있습니다.
+서버도 로그인도 없이 브라우저에서만 동작하고, 데이터는 내 브라우저에 저장됩니다.
 
-Currently, two official plugins are available:
+## 주요 기능
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **연속 연간 달력**: 선택한 연도와 다음 해를 이어서 보여 줍니다. 가로 스크롤 / 화면 맞춤 두 가지 보기 방식이 있습니다.
+- **기간 일정**: 날짜 칸을 마우스로 끌었다 놓으면 기간 일정을 만들 수 있습니다. 색은 5가지 중에서 고릅니다.
+- **상세 일정**: 날짜 칸의 `+` 버튼으로 하루짜리 종일 일정과 0~23시 시간대별 일정을 적습니다.
+- **더보기**: 한 칸에 일정이 4개 이상이면 `+N 더보기`가 나타나고, 누르면 그날의 전체 일정을 봅니다.
+- **수정·삭제**: 일정 막대에 마우스를 올리면 연필(수정)과 X(삭제) 버튼이 나타납니다.
+- **공휴일 표시**: 공휴일과 일요일은 날짜가 다른 색으로 표시됩니다. (아래 [알려진 한계](#알려진-한계) 참고)
 
-## React Compiler
+## 실행 방법
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+필요한 것: [Node.js](https://nodejs.org) **20.19 이상** 또는 **22.12 이상** (Vite 8의 요구 사항입니다)
 
-## Expanding the ESLint configuration
+```bash
+npm install        # 처음 한 번: 필요한 도구 설치
+npm run dev        # 개발 서버 실행 → 터미널에 나오는 주소(보통 http://localhost:5173)를 브라우저로 열기
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| 명령 | 하는 일 |
+|---|---|
+| `npm run dev` | 개발 서버를 켭니다. 터미널에서 `Ctrl + C`를 누르면 꺼집니다. |
+| `npm run build` | 배포용 파일을 `dist/` 폴더에 만듭니다. |
+| `npm run preview` | `build`로 만든 결과를 미리 봅니다. |
+| `npm run lint` | 코드 검사기를 돌립니다. 오류가 없어야 정상입니다. |
+
+> 개발 서버를 끄면 브라우저에서 `localhost:5173`이 "연결할 수 없음"으로 나옵니다. 앱이 고장 난 것이 아니니 `npm run dev`를 다시 실행하면 됩니다. 저장한 일정은 브라우저에 남아 있습니다.
+
+## 사용 방법
+
+| 하고 싶은 일 | 방법 |
+|---|---|
+| 연도 바꾸기 | 맨 위 연도 선택 칸 (올해 기준 −1년 ~ +3년, 처음에는 올해로 시작) |
+| 보기 방식 바꾸기 | 맨 위 `가로 스크롤` / `화면 맞춤` 버튼 |
+| 기간 일정 만들기 | 시작 날짜에서 마우스를 누른 채 끝 날짜까지 끌었다 놓기 → 이름과 색 입력 → 저장 |
+| 하루 일정 만들기 | 날짜 칸에 마우스를 올리고 `+` → 위쪽 "전체(종일) 일정"에 입력 |
+| 시간대별 일정 만들기 | 같은 팝업의 아래쪽 24줄에 입력. **오른쪽 "주요"에 체크한 것만 달력 칸에 표시됩니다.** |
+| 일정 수정 / 삭제 | 달력의 일정 막대에 마우스를 올려 연필 / X 클릭 |
+| 한 칸의 일정 모두 보기 | 칸 아래쪽 `+N 더보기` 클릭 |
+
+## 폴더 구조
+
+화면 부품, 데이터 규칙, 설정값이 서로 섞이지 않게 역할별로 나눠 두었습니다.
+
+```
+src/
+├── main.jsx                   앱의 시작점
+├── App.jsx                    상태를 연결하고 화면을 조립하는 곳 (약 200줄)
+├── components/                화면 부품
+│   ├── layout/Header.jsx          맨 위 연도 선택 + 보기 방식 버튼
+│   ├── calendar/                  달력 표: YearSection(한 해) → MonthRow(한 달) → DayCell(하루)
+│   ├── modals/                    팝업: 기간 등록 / 상세 일정 / 더보기 / 수정 / 삭제 확인
+│   ├── common/ColorPicker.jsx     여러 팝업이 함께 쓰는 색 선택 버튼
+│   └── icons/                     연필, X, + 아이콘
+├── hooks/
+│   ├── usePlannerData.js      일정 데이터를 들고 추가·수정·삭제·저장을 맡음
+│   └── useDragSelect.js       날짜를 끌어서 범위를 고르는 동작
+├── utils/
+│   ├── storage.js             브라우저 저장소 읽기·쓰기 (깨진 데이터에도 앱이 멈추지 않음)
+│   └── date.js                날짜 계산 (한 달의 일수, 요일, 올해, 연도 목록)
+├── constants/                 색 팔레트, 요일 이름, 연도 선택 범위
+└── data/holidays.js           공휴일 데이터
+```
+
+원칙: **한 파일은 한 가지 일만 하고**, 팝업과 같은 화면 부품은 데이터를 직접 만지지 않고 `App`이 건네준 값만 보여 주면서 "바뀌었다"고 알립니다.
+
+## 자주 하는 수정
+
+| 바꾸고 싶은 것 | 고칠 파일 |
+|---|---|
+| 일정 색 추가·변경 | `src/constants/colors.js` |
+| 연도 선택 범위 (몇 년 전 ~ 몇 년 뒤) | `src/constants/calendar.js`의 `YEAR_RANGE` |
+| 공휴일 추가·수정 | `src/data/holidays.js` |
+| 일정 저장 방식 (예: 서버로 옮기기) | `src/utils/storage.js`, `src/hooks/usePlannerData.js` |
+| 팝업 모양·문구 | `src/components/modals/` 안의 해당 파일 |
+| 날짜 칸 모양 | `src/components/calendar/DayCell.jsx` |
+
+## 데이터 저장
+
+- 일정은 **내 브라우저의 `localStorage`**에 저장됩니다. 키는 `planner_events`(기간·종일 일정)와 `planner_daily`(시간대별 일정)입니다.
+- 브라우저와 기기마다 따로 저장되어서 **다른 컴퓨터나 다른 브라우저에서는 보이지 않습니다.**
+- 브라우저의 사이트 데이터를 지우면 일정도 **사라집니다.** 내보내기·백업 기능은 아직 없습니다.
+- 저장된 데이터가 깨져 있으면 앱은 멈추지 않고 일정이 없는 상태로 시작합니다. 이 상태에서 새로 저장하면 깨진 데이터를 덮어씁니다.
+
+## 알려진 한계
+
+- **공휴일 데이터가 정확하지 않습니다.** 2026~2027년만 있고 직접 입력한 것이라 누락과 오류가 확인되었습니다. 예) 2026년 노동절·제헌절·지방선거일, 2027년 대체공휴일 일부 누락, 2027년 설날 날짜 어긋남. 2028년 이후는 공휴일이 표시되지 않습니다. 공식 자료(우주항공청 월력요항, 한국천문연구원 특일 정보)로 교체할 계획입니다.
+- 시간대별 일정은 **"주요"에 체크해야 달력에 보입니다.** 체크하지 않은 일정은 저장은 되지만 달력 칸에는 나타나지 않습니다.
+- 날짜 선택은 **마우스 기준**입니다. 터치 화면에서 끌어서 고르는 동작은 지원하지 않습니다.
+- 일정명 확인이 일관되지 않습니다. **수정** 팝업에서 이름을 비우고 저장하면 브라우저 기본 경고창(`alert`)이 뜨지만, **새 일정**을 이름 없이 저장하면 아무 안내 없이 저장되지 않고 팝업만 닫힙니다.
+- 자동 시험(테스트)은 아직 프로젝트에 들어 있지 않고, `npm run lint`만 있습니다.
+
+## 기술 스택
+
+React 19 · Vite 8 · Tailwind CSS 3 · ESLint
+
+## 개발 규칙
+
+작업 규칙은 [CLAUDE.md](./CLAUDE.md)에 있습니다. 요약하면 이렇습니다.
+
+- 코드를 바꾸기 전에 무엇을 왜 바꾸는지 먼저 설명하고, 한 번에 한 가지만 바꿉니다.
+- 커밋 메시지는 한국어로 "무엇을 왜 바꿨는지" 한 줄로 씁니다.
+- `git push --force`는 쓰지 않고, `.env` 파일은 커밋하지 않습니다.
