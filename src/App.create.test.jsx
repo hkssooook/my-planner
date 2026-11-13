@@ -179,8 +179,8 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
     const box = popup('기간 일정 등록');
-    expect(buttonIn(box, '취소')).toHaveClass('bg-white', 'border', 'border-gray-300');
-    expect(buttonIn(box, '저장')).toHaveClass('bg-blue-500', 'text-white');
+    expect(buttonIn(box, '취소')).toHaveClass('border-border', 'bg-background');
+    expect(buttonIn(box, '저장')).toHaveClass('bg-primary', 'text-primary-foreground');
   });
 
   it('기간 등록 팝업: 회색 띠 없이 흰 바탕이고, 버튼줄은 오른쪽 정렬이다', async () => {
@@ -236,7 +236,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
     const user = setup();
     await user.click(plusButtonOf('2026-01-05'));
     const box = popup('상세 일정 관리');
-    expect(buttonIn(box, '취소')).toHaveClass('bg-white', 'border', 'border-gray-300');
-    expect(buttonIn(box, '통합 저장')).toHaveClass('bg-blue-500', 'text-white');
+    expect(buttonIn(box, '취소')).toHaveClass('border-border', 'bg-background');
+    expect(buttonIn(box, '통합 저장')).toHaveClass('bg-primary', 'text-primary-foreground');
   });
 });

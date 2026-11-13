@@ -2,7 +2,7 @@ import ColorPicker from '../common/ColorPicker';
 import ModalShell from '../common/ModalShell';
 import ModalHeader from '../common/ModalHeader';
 import ModalFooter from '../common/ModalFooter';
-import Button from '../common/Button';
+import { Button } from '@/components/ui/button';
 
 // 상세 일정 관리 팝업: 위쪽은 종일 일정, 아래쪽은 시간대별(0~23시) 24줄.
 // 입력값은 모두 부모(App)가 들고 있고, 이 부품은 보여 주고 "바뀌었다"고 알리기만 한다.

@@ -2,7 +2,7 @@ import ColorPicker from '../common/ColorPicker';
 import ModalShell from '../common/ModalShell';
 import ModalHeader from '../common/ModalHeader';
 import ModalFooter from '../common/ModalFooter';
-import Button from '../common/Button';
+import { Button } from '@/components/ui/button';
 
 // 일정 수정 팝업. 수정 중인 값은 부모(App)가 들고 있다.
 // onChange는 바뀐 부분만 받고, onDelete는 삭제 확인 팝업을 띄우는 일을 부모에게 맡긴다.
@@ -46,7 +46,7 @@ export default function EditEventModal({ event, onChange, onSave, onClose, onDel
         </div>
       </div>
       <ModalFooter spread>
-        <Button variant="destructive-soft" onClick={onDelete}>삭제</Button>
+        <Button variant="destructive" onClick={onDelete}>삭제</Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose}>취소</Button>
           <Button onClick={onSave}>변경 저장</Button>

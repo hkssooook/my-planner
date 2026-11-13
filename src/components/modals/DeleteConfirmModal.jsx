@@ -1,7 +1,7 @@
 import ModalShell from '../common/ModalShell';
 import ModalHeader from '../common/ModalHeader';
 import ModalFooter from '../common/ModalFooter';
-import Button from '../common/Button';
+import { Button } from '@/components/ui/button';
 
 // 삭제 확인 팝업. 보일지 말지는 부모가 정하고, 이 부품은 모양과 두 버튼 동작만 맡는다.
 export default function DeleteConfirmModal({ onCancel, onConfirm }) {

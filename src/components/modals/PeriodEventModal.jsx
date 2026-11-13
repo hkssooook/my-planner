@@ -2,7 +2,7 @@ import ColorPicker from '../common/ColorPicker';
 import ModalShell from '../common/ModalShell';
 import ModalHeader from '../common/ModalHeader';
 import ModalFooter from '../common/ModalFooter';
-import Button from '../common/Button';
+import { Button } from '@/components/ui/button';
 
 // 기간 일정 등록 팝업. 입력값은 부모(App)가 들고 있고, 이 부품은 보여 주고 "바뀌었다"고 알리기만 한다.
 // onChange는 바뀐 부분만 받는다. 예: onChange({ title: '새 제목' })
