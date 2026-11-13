@@ -314,7 +314,7 @@ describe('팝업 버튼의 종류(모양)', () => {
     expect(confirm.firstChild).toHaveClass('rounded-xl');
     expect(confirm.firstChild).toHaveClass('max-w-xs'); // 삭제 확인은 작은 확인창
     expect(edit.firstChild).toHaveClass('max-w-sm'); // 수정은 중간 너비
-    expect(confirm.className).toBe(edit.className.replace('z-[70]', 'z-[80]')); // 층 번호만 다르고 배경은 같은 모양
+    expect(confirm.className).toBe(edit.className.replace('z-70', 'z-80')); // 층 번호만 다르고 배경은 같은 모양
   });
 
   it('삭제 확인 팝업: 제목 아래 안내 문구가 있고 버튼줄은 오른쪽 정렬이다', async () => {

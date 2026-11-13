@@ -16,7 +16,7 @@ export default function EditEventModal({ event, onChange, onSave, onClose, onDel
           <input 
             type="text" value={event.title} 
             onChange={(e) => onChange({ title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-400 text-sm"
           />
         </div>
         <div className="flex gap-2">
@@ -25,7 +25,7 @@ export default function EditEventModal({ event, onChange, onSave, onClose, onDel
             <input 
               type="date" value={event.start_date} 
               onChange={(e) => onChange({ start_date: e.target.value })}
-              className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+              className="w-full h-9 px-2 py-1.5 border border-gray-300 rounded-md text-sm"
             />
           </div>
           <div className="flex-1">
@@ -33,7 +33,7 @@ export default function EditEventModal({ event, onChange, onSave, onClose, onDel
             <input 
               type="date" value={event.end_date} 
               onChange={(e) => onChange({ end_date: e.target.value })}
-              className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+              className="w-full h-9 px-2 py-1.5 border border-gray-300 rounded-md text-sm"
             />
           </div>
         </div>

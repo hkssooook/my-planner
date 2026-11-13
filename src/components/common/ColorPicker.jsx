@@ -11,14 +11,14 @@ const SIZES = {
     showName: false,
   },
   md: {
-    wrapper: 'flex gap-1.5 flex-shrink-0',
+    wrapper: 'flex gap-1.5 shrink-0',
     base: 'w-6 h-6 rounded-full border-2',
     selected: 'border-gray-900 ring-1 ring-offset-1 ring-gray-900',
     unselected: 'border-transparent',
     showName: false,
   },
   sm: {
-    wrapper: 'flex gap-1 items-center px-1 flex-shrink-0',
+    wrapper: 'flex gap-1 items-center px-1 shrink-0',
     base: 'w-3.5 h-3.5 rounded-full border border-gray-200',
     selected: 'ring-1 ring-offset-1 ring-gray-900',
     unselected: '',

@@ -15,7 +15,7 @@ export default function PeriodEventModal({ event, onChange, onClose, onSave }) {
           <input 
             type="text" placeholder="일정명 입력" value={event.title} 
             onChange={(e) => onChange({ title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-400 text-sm"
           />
         </div>
         <div>

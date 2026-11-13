@@ -18,7 +18,7 @@ export default function DayCell({
   
   if (day > maxDays) {
     if (isWrapMode) return null;
-    return <div className="bg-gray-100 border-r border-b border-gray-200 w-[120px] flex-shrink-0"></div>;
+    return <div className="bg-gray-100 border-r border-b border-gray-200 w-[120px] shrink-0"></div>;
   }
 
   const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -48,24 +48,24 @@ export default function DayCell({
     <div 
       onMouseDown={() => onMouseDown(dateString)}
       onMouseEnter={() => onMouseEnter(dateString)}
-      className={`group/cell p-1 border-r border-b border-gray-200 w-[120px] flex-shrink-0 h-28 flex flex-col gap-1 relative select-none ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+      className={`group/cell p-1 border-r border-b border-gray-200 w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
     >
       <div className="flex justify-between items-start text-xs min-w-0">
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <span className={`font-medium ${isHoliday ? 'text-[#D88C70]' : 'text-gray-700'}`}>
             {day} <span className="text-gray-400 font-normal">({DAY_NAMES[dayOfWeek]})</span>
           </span>
           <button 
             onMouseDown={(e) => e.stopPropagation()} 
             onClick={(e) => onAddDaily(e, dateString)}
-            className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 hover:bg-gray-200 p-0.5 rounded"
+            className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 hover:bg-gray-200 p-0.5 rounded-sm"
             title="개별 일정 등록"
           >
             <PlusIcon />
           </button>
         </div>
         {holidayName && (
-          <span className="text-[10px] text-[#D88C70] truncate text-right flex-1 ml-1">{holidayName}</span>
+          <span className="text-[10px]/4 text-[#D88C70] truncate text-right flex-1 ml-1">{holidayName}</span>
         )}
       </div>
 
@@ -74,7 +74,7 @@ export default function DayCell({
           <div 
             key={evt.id} 
             style={{ backgroundColor: evt.color }} 
-            className="group/evt text-white text-[10px] px-1.5 py-0.5 mb-0.5 rounded flex justify-between items-center shadow-sm relative font-medium w-full min-w-0"
+            className="group/evt text-white text-[10px] px-1.5 py-0.5 mb-0.5 rounded-sm flex justify-between items-center shadow-xs relative font-medium w-full min-w-0"
           >
             <span className="truncate flex-1 pr-1">{evt.title}</span>
             <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
@@ -86,8 +86,8 @@ export default function DayCell({
 
         {visibleSchedules.map((sch, idx) => (
           <div key={idx} className="text-[9.5px] text-gray-700 flex gap-1.5 items-center px-1 w-full min-w-0">
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: sch.color }}></span>
-            <span className="font-semibold text-gray-500 flex-shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
+            <span className="font-semibold text-gray-500 shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
             <span className="truncate flex-1">{sch.content}</span>
           </div>
         ))}

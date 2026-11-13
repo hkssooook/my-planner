@@ -6,7 +6,7 @@ export default function YearSection({ year, isWrapMode, cellProps }) {
     <>
       {/* 연도 구분선 (Year Divider) */}
       <div className={`flex ${isWrapMode ? 'border-b-2 border-gray-300 bg-gray-200 text-lg font-bold' : 'min-w-max border-b-2 border-gray-300 bg-gray-200'}`}>
-        <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 flex-shrink-0 sticky left-0 z-20 bg-gray-300 flex items-center justify-center font-bold text-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+        <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 shrink-0 sticky left-0 z-20 bg-gray-300 flex items-center justify-center font-bold text-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
           {year}
         </div>
         {!isWrapMode && (

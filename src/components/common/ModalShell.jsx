@@ -7,9 +7,9 @@
 // 겹침 순서: 숫자가 큰 팝업이 위에 뜬다. (더보기 < 수정 < 삭제 확인)
 const LAYERS = {
   base: 'z-50',
-  more: 'z-[60]',
-  edit: 'z-[70]',
-  confirm: 'z-[80]',
+  more: 'z-60',
+  edit: 'z-70',
+  confirm: 'z-80',
 };
 
 // 상자의 최대 너비

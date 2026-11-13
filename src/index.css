@@ -1,3 +1,79 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss' source(none);
+
+/*
+  Tailwind 4는 기본으로 프로젝트의 모든 파일을 훑어서 클래스 이름을 찾는다.
+  시험 파일과 문서(README, docs)에 있는 단어가 클래스로 오해되어 배포용 CSS에 섞이지 않도록,
+  자동 탐지를 끄고(source(none)) 앱 코드만 직접 지정한다. (Tailwind 3의 content 설정과 같은 규칙)
+*/
+@source "../index.html";
+@source ".";
+@source not "./**/*.test.{js,jsx}";
+@source not "./test";
+
+/*
+  Tailwind 4는 기본 색상표를 새 색 체계로 바꿔서, 같은 이름(예: blue-500)이라도 색이 조금 다르다.
+  전환 전 화면과 똑같이 유지하려고, 이 앱이 쓰는 색 18가지를 Tailwind 3의 값으로 고정해 둔다.
+  새 색 규정(docs/design-tokens.md)을 적용할 때 이 부분이 새 색으로 교체된다.
+*/
+@theme {
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-blue-50: #eff6ff;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+/*
+  Tailwind 4에서 달라진 기본값 중, 전환 전 모습을 유지하려고 되돌려 놓은 것들.
+  나중에 새 디자인(shadcn)을 적용할 때 하나씩 정리한다.
+*/
+@layer base {
+  /* 버튼 위에서 손가락 모양 커서 (Tailwind 4는 기본 화살표로 바꿨다) */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* 입력칸 안내 글자(placeholder)의 회색 (Tailwind 4는 글자색의 50% 투명으로 바꿨다) */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  /* 입력칸의 흰 바탕 (Tailwind 4는 투명으로 바꿨다). 체크박스·라디오는 원래 투명이라 제외 */
+  input:not([type='checkbox'], [type='radio']),
+  textarea {
+    background-color: #fff;
+  }
+}

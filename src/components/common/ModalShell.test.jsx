@@ -10,7 +10,7 @@ const renderShell = (props = {}) => {
   return { overlay, panel };
 };
 
-// 겹침 순서 이름 -> z-index 숫자 (예: 'z-[70]' -> 70)
+// 겹침 순서 이름 -> z-index 숫자 (예: 'z-70' -> 70)
 const zOf = (layer) => {
   const { overlay } = renderShell({ layer });
   return Number([...overlay.classList].find((c) => c.startsWith('z-')).match(/\d+/)[0]);
@@ -46,9 +46,9 @@ describe('ModalShell (팝업의 배경 + 흰 상자)', () => {
 
   it('겹침 순서 이름마다 올바른 층이 정해진다', () => {
     expect(renderShell({ layer: 'base' }).overlay).toHaveClass('z-50');
-    expect(renderShell({ layer: 'more' }).overlay).toHaveClass('z-[60]');
-    expect(renderShell({ layer: 'edit' }).overlay).toHaveClass('z-[70]');
-    expect(renderShell({ layer: 'confirm' }).overlay).toHaveClass('z-[80]');
+    expect(renderShell({ layer: 'more' }).overlay).toHaveClass('z-60');
+    expect(renderShell({ layer: 'edit' }).overlay).toHaveClass('z-70');
+    expect(renderShell({ layer: 'confirm' }).overlay).toHaveClass('z-80');
   });
 
   it('겹침 순서는 base < more < edit < confirm 이어야 한다 (삭제 확인이 수정 팝업 위에, 수정이 더보기 위에 떠야 하므로)', () => {
