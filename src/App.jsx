@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
+import { STORAGE_KEYS, loadJSON, saveJSON } from './utils/storage';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import MoreEventsModal from './components/modals/MoreEventsModal';
@@ -34,10 +35,10 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
-    const savedEvents = localStorage.getItem('planner_events');
-    const savedDaily = localStorage.getItem('planner_daily');
-    if (savedEvents) setEvents(JSON.parse(savedEvents));
-    if (savedDaily) setDailySchedules(JSON.parse(savedDaily));
+    const savedEvents = loadJSON(STORAGE_KEYS.events);
+    const savedDaily = loadJSON(STORAGE_KEYS.daily);
+    if (savedEvents) setEvents(savedEvents);
+    if (savedDaily) setDailySchedules(savedDaily);
   }, []);
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function App() {
     if (newEvent.title.trim()) {
       const updatedEvents = [...events, { ...newEvent, id: Date.now() }];
       setEvents(updatedEvents);
-      localStorage.setItem('planner_events', JSON.stringify(updatedEvents));
+      saveJSON(STORAGE_KEYS.events, updatedEvents);
     }
     closePeriodModal();
   };
@@ -113,13 +114,13 @@ export default function App() {
       };
       const updatedEvents = [...events, newSingleEvent];
       setEvents(updatedEvents);
-      localStorage.setItem('planner_events', JSON.stringify(updatedEvents));
+      saveJSON(STORAGE_KEYS.events, updatedEvents);
     }
 
     const validSchedules = tempDaily.filter(item => item.content.trim() !== '');
     const updatedDaily = { ...dailySchedules, [dailyModalDate]: validSchedules };
     setDailySchedules(updatedDaily);
-    localStorage.setItem('planner_daily', JSON.stringify(updatedDaily));
+    saveJSON(STORAGE_KEYS.daily, updatedDaily);
     
     closeDailyModal();
   };
@@ -148,7 +149,7 @@ export default function App() {
     if (!selectedEvent.title.trim()) return alert('일정명을 입력해주세요.');
     const updatedEvents = events.map(evt => evt.id === selectedEvent.id ? selectedEvent : evt);
     setEvents(updatedEvents);
-    localStorage.setItem('planner_events', JSON.stringify(updatedEvents));
+    saveJSON(STORAGE_KEYS.events, updatedEvents);
     setShowEditModal(false);
     setSelectedEvent(null);
   };
@@ -162,7 +163,7 @@ export default function App() {
   const deleteEvent = () => {
     const updatedEvents = events.filter(evt => evt.id !== selectedEvent.id);
     setEvents(updatedEvents);
-    localStorage.setItem('planner_events', JSON.stringify(updatedEvents));
+    saveJSON(STORAGE_KEYS.events, updatedEvents);
     setShowDeleteModal(false);
     setShowEditModal(false);
     setSelectedEvent(null);
