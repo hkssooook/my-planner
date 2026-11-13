@@ -148,16 +148,16 @@ describe('머리말: 연도와 보기 방식', () => {
 
   it('"화면 맞춤"을 누르면 보기 방식이 바뀌고, "가로 스크롤"을 누르면 돌아온다', async () => {
     const user = setup();
-    expect(screen.getByText('가로 스크롤')).toHaveClass('bg-white'); // 처음에는 가로 스크롤이 선택된 모양
+    expect(screen.getByText('가로 스크롤')).toHaveClass('bg-card'); // 처음에는 가로 스크롤이 선택된 모양
 
     await user.click(screen.getByText('화면 맞춤'));
-    expect(screen.getByText('화면 맞춤')).toHaveClass('bg-white');
-    expect(screen.getByText('가로 스크롤')).not.toHaveClass('bg-white');
+    expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
+    expect(screen.getByText('가로 스크롤')).not.toHaveClass('bg-card');
     expect(screen.queryByText('2026년 연간 일정')).not.toBeInTheDocument(); // 화면 맞춤에서는 연도 구분선이 숫자만 보인다
     expect(screen.getAllByTitle('개별 일정 등록')).toHaveLength(730); // 날짜 칸은 그대로
 
     await user.click(screen.getByText('가로 스크롤'));
-    expect(screen.getByText('가로 스크롤')).toHaveClass('bg-white');
+    expect(screen.getByText('가로 스크롤')).toHaveClass('bg-card');
     expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
   });
 
@@ -188,7 +188,7 @@ describe('머리말: 연도와 보기 방식', () => {
     await pickYear(user, '2027년 기준');
 
     expect(yearSelect()).toHaveTextContent('2027년 기준');
-    expect(screen.getByText('화면 맞춤')).toHaveClass('bg-white');
+    expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
     expect(screen.queryByText('2027년 연간 일정')).not.toBeInTheDocument();
   });
 });

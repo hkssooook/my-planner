@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export default function Header({ year, years, onYearChange, isWrapMode, onWrapModeChange }) {
   const yearItems = years.map((y) => ({ value: y, label: `${y}년 기준` }));
   return (
-    <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-lg shadow-xs gap-4 md:gap-0">
+    <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-card p-4 rounded-lg shadow-xs gap-4 md:gap-0">
       <div className="flex items-center gap-4">
         {/* shadcn Select. items는 "값 → 화면에 보일 글자" 짝이라서, 닫혀 있을 때도 "2026년 기준"처럼 글자가 보인다 */}
         <Select value={year} onValueChange={onYearChange} items={yearItems}>
@@ -19,19 +19,19 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
             ))}
           </SelectContent>
         </Select>
-        <h1 className="text-xl text-gray-600 hidden sm:block">연속 연간 플래너</h1>
+        <h1 className="text-xl text-muted-foreground hidden sm:block">연속 연간 플래너</h1>
       </div>
 
-      <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-md border border-gray-200">
+      <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border">
         <button 
           onClick={() => onWrapModeChange(false)} 
-          className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-all ${!isWrapMode ? 'bg-white shadow-xs text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-all ${!isWrapMode ? 'bg-card shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
         >
           가로 스크롤
         </button>
         <button 
           onClick={() => onWrapModeChange(true)} 
-          className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-all ${isWrapMode ? 'bg-white shadow-xs text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-all ${isWrapMode ? 'bg-card shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
         >
           화면 맞춤
         </button>

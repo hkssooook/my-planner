@@ -18,7 +18,7 @@ export default function DayCell({
   
   if (day > maxDays) {
     if (isWrapMode) return null;
-    return <div className="bg-gray-100 border-r border-b border-gray-200 w-[120px] shrink-0"></div>;
+    return <div className="bg-muted border-r border-b border-border w-[120px] shrink-0"></div>;
   }
 
   const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -48,24 +48,24 @@ export default function DayCell({
     <div 
       onMouseDown={() => onMouseDown(dateString)}
       onMouseEnter={() => onMouseEnter(dateString)}
-      className={`group/cell p-1 border-r border-b border-gray-200 w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+      className={`group/cell p-1 border-r border-b border-border w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none ${isSelected ? 'bg-selection' : 'hover:bg-muted'}`}
     >
       <div className="flex justify-between items-start text-xs min-w-0">
         <div className="flex items-center gap-1 shrink-0">
-          <span className={`font-medium ${isHoliday ? 'text-[#D88C70]' : 'text-gray-700'}`}>
-            {day} <span className="text-gray-400 font-normal">({DAY_NAMES[dayOfWeek]})</span>
+          <span className={`font-medium ${isHoliday ? 'text-holiday' : 'text-foreground'}`}>
+            {day} <span className="text-muted-foreground font-normal">({DAY_NAMES[dayOfWeek]})</span>
           </span>
           <button 
             onMouseDown={(e) => e.stopPropagation()} 
             onClick={(e) => onAddDaily(e, dateString)}
-            className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 hover:bg-gray-200 p-0.5 rounded-sm"
+            className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-muted-foreground hover:text-primary hover:bg-accent p-0.5 rounded-sm"
             title="개별 일정 등록"
           >
             <PlusIcon />
           </button>
         </div>
         {holidayName && (
-          <span className="text-[10px]/4 text-[#D88C70] truncate text-right flex-1 ml-1">{holidayName}</span>
+          <span className="text-[10px]/4 text-holiday truncate text-right flex-1 ml-1">{holidayName}</span>
         )}
       </div>
 
@@ -78,16 +78,16 @@ export default function DayCell({
           >
             <span className="truncate flex-1 pr-1">{evt.title}</span>
             <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
-              <button onClick={(e) => onEditEvent(e, evt)} className="text-white hover:text-gray-200"><EditIcon /></button>
-              <button onClick={(e) => onDeleteEvent(e, evt)} className="text-red-100 hover:text-white"><DeleteIcon /></button>
+              <button onClick={(e) => onEditEvent(e, evt)} className="text-white/90 hover:text-white"><EditIcon /></button>
+              <button onClick={(e) => onDeleteEvent(e, evt)} className="text-white/70 hover:text-white"><DeleteIcon /></button>
             </div>
           </div>
         ))}
 
         {visibleSchedules.map((sch, idx) => (
-          <div key={idx} className="text-[9.5px] text-gray-700 flex gap-1.5 items-center px-1 w-full min-w-0">
+          <div key={idx} className="text-[9.5px] text-foreground flex gap-1.5 items-center px-1 w-full min-w-0">
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
-            <span className="font-semibold text-gray-500 shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
+            <span className="font-semibold text-muted-foreground shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
             <span className="truncate flex-1">{sch.content}</span>
           </div>
         ))}
@@ -96,7 +96,7 @@ export default function DayCell({
           <button 
             onMouseDown={(e) => e.stopPropagation()} 
             onClick={(e) => { e.stopPropagation(); onShowMore(dateString); }}
-            className="text-[10px] text-gray-500 font-medium pl-1 mb-0.5 text-left hover:text-gray-800 transition-colors w-full"
+            className="text-[10px] text-muted-foreground font-medium pl-1 mb-0.5 text-left hover:text-foreground transition-colors w-full"
           >
             +{hiddenCount} 더보기
           </button>

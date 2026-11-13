@@ -17,11 +17,11 @@ export default function PeriodEventModal({ event, onChange, onClose, onSave }) {
           <input 
             type="text" placeholder="일정명 입력" value={event.title} 
             onChange={(e) => onChange({ title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-400 text-sm"
+            className="w-full px-3 py-2 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-600 mb-2 block">지정색</label>
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">지정색</label>
           <ColorPicker
             value={event.color}
             onChange={(color) => onChange({ color })}

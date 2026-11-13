@@ -141,13 +141,13 @@ export default function App() {
   };
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen">
+    <div className="p-4 bg-background min-h-screen">
       <Header
         year={currentYear} onYearChange={setCurrentYear} years={yearOptions}
         isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode}
       />
 
-      <div className={`border border-gray-200 rounded-lg shadow-inner bg-white relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
+      <div className={`border border-border rounded-lg shadow-inner bg-card relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
         <div className={`flex flex-col ${isWrapMode ? '' : 'min-w-max'}`}>
           {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
           {displayYears.map(year => (

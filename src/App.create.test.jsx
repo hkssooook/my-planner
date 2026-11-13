@@ -31,11 +31,11 @@ describe('기간 일정 만들기 (날짜 끌기)', () => {
   it('팝업이 열려 있는 동안 고른 칸이 강조되고, 닫으면 강조가 풀린다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    expect(cellOf('2026-01-06')).toHaveClass('bg-blue-50');
-    expect(cellOf('2026-01-08')).not.toHaveClass('bg-blue-50');
+    expect(cellOf('2026-01-06')).toHaveClass('bg-selection');
+    expect(cellOf('2026-01-08')).not.toHaveClass('bg-selection');
 
     await user.click(buttonIn(popup('기간 일정 등록'), '취소'));
-    expect(cellOf('2026-01-06')).not.toHaveClass('bg-blue-50');
+    expect(cellOf('2026-01-06')).not.toHaveClass('bg-selection');
   });
 
   it('이름과 색을 입력해 저장하면 기간의 모든 날짜 칸에 그 색의 막대가 생기고 저장소에도 저장된다', async () => {
@@ -207,7 +207,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
     await user.click(within(popup('기간 일정 등록')).getByRole('button', { name: '닫기' })); // 오른쪽 위 X
 
     expect(queryPopup('기간 일정 등록')).toBeNull();
-    expect(cellOf('2026-01-06')).not.toHaveClass('bg-blue-50');
+    expect(cellOf('2026-01-06')).not.toHaveClass('bg-selection');
     expect(localStorage.getItem('planner_events')).toBeNull();
   });
 

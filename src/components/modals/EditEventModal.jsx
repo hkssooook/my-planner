@@ -13,33 +13,33 @@ export default function EditEventModal({ event, onChange, onSave, onClose, onDel
       </DialogHeader>
       <div className="flex flex-col gap-5">
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">일정명</label>
+          <label className="text-sm font-medium text-foreground mb-1 block">일정명</label>
           <input 
             type="text" value={event.title} 
             onChange={(e) => onChange({ title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-400 text-sm"
+            className="w-full px-3 py-2 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
           />
         </div>
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="text-sm font-medium text-gray-700 mb-1 block">시작일</label>
+            <label className="text-sm font-medium text-foreground mb-1 block">시작일</label>
             <input 
               type="date" value={event.start_date} 
               onChange={(e) => onChange({ start_date: e.target.value })}
-              className="w-full h-9 px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+              className="w-full h-9 px-2 py-1.5 border border-input rounded-md text-sm"
             />
           </div>
           <div className="flex-1">
-            <label className="text-sm font-medium text-gray-700 mb-1 block">종료일</label>
+            <label className="text-sm font-medium text-foreground mb-1 block">종료일</label>
             <input 
               type="date" value={event.end_date} 
               onChange={(e) => onChange({ end_date: e.target.value })}
-              className="w-full h-9 px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+              className="w-full h-9 px-2 py-1.5 border border-input rounded-md text-sm"
             />
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">지정색</label>
+          <label className="text-sm font-medium text-foreground mb-2 block">지정색</label>
           <ColorPicker
             value={event.color}
             onChange={(color) => onChange({ color })}

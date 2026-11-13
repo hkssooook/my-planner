@@ -15,15 +15,15 @@ export default function MoreEventsModal({ date, events, dailySchedules, onClose,
           <div key={evt.id} style={{ backgroundColor: evt.color }} className="text-white text-xs px-2.5 py-1.5 rounded-sm flex justify-between items-center shadow-xs font-medium w-full min-w-0">
             <span className="truncate flex-1">{evt.title}</span>
             <div className="flex gap-2 items-center shrink-0 ml-2">
-              <button onClick={() => onEditEvent(evt)} className="text-white hover:text-gray-200"><EditIcon /></button>
-              <button onClick={() => onDeleteEvent(evt)} className="text-red-100 hover:text-white"><DeleteIcon /></button>
+              <button onClick={() => onEditEvent(evt)} className="text-white/90 hover:text-white"><EditIcon /></button>
+              <button onClick={() => onDeleteEvent(evt)} className="text-white/70 hover:text-white"><DeleteIcon /></button>
             </div>
           </div>
         ))}
         {(dailySchedules[date] || []).filter(s => s.is_important).sort((a,b)=>a.hour-b.hour).map((sch, idx) => (
-          <div key={idx} className="text-xs text-gray-700 flex gap-2 items-center px-2 py-1.5 bg-gray-50 rounded-sm border border-gray-100 w-full min-w-0">
+          <div key={idx} className="text-xs text-foreground flex gap-2 items-center px-2 py-1.5 bg-muted rounded-sm border border-border w-full min-w-0">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
-            <span className="font-semibold text-gray-500 w-9 shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
+            <span className="font-semibold text-muted-foreground w-9 shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
             <span className="truncate flex-1">{sch.content}</span>
           </div>
         ))}

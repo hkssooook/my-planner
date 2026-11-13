@@ -5,12 +5,12 @@ export default function YearSection({ year, isWrapMode, cellProps }) {
   return (
     <>
       {/* 연도 구분선 (Year Divider) */}
-      <div className={`flex ${isWrapMode ? 'border-b-2 border-gray-300 bg-gray-200 text-lg font-bold' : 'min-w-max border-b-2 border-gray-300 bg-gray-200'}`}>
-        <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 shrink-0 sticky left-0 z-20 bg-gray-300 flex items-center justify-center font-bold text-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+      <div className={`flex ${isWrapMode ? 'border-b-2 border-border bg-accent text-lg font-bold' : 'min-w-max border-b-2 border-border bg-accent'}`}>
+        <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 shrink-0 sticky left-0 z-20 bg-accent flex items-center justify-center font-bold text-foreground shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
           {year}
         </div>
         {!isWrapMode && (
-          <div className="p-3 font-bold text-gray-800 sticky left-16 z-10">
+          <div className="p-3 font-bold text-foreground sticky left-16 z-10">
             {year}년 연간 일정
           </div>
         )}
