@@ -4,7 +4,7 @@
 색을 정하거나 바꿀 때는 코드를 고치기 전에 이 문서의 표를 먼저 고칩니다.
 
 - 작성: 2026-11-13
-- 상태: **shadcn 부품(버튼·팝업·드롭다운)에는 적용 완료 (S-5a).** 달력 본체와 입력칸은 아직 `bg-blue-500`, `border-gray-300` 같은 Tailwind 기본 색을 씁니다. (남은 일은 아래 "적용 계획" 참고)
+- 상태: **코드에 모두 적용 완료.** shadcn 부품, 달력, 입력칸, 일정 색이 이 문서의 색을 씁니다. 옛 Tailwind 색(`gray-*`, `blue-*`, `red-*`)은 코드에 남아 있지 않습니다. (적용 순서와 결과는 아래 "적용 계획" 참고)
 
 ## 참고 시안과 측정 방법
 
@@ -119,17 +119,21 @@ WCAG 기준: 일반 글자 **4.5:1 이상**, 입력칸 경계·포커스 링 같
 
 색을 코드에 넣는 시점은 **shadcn 도입 단계**입니다. Tailwind 3 방식으로 임시 정의하면 Tailwind 4로 올릴 때 다시 써야 해서, 먼저 Tailwind 4로 전환한 뒤에 넣기로 했습니다.
 
-진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 버튼 교체 ✅ → 팝업 틀(Dialog) 교체 ✅ → 드롭다운(Select) 교체 ✅ → **이 문서의 색을 CSS 변수로 반영 ✅ (S-5a)** → 달력·입력칸의 옛 색을 토큰으로 교체하고 임시 설정 정리 (S-5b)
+진행 순서: 팝업 정리 ✅ → Tailwind 4 전환 ✅ → shadcn 설치 ✅ → 버튼 교체 ✅ → 팝업 틀(Dialog) 교체 ✅ → 드롭다운(Select) 교체 ✅ → 색을 CSS 변수로 반영 ✅ → 달력·입력칸의 옛 색을 토큰으로 교체 ✅ → 일정 색 파스텔 교체 ✅ → 모서리 15px ✅
 
-**현재 상태 (S-5a 완료):** `src/index.css`의 `:root`에 이 문서의 색이 들어 있습니다. 값은 헥스 그대로이고, `src/index.css.test.js`가 이 문서의 "shadcn 변수 이름과 이 문서의 이름" 표와 코드가 같은지 자동으로 비교합니다. 추가 이름(`--success`, `--warning`, `--info`, `--holiday`, `--selection`)은 `bg-success`처럼 쓸 수 있게 연결해 두었지만 아직 쓰는 곳은 없습니다. 달력 본체는 옛 색이라, 지금 화면은 새 색(버튼·팝업·드롭다운)과 옛 색(달력)이 섞여 있습니다.
+**현재 상태:** `src/index.css`의 `:root`에 이 문서의 색이 들어 있고, 코드는 `bg-primary`, `border-input`, `text-muted-foreground` 같은 **토큰 이름**으로만 색을 씁니다. 시험이 문서와 코드가 같은지 자동으로 비교합니다. (`src/index.css.test.js`: 변수 표, `src/constants/colors.test.js`: 일정 색 5가지)
 
-**S-5a에서 일부러 하지 않은 것:** `primary-hover`(`#4B58D8`)는 shadcn 버튼이 "primary를 80%로 옅게" 하는 방식으로 마우스 올림을 표현해서 쓰지 않았습니다. `.dark` 색 변수는 다크 모드를 쓰지 않으므로 그대로 두었습니다. `--radius`는 아직 정하지 않았습니다.
+| `src/index.css`의 설정 | 이유 |
+|---|---|
+| `:root`의 색 변수 | shadcn 부품과 앱이 이 변수를 읽는다. 값은 이 문서의 표와 같다 |
+| `--radius: 15px` | 모서리 기준. shadcn이 `rounded-sm`·`md`·`lg`·`xl`을 이 값의 0.6·0.8·1·1.4배로 만든다 (9·12·15·21px) |
+| 버튼 커서(`pointer`), 입력칸 바탕(`--card`)·안내 글자(`--muted-foreground`) | Tailwind 4가 바꾼 기본값을 이 앱의 모습으로 되돌린 것. 색은 토큰을 따른다 |
+| `.dark`의 색 변수 | 다크 모드는 쓰지 않아서 shadcn 기본값을 그대로 둠 |
 
-| `src/index.css`의 설정 | 이유 | 새 색 적용 때 |
-|---|---|---|
-| `:root`의 shadcn 기본 색 변수 (`--primary`, `--destructive`, `--border` 등) | shadcn 부품이 이 변수를 읽는다 (지금은 neutral 기본값) | ✅ 이 문서의 색으로 교체 완료 |
-| `@theme`의 색 18가지 고정 (`gray`, `blue`, `red`) | 기존 부품이 `bg-blue-500` 같은 Tailwind 색을 쓰고 있어서, Tailwind 4의 새 색상표 대신 Tailwind 3의 값으로 고정 | 기존 부품을 shadcn으로 교체한 뒤 **삭제** |
-| 버튼 커서(`pointer`), 입력칸 흰 바탕·안내 글자 회색 | Tailwind 4가 기본값을 바꿔서 전환 전 모습을 유지 | shadcn 부품으로 교체한 뒤 **정리** |
+**결정한 것들**
+- `primary-hover`(`#4B58D8`)는 쓰지 않습니다. shadcn 버튼은 마우스를 올리면 primary를 80%로 옅게 하는 방식입니다.
+- **일정 막대의 글자색은 배경에 맞춰 자동으로 고릅니다** (`src/utils/color.js`). 진한 글자 `#21242E`와 흰 글자 중 대비가 더 큰 쪽입니다. 새 파스텔 5가지는 모두 진한 글자이고, 예전에 만든 진한 색 일정(파랑·빨강 등)도 읽히게 하려는 것입니다.
+- 이미 저장된 일정은 **옛 색 그대로** 남습니다. 색 선택기에서 옛 색은 선택 표시가 안 됩니다.
 
 ### shadcn 변수 이름과 이 문서의 이름
 
@@ -156,26 +160,29 @@ WCAG 기준: 일반 글자 **4.5:1 이상**, 입력칸 경계·포커스 링 같
 
 색 값의 표기(헥스, HSL, OKLCH)는 shadcn과 Tailwind 버전에 맞춰 그때 변환합니다.
 
-### 지금 코드의 Tailwind 기본 색은 무엇에 해당하는가
+### 옛 Tailwind 색은 어떤 토큰으로 바뀌었는가 (교체 완료)
 
-팝업·버튼을 정리할 때 아래 대응을 기준으로 이름을 붙입니다.
-
-| 지금 쓰는 것 | 해당하는 토큰 |
+| 옛 색 | 토큰 |
 |---|---|
-| `bg-blue-500`, `hover:bg-blue-600` + `text-white` | primary, primary-hover |
-| `bg-red-600`, `hover:bg-red-700` + `text-white` | (옛 진한 빨강 버튼. 지금은 쓰지 않음) |
-| `bg-red-50` + `text-red-700` | destructive-soft → 지금은 shadcn `destructive` 버튼 |
-| `bg-gray-100` + `text-gray-700` | secondary |
-| `bg-white` + `border-gray-300` (취소 버튼) | outline (흰 바탕 + border) |
-| 입력칸의 `border-gray-300` | input |
-| `text-gray-900` | foreground |
+| `bg-blue-500` + `text-white` (주 버튼) | primary (shadcn 기본 버튼) |
+| `bg-red-50` + `text-red-700` (약한 삭제 버튼) | destructive (shadcn 기본 버튼) |
+| `bg-white` | card |
+| 페이지 바탕 `bg-gray-50` | background |
+| `bg-gray-50`, `bg-gray-100`, `hover:bg-gray-50` | muted |
+| `bg-gray-200`, `bg-gray-300` (연도 구분줄) | accent |
+| `hover:bg-gray-200`, `hover:text-blue-500` (+ 버튼) | accent, primary |
+| `border-gray-300` (입력칸) | input |
+| `border-gray-200`, `border-gray-100` | border |
+| `text-gray-900` ~ `text-gray-700` | foreground |
 | `text-gray-600` ~ `text-gray-400` | muted-foreground |
-| `bg-gray-50`, `hover:bg-gray-50` | muted / accent |
 | `text-[#D88C70]` (휴일) | holiday |
 | `bg-blue-50` (끌어서 고른 칸) | selection |
+| `focus:ring-blue-400`, `focus:border-blue-400` | ring |
+| `border-gray-900`, `ring-gray-900` (선택된 색 표시) | foreground |
+| `text-blue-600` (체크박스) | primary |
 
 ## 아직 정하지 않은 것
 
-- **모서리 둥글기**: 시안은 카드가 크게 둥글고 버튼이 알약 모양입니다. shadcn의 `--radius`로 따로 정합니다.
 - **다크 모드**: 시안에 없어서 규정하지 않았습니다.
-- **글꼴, 그림자, 간격**: 이 문서는 색만 다룹니다.
+- **글꼴, 그림자, 간격**: 이 문서는 색과 모서리 기준만 다룹니다.
+- **`--chart-1`~`5`, `--success`, `--warning`, `--info`, `--selection`의 일부**: 이름은 만들어 두었지만 아직 쓰는 화면이 없습니다. (일정 색은 값으로 저장하므로 `--chart-*`를 직접 읽지 않습니다)
