@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
-import EditIcon from './components/icons/EditIcon';
 import DeleteIcon from './components/icons/DeleteIcon';
 import ColorPicker from './components/common/ColorPicker';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
+import MoreEventsModal from './components/modals/MoreEventsModal';
 
 export default function App() {
   const [events, setEvents] = useState([]);
@@ -320,32 +320,13 @@ export default function App() {
 
       {/* --- 더보기 모달 --- */}
       {showMoreDate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onMouseUp={(e) => e.stopPropagation()}>
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 flex flex-col max-h-[80vh]">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-bold text-gray-900">{showMoreDate} 전체 일정</h3>
-              <button onClick={() => setShowMoreDate(null)} className="text-gray-400 hover:text-gray-600"><DeleteIcon /></button>
-            </div>
-            <div className="overflow-y-auto flex flex-col gap-2.5 pr-1">
-              {events.filter(e => e.start_date <= showMoreDate && e.end_date >= showMoreDate).map(evt => (
-                <div key={evt.id} style={{ backgroundColor: evt.color }} className="text-white text-xs px-2.5 py-1.5 rounded flex justify-between items-center shadow-sm font-medium w-full min-w-0">
-                  <span className="truncate flex-1">{evt.title}</span>
-                  <div className="flex gap-2 items-center flex-shrink-0 ml-2">
-                    <button onClick={() => openEditModal(null, evt)} className="text-white hover:text-gray-200"><EditIcon /></button>
-                    <button onClick={() => openDeleteModal(null, evt)} className="text-red-100 hover:text-white"><DeleteIcon /></button>
-                  </div>
-                </div>
-              ))}
-              {(dailySchedules[showMoreDate] || []).filter(s => s.is_important).sort((a,b)=>a.hour-b.hour).map((sch, idx) => (
-                <div key={idx} className="text-xs text-gray-700 flex gap-2 items-center px-2 py-1.5 bg-gray-50 rounded border border-gray-100 w-full min-w-0">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sch.color }}></span>
-                  <span className="font-semibold text-gray-500 w-9 flex-shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
-                  <span className="truncate flex-1">{sch.content}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <MoreEventsModal
+          date={showMoreDate}
+          events={events} dailySchedules={dailySchedules}
+          onClose={() => setShowMoreDate(null)}
+          onEditEvent={(evt) => openEditModal(null, evt)}
+          onDeleteEvent={(evt) => openDeleteModal(null, evt)}
+        />
       )}
 
       {/* --- 일정 수정 모달 --- */}
