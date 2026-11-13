@@ -33,10 +33,10 @@ export const plusButtonOf = (date, startYear = 2026) => {
 };
 export const cellOf = (date, startYear) => plusButtonOf(date, startYear).closest('[class~="group/cell"]');
 
-// 팝업은 제목 글자로 찾는다. (팝업에 role="dialog"가 없어서)
-export const popup = (title) => screen.getByText(title, { selector: 'h2, h3' }).closest('div.fixed');
-export const queryPopup = (title) => screen.queryByText(title, { selector: 'h2, h3' })?.closest('div.fixed') ?? null;
-export const popupCount = () => document.querySelectorAll('div.fixed').length;
+// 팝업(role="dialog")은 제목 글자로 찾는다. 다른 팝업이 위에 겹쳐 있으면 아래 팝업은 접근성 트리에서 가려지므로 hidden: true로 찾는다.
+export const popup = (title) => screen.getByRole('dialog', { name: title, hidden: true });
+export const queryPopup = (title) => screen.queryByRole('dialog', { name: title, hidden: true });
+export const popupCount = () => document.querySelectorAll('[role="dialog"]').length;
 
 export const buttonIn = (box, name) => within(box).getByRole('button', { name });
 export const colorButtonsIn = (box) => within(box).getAllByRole('button').filter((b) => b.classList.contains('rounded-full'));

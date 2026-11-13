@@ -119,9 +119,9 @@ WCAG 기준: 일반 글자 **4.5:1 이상**, 입력칸 경계·포커스 링 같
 
 색을 코드에 넣는 시점은 **shadcn 도입 단계**입니다. Tailwind 3 방식으로 임시 정의하면 Tailwind 4로 올릴 때 다시 써야 해서, 먼저 Tailwind 4로 전환한 뒤에 넣기로 했습니다.
 
-진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 버튼 교체 ✅ → 팝업(Dialog)·드롭다운(Select) 교체 → **이 문서의 색을 CSS 변수로 반영**
+진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 버튼 교체 ✅ → 팝업 틀(Dialog) 교체 ✅ → 드롭다운(Select) 교체 → **이 문서의 색을 CSS 변수로 반영**
 
-**현재 상태 (shadcn 설치 직후):** shadcn(`base-nova`: Base UI + nova 스타일, 기준 색 `neutral`)이 설치되어 있고, `src/index.css`의 `:root`에는 **shadcn 기본(neutral) 색 변수**가 들어 있습니다. 이 문서의 새 색은 아직 적용되지 않았고, 앱 화면은 팝업 버튼만 shadcn `Button`을 쓰고, 팝업 틀과 연도 드롭다운은 아직 옛 부품입니다. 화면에 영향이 있는 것은 shadcn 기본 규칙(테두리·글자 색, 모서리 기준 `--radius`, Geist 글꼴)뿐입니다.
+**현재 상태 (shadcn 설치 직후):** shadcn(`base-nova`: Base UI + nova 스타일, 기준 색 `neutral`)이 설치되어 있고, `src/index.css`의 `:root`에는 **shadcn 기본(neutral) 색 변수**가 들어 있습니다. 이 문서의 새 색은 아직 적용되지 않았고, 앱 화면은 팝업 버튼과 팝업 틀이 shadcn `Button`·`Dialog`를 쓰고, 연도 드롭다운만 아직 옛 부품입니다. 화면에 영향이 있는 것은 shadcn 기본 규칙(테두리·글자 색, 모서리 기준 `--radius`, Geist 글꼴)뿐입니다.
 
 | `src/index.css`의 설정 | 이유 | 새 색 적용 때 |
 |---|---|---|

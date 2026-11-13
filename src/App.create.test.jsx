@@ -183,30 +183,28 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
     expect(buttonIn(box, '저장')).toHaveClass('bg-primary', 'text-primary-foreground');
   });
 
-  it('기간 등록 팝업: 회색 띠 없이 흰 바탕이고, 버튼줄은 오른쪽 정렬이다', async () => {
+  it('기간 등록 팝업: shadcn 기본 모양(바깥 여백 p-4, 둥근 모서리)이고, 버튼줄은 오른쪽 정렬이다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
     const box = popup('기간 일정 등록');
-    expect(box.querySelector('[class*="rounded-t-xl"], [class*="rounded-b-xl"]')).toBeNull(); // 제목줄·버튼줄의 회색 띠가 남아 있지 않다
-    expect(box.firstChild).toHaveClass('max-w-sm'); // 팝업 너비: 중간
-    expect(buttonIn(box, '저장').parentElement).toHaveClass('justify-end');
-    expect(buttonIn(box, '취소').parentElement).toHaveClass('justify-end');
+    expect(box).toHaveClass('rounded-xl', 'p-4', 'sm:max-w-sm'); // 팝업 너비: 중간
+    expect(buttonIn(box, '저장').parentElement).toHaveClass('sm:justify-end');
+    expect(buttonIn(box, '취소').parentElement).toHaveClass('sm:justify-end');
     expect(buttonIn(box, '저장')).not.toHaveClass('flex-1'); // 폭을 반씩 나눠 갖지 않는다
   });
 
-  it('상세 일정 팝업: 회색 띠 없이 흰 바탕이고, 버튼줄은 오른쪽 정렬이다', async () => {
+  it('상세 일정 팝업: 버튼줄은 오른쪽 정렬이다', async () => {
     const user = setup();
     await user.click(plusButtonOf('2026-01-05'));
     const box = popup('상세 일정 관리');
-    expect(box.querySelector('[class*="rounded-t-xl"], [class*="rounded-b-xl"]')).toBeNull();
-    expect(buttonIn(box, '통합 저장').parentElement).toHaveClass('justify-end');
+    expect(buttonIn(box, '통합 저장').parentElement).toHaveClass('sm:justify-end');
     expect(buttonIn(box, '통합 저장')).not.toHaveClass('flex-1');
   });
 
   it('기간 등록 팝업: 제목줄의 X 버튼으로 닫을 수 있다 (저장하지 않고 선택 표시도 풀린다)', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    await user.click(within(popup('기간 일정 등록')).getAllByRole('button')[0]); // 첫 번째 버튼이 제목줄의 X
+    await user.click(within(popup('기간 일정 등록')).getByRole('button', { name: '닫기' })); // 오른쪽 위 X
 
     expect(queryPopup('기간 일정 등록')).toBeNull();
     expect(cellOf('2026-01-06')).not.toHaveClass('bg-blue-50');
@@ -217,7 +215,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
     const user = setup();
     await user.click(plusButtonOf('2026-01-05'));
     await user.type(within(popup('상세 일정 관리')).getByPlaceholderText('예: 워크숍 일정'), '저장되면 안 됨');
-    await user.click(within(popup('상세 일정 관리')).getAllByRole('button')[0]);
+    await user.click(within(popup('상세 일정 관리')).getByRole('button', { name: '닫기' }));
 
     expect(queryPopup('상세 일정 관리')).toBeNull();
     expect(localStorage.getItem('planner_events')).toBeNull();
@@ -227,9 +225,9 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
     const user = setup();
     await user.click(plusButtonOf('2026-01-05'));
     const box = popup('상세 일정 관리');
-    expect(box.firstChild).toHaveClass('max-h-[90vh]', 'max-w-lg'); // 흰 상자의 크기 제한
+    expect(box).toHaveClass('max-h-[90vh]', 'sm:max-w-lg'); // 흰 상자의 크기 제한
     // 스크롤 영역은 흰 상자의 바로 아래 자식이어야 한다. (안쪽 시간대 목록에도 스크롤이 있어서 그냥 찾으면 하나가 빠져도 통과한다)
-    expect([...box.firstChild.children].some((child) => child.classList.contains('overflow-y-auto'))).toBe(true);
+    expect([...box.children].some((child) => child.classList.contains('overflow-y-auto'))).toBe(true);
   });
 
   it('상세 일정 팝업', async () => {

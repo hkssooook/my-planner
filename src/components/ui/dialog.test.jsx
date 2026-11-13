@@ -48,7 +48,7 @@ describe('shadcn Dialog (Base UI)', () => {
   it('기본으로 오른쪽 위에 닫기 버튼이 있고, 누르면 닫힘을 요청한다', async () => {
     const onOpenChange = vi.fn();
     renderOpen({ onOpenChange });
-    await userEvent.setup().click(screen.getByRole('button', { name: /close/i }));
+    await userEvent.setup().click(screen.getByRole('button', { name: /닫기/i }));
     expect(onOpenChange).toHaveBeenCalled();
     expect(onOpenChange.mock.calls[0][0]).toBe(false);
   });
@@ -83,7 +83,7 @@ describe('shadcn Dialog (Base UI)', () => {
     await user.click(screen.getByRole('button', { name: '열기' }));
     expect(await screen.findByRole('dialog', { name: '제목' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /close/i }));
+    await user.click(screen.getByRole('button', { name: /닫기/i }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 

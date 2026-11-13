@@ -1,7 +1,6 @@
 import ColorPicker from '../common/ColorPicker';
-import ModalShell from '../common/ModalShell';
-import ModalHeader from '../common/ModalHeader';
-import ModalFooter from '../common/ModalFooter';
+import PopupDialog from '../common/PopupDialog';
+import { DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 // 상세 일정 관리 팝업: 위쪽은 종일 일정, 아래쪽은 시간대별(0~23시) 24줄.
@@ -14,8 +13,11 @@ export default function DailyDetailModal({
   onSave, onClose,
 }) {
   return (
-    <ModalShell width="lg" maxHeight="90vh">
-      <ModalHeader title="상세 일정 관리" description={date} onClose={onClose} />
+    <PopupDialog width="lg" maxHeight="90vh" onClose={onClose}>
+      <DialogHeader>
+        <DialogTitle>상세 일정 관리</DialogTitle>
+        <DialogDescription>{date}</DialogDescription>
+      </DialogHeader>
 
       <div className="overflow-y-auto flex flex-col gap-6">
         <section>
@@ -59,10 +61,10 @@ export default function DailyDetailModal({
         </section>
       </div>
 
-      <ModalFooter>
+      <DialogFooter>
         <Button variant="outline" onClick={onClose}>취소</Button>
         <Button onClick={onSave}>통합 저장</Button>
-      </ModalFooter>
-    </ModalShell>
+      </DialogFooter>
+    </PopupDialog>
   );
 }

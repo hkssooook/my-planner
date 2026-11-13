@@ -1,13 +1,15 @@
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
-import ModalShell from '../common/ModalShell';
-import ModalHeader from '../common/ModalHeader';
+import PopupDialog from '../common/PopupDialog';
+import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // 한 날짜의 전체 일정 목록 팝업. 보일지 말지는 부모가 정한다.
 export default function MoreEventsModal({ date, events, dailySchedules, onClose, onEditEvent, onDeleteEvent }) {
   return (
-    <ModalShell layer="more" maxHeight="80vh">
-      <ModalHeader title={`${date} 전체 일정`} onClose={onClose} />
+    <PopupDialog maxHeight="80vh" onClose={onClose}>
+      <DialogHeader>
+        <DialogTitle>{`${date} 전체 일정`}</DialogTitle>
+      </DialogHeader>
       <div className="overflow-y-auto flex flex-col gap-2.5 pr-1">
         {events.filter(e => e.start_date <= date && e.end_date >= date).map(evt => (
           <div key={evt.id} style={{ backgroundColor: evt.color }} className="text-white text-xs px-2.5 py-1.5 rounded-sm flex justify-between items-center shadow-xs font-medium w-full min-w-0">
@@ -26,6 +28,6 @@ export default function MoreEventsModal({ date, events, dailySchedules, onClose,
           </div>
         ))}
       </div>
-    </ModalShell>
+    </PopupDialog>
   );
 }

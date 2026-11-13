@@ -1,15 +1,16 @@
 import ColorPicker from '../common/ColorPicker';
-import ModalShell from '../common/ModalShell';
-import ModalHeader from '../common/ModalHeader';
-import ModalFooter from '../common/ModalFooter';
+import PopupDialog from '../common/PopupDialog';
+import { DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 // 일정 수정 팝업. 수정 중인 값은 부모(App)가 들고 있다.
 // onChange는 바뀐 부분만 받고, onDelete는 삭제 확인 팝업을 띄우는 일을 부모에게 맡긴다.
 export default function EditEventModal({ event, onChange, onSave, onClose, onDelete }) {
   return (
-    <ModalShell layer="edit">
-      <ModalHeader title="일정 수정" />
+    <PopupDialog>
+      <DialogHeader>
+        <DialogTitle>일정 수정</DialogTitle>
+      </DialogHeader>
       <div className="flex flex-col gap-5">
         <div>
           <label className="text-sm font-medium text-gray-700 mb-1 block">일정명</label>
@@ -45,13 +46,13 @@ export default function EditEventModal({ event, onChange, onSave, onClose, onDel
           />
         </div>
       </div>
-      <ModalFooter spread>
+      <DialogFooter className="sm:justify-between">
         <Button variant="destructive" onClick={onDelete}>삭제</Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose}>취소</Button>
           <Button onClick={onSave}>변경 저장</Button>
         </div>
-      </ModalFooter>
-    </ModalShell>
+      </DialogFooter>
+    </PopupDialog>
   );
 }
