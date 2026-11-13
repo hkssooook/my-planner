@@ -73,3 +73,46 @@ describe('src/index.css (Tailwind 4 설정)', () => {
     expect(css).toMatch(/input:not\(\[type='checkbox'\],\s*\[type='radio'\]\)[^{]*\{[^}]*background-color:\s*#fff/);
   });
 });
+
+// 색의 "정답"은 docs/design-tokens.md의 표다. 코드(:root)가 그 표와 어긋나면 알린다.
+const docs = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../docs/design-tokens.md'), 'utf-8');
+const root = css.match(/:root\s*\{([^}]*)\}/)?.[1] ?? '';
+const rootValue = (name) => root.match(new RegExp(`--${name}:\\s*([^;]+);`))?.[1].trim();
+
+describe('src/index.css의 색 변수 (docs/design-tokens.md와 같아야 한다)', () => {
+  // 문서의 "shadcn 변수 이름과 이 문서의 이름" 표에서 "| `--변수`, `--변수` | 이름 | `#색` |" 줄을 모두 읽는다
+  const rows = [...docs.matchAll(/^\|\s*((?:`--[a-z-]+`(?:,\s*)?)+)\s*\|[^|]*\|\s*`(#[0-9A-Fa-f]{6})`\s*\|$/gm)].flatMap(
+    ([, vars, hex]) => [...vars.matchAll(/--([a-z-]+)/g)].map(([, name]) => [name, hex.toLowerCase()]),
+  );
+
+  it('문서의 표에서 변수 16개 이상을 읽어 냈다 (표 모양이 바뀌어 시험이 아무것도 안 보게 되는 일을 막는다)', () => {
+    expect(rows.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it.each(rows)('--%s 는 문서의 값 %s 이다', (name, hex) => {
+    expect(rootValue(name)).toBe(hex);
+  });
+
+  it('일정 색 5가지(--chart-1~5)는 문서의 블루·퍼플·핑크·앰버·민트 순서다', () => {
+    const doc = ['블루', '퍼플', '핑크', '앰버', '민트'].map(
+      (n) => docs.match(new RegExp('\\|\\s*' + n + '\\s*\\|\\s*`(#[0-9A-Fa-f]{6})`'))?.[1].toLowerCase(),
+    );
+    expect([1, 2, 3, 4, 5].map((i) => rootValue(`chart-${i}`))).toEqual(doc);
+  });
+
+  it('추가 이름(success·warning·info·holiday·selection)도 문서의 값이다', () => {
+    expect(rootValue('success')).toBe('#7ac4a4');
+    expect(rootValue('success-text')).toBe('#25805d');
+    expect(rootValue('warning')).toBe('#fdb11a');
+    expect(rootValue('info')).toBe('#3a8ced');
+    expect(rootValue('holiday')).toBe('#b94737');
+    expect(rootValue('selection')).toBe('#eff0fd');
+  });
+
+  it('추가 이름은 Tailwind 색 이름(bg-success 등)으로도 쓸 수 있게 연결되어 있다', () => {
+    for (const name of ['success', 'warning', 'info', 'holiday', 'selection']) {
+      expect(css).toContain(`--color-${name}: var(--${name});`);
+    }
+  });
+});
+

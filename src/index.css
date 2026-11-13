@@ -92,6 +92,14 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-text: var(--success-text);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-holiday: var(--holiday);
+  --color-selection: var(--selection);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -127,38 +135,49 @@
   ---break---
 */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* 색 값은 docs/design-tokens.md의 규정값 그대로다. 색을 바꿀 때는 문서의 표를 먼저 고친다. */
+  --background: #f5f8ff;
+  --foreground: #21242e;
+  --card: #ffffff;
+  --card-foreground: #21242e;
+  --popover: #ffffff;
+  --popover-foreground: #21242e;
+  --primary: #5a68ec;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f7fd;
+  --secondary-foreground: #21242e;
+  --muted: #f5f8ff;
+  --muted-foreground: #6b7183;
+  --accent: #eff0fd;
+  --accent-foreground: #21242e;
+  --destructive: #d6364d;
+  --border: #e4e9f5;
+  --input: #8e94a6;
+  --ring: #5a68ec;
+  /* 일정 색 5가지: 블루, 퍼플, 핑크, 앰버, 민트 (달력 막대에 아직 적용 전) */
+  --chart-1: #8da5fd;
+  --chart-2: #b493fc;
+  --chart-3: #fd8aeb;
+  --chart-4: #fdca59;
+  --chart-5: #7ac4a4;
+  /* 이 앱에서 추가로 쓰는 이름 (shadcn 기본에는 없음) */
+  --success: #7ac4a4;
+  --success-foreground: #21242e;
+  --success-text: #25805d;
+  --warning: #fdb11a;
+  --warning-foreground: #21242e;
+  --info: #3a8ced;
+  --holiday: #b94737;
+  --selection: #eff0fd;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #21242e;
+  --sidebar-primary: #5a68ec;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff0fd;
+  --sidebar-accent-foreground: #21242e;
+  --sidebar-border: #e4e9f5;
+  --sidebar-ring: #5a68ec;
 }
 /*
   ---break---

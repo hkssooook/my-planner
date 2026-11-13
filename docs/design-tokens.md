@@ -4,7 +4,7 @@
 색을 정하거나 바꿀 때는 코드를 고치기 전에 이 문서의 표를 먼저 고칩니다.
 
 - 작성: 2026-11-13
-- 상태: **규정만 완료, 코드에는 아직 적용되지 않았습니다.** 지금 코드는 `bg-blue-500` 같은 Tailwind 기본 색을 씁니다. (적용 계획은 아래 "적용 계획" 참고)
+- 상태: **shadcn 부품(버튼·팝업·드롭다운)에는 적용 완료 (S-5a).** 달력 본체와 입력칸은 아직 `bg-blue-500`, `border-gray-300` 같은 Tailwind 기본 색을 씁니다. (남은 일은 아래 "적용 계획" 참고)
 
 ## 참고 시안과 측정 방법
 
@@ -119,13 +119,15 @@ WCAG 기준: 일반 글자 **4.5:1 이상**, 입력칸 경계·포커스 링 같
 
 색을 코드에 넣는 시점은 **shadcn 도입 단계**입니다. Tailwind 3 방식으로 임시 정의하면 Tailwind 4로 올릴 때 다시 써야 해서, 먼저 Tailwind 4로 전환한 뒤에 넣기로 했습니다.
 
-진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 버튼 교체 ✅ → 팝업 틀(Dialog) 교체 ✅ → 드롭다운(Select) 교체 ✅ → **이 문서의 색을 CSS 변수로 반영**
+진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 버튼 교체 ✅ → 팝업 틀(Dialog) 교체 ✅ → 드롭다운(Select) 교체 ✅ → **이 문서의 색을 CSS 변수로 반영 ✅ (S-5a)** → 달력·입력칸의 옛 색을 토큰으로 교체하고 임시 설정 정리 (S-5b)
 
-**현재 상태 (shadcn 설치 직후):** shadcn(`base-nova`: Base UI + nova 스타일, 기준 색 `neutral`)이 설치되어 있고, `src/index.css`의 `:root`에는 **shadcn 기본(neutral) 색 변수**가 들어 있습니다. 이 문서의 새 색은 아직 적용되지 않았고, 앱 화면의 팝업 버튼·팝업 틀·연도 드롭다운은 모두 shadcn `Button`·`Dialog`·`Select`를 씁니다. 남은 일은 색 변수 교체(S-5)입니다. 화면에 영향이 있는 것은 shadcn 기본 규칙(테두리·글자 색, 모서리 기준 `--radius`, Geist 글꼴)뿐입니다.
+**현재 상태 (S-5a 완료):** `src/index.css`의 `:root`에 이 문서의 색이 들어 있습니다. 값은 헥스 그대로이고, `src/index.css.test.js`가 이 문서의 "shadcn 변수 이름과 이 문서의 이름" 표와 코드가 같은지 자동으로 비교합니다. 추가 이름(`--success`, `--warning`, `--info`, `--holiday`, `--selection`)은 `bg-success`처럼 쓸 수 있게 연결해 두었지만 아직 쓰는 곳은 없습니다. 달력 본체는 옛 색이라, 지금 화면은 새 색(버튼·팝업·드롭다운)과 옛 색(달력)이 섞여 있습니다.
+
+**S-5a에서 일부러 하지 않은 것:** `primary-hover`(`#4B58D8`)는 shadcn 버튼이 "primary를 80%로 옅게" 하는 방식으로 마우스 올림을 표현해서 쓰지 않았습니다. `.dark` 색 변수는 다크 모드를 쓰지 않으므로 그대로 두었습니다. `--radius`는 아직 정하지 않았습니다.
 
 | `src/index.css`의 설정 | 이유 | 새 색 적용 때 |
 |---|---|---|
-| `:root`의 shadcn 기본 색 변수 (`--primary`, `--destructive`, `--border` 등) | shadcn 부품이 이 변수를 읽는다 (지금은 neutral 기본값) | 이 문서의 색으로 **교체** (위 "shadcn 변수 이름과 이 문서의 이름" 표 참고) |
+| `:root`의 shadcn 기본 색 변수 (`--primary`, `--destructive`, `--border` 등) | shadcn 부품이 이 변수를 읽는다 (지금은 neutral 기본값) | ✅ 이 문서의 색으로 교체 완료 |
 | `@theme`의 색 18가지 고정 (`gray`, `blue`, `red`) | 기존 부품이 `bg-blue-500` 같은 Tailwind 색을 쓰고 있어서, Tailwind 4의 새 색상표 대신 Tailwind 3의 값으로 고정 | 기존 부품을 shadcn으로 교체한 뒤 **삭제** |
 | 버튼 커서(`pointer`), 입력칸 흰 바탕·안내 글자 회색 | Tailwind 4가 기본값을 바꿔서 전환 전 모습을 유지 | shadcn 부품으로 교체한 뒤 **정리** |
 
