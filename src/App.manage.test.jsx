@@ -1,0 +1,256 @@
+import { describe, it, expect, vi } from 'vitest';
+import { render, within, fireEvent } from '@testing-library/react';
+import App from './App';
+import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, deleteIconOf, editIconOf, hexToRgb, makeEvent, popup, popupCount, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+
+// 만들어 둔 일정을 보고(+N 더보기), 고치고, 지우는 동작을 확인하는 시험.
+// 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
+
+setupTestEnvironment();
+
+describe('+N 더보기', () => {
+  const sameDay = '2026-01-05';
+  const fourEvents = () => [
+    makeEvent(1, '일정 하나', sameDay, sameDay, COLOR.blue),
+    makeEvent(2, '일정 둘', sameDay, sameDay, COLOR.green),
+    makeEvent(3, '일정 셋', sameDay, sameDay, COLOR.orange),
+    makeEvent(4, '일정 넷', sameDay, sameDay, COLOR.red),
+  ];
+
+  it('한 칸에 보여줄 수 있는 3개까지는 "더보기"가 없다', () => {
+    seedEvents(fourEvents().slice(0, 3));
+    render(<App />);
+    expect(within(cellOf(sameDay)).queryByText(/더보기/)).not.toBeInTheDocument();
+    expect(within(cellOf(sameDay)).getByText('일정 셋')).toBeInTheDocument();
+  });
+
+  it('4개부터는 3개만 보이고 나머지 개수가 "+N 더보기"로 나타난다', () => {
+    seedEvents(fourEvents());
+    render(<App />);
+    const cell = cellOf(sameDay);
+    expect(within(cell).getByText('일정 셋')).toBeInTheDocument();
+    expect(within(cell).queryByText('일정 넷')).not.toBeInTheDocument();
+    expect(within(cell).getByText('+1 더보기')).toBeInTheDocument();
+  });
+
+  it('일정과 "주요" 시간대 일정을 합쳐서 센다', () => {
+    seedEvents(fourEvents());
+    seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.green }] });
+    render(<App />);
+    expect(within(cellOf(sameDay)).getByText('+2 더보기')).toBeInTheDocument();
+  });
+
+  it('"더보기"를 누르면 그날의 전체 일정이 팝업에 나오고 X로 닫을 수 있다', async () => {
+    seedEvents(fourEvents());
+    seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.green }] });
+    const user = setup();
+    await user.click(within(cellOf(sameDay)).getByText('+2 더보기'));
+
+    const box = popup(`${sameDay} 전체 일정`);
+    for (const title of ['일정 하나', '일정 둘', '일정 셋', '일정 넷', '주요 회의']) {
+      expect(within(box).getByText(title)).toBeInTheDocument();
+    }
+    expect(within(box).getByText('09:00')).toBeInTheDocument();
+
+    await user.click(within(box).getAllByRole('button')[0]); // 제목줄의 X
+    expect(queryPopup(`${sameDay} 전체 일정`)).toBeNull();
+  });
+
+  it('"더보기" 팝업에서 연필을 누르면 수정 팝업이 그 위에 겹쳐 열리고 "더보기" 팝업은 그대로 남는다', async () => {
+    seedEvents(fourEvents());
+    const user = setup();
+    await user.click(within(cellOf(sameDay)).getByText('+1 더보기'));
+    const more = popup(`${sameDay} 전체 일정`);
+    await user.click(editIconOf(barIn(more, '일정 넷')));
+
+    expect(popupCount()).toBe(2);
+    expect(within(popup('일정 수정')).getByDisplayValue('일정 넷')).toBeInTheDocument();
+    expect(queryPopup(`${sameDay} 전체 일정`)).not.toBeNull();
+  });
+});
+
+describe('일정 수정', () => {
+  const openEdit = async (user, date, title) => {
+    await user.click(editIconOf(barIn(cellOf(date), title)));
+    return popup('일정 수정');
+  };
+
+  it('연필을 누르면 현재 이름·기간이 채워진 수정 팝업이 열린다', async () => {
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05', '2026-01-07', COLOR.green)]);
+    const user = setup();
+    const box = await openEdit(user, '2026-01-05', '원래 이름');
+
+    expect(within(box).getByDisplayValue('원래 이름')).toBeInTheDocument();
+    const [start, end] = box.querySelectorAll('input[type="date"]');
+    expect(start).toHaveValue('2026-01-05');
+    expect(end).toHaveValue('2026-01-07');
+  });
+
+  it('이름·기간·색을 바꿔 저장하면 달력과 저장소에 반영되고 이전 날짜 칸에서는 사라진다', async () => {
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05', '2026-01-06', COLOR.blue)]);
+    const user = setup();
+    const box = await openEdit(user, '2026-01-05', '원래 이름');
+
+    const nameInput = within(box).getByDisplayValue('원래 이름');
+    await user.clear(nameInput);
+    await user.type(nameInput, '바뀐 이름');
+    const [start, end] = box.querySelectorAll('input[type="date"]');
+    fireEvent.change(start, { target: { value: '2026-02-03' } });
+    fireEvent.change(end, { target: { value: '2026-02-04' } });
+    await user.click(colorButtonsIn(box)[3]); // 네 번째 색(레드)
+    await user.click(buttonIn(box, '변경 저장'));
+
+    expect(queryPopup('일정 수정')).toBeNull();
+    expect(within(cellOf('2026-01-05')).queryByText('원래 이름')).not.toBeInTheDocument();
+    expect(within(cellOf('2026-01-05')).queryByText('바뀐 이름')).not.toBeInTheDocument();
+    expect(barIn(cellOf('2026-02-03'), '바뀐 이름')).toHaveStyle({ backgroundColor: hexToRgb(COLOR.red) });
+    expect(within(cellOf('2026-02-04')).getByText('바뀐 이름')).toBeInTheDocument();
+    expect(stored('planner_events')).toEqual([
+      { id: 1, title: '바뀐 이름', start_date: '2026-02-03', end_date: '2026-02-04', color: COLOR.red },
+    ]);
+  });
+
+  it('이름을 비우고 저장하려 하면 경고를 보여 주고, 팝업은 열려 있으며 저장되지 않는다', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05')]);
+    const user = setup();
+    const box = await openEdit(user, '2026-01-05', '원래 이름');
+    await user.clear(within(box).getByDisplayValue('원래 이름'));
+    await user.click(buttonIn(box, '변경 저장'));
+
+    expect(alertSpy).toHaveBeenCalledWith('일정명을 입력해주세요.');
+    expect(queryPopup('일정 수정')).not.toBeNull();
+    expect(stored('planner_events')[0].title).toBe('원래 이름');
+  });
+
+  it('취소하면 바꾼 내용을 버리고, 다시 열면 원래 값이 나온다', async () => {
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05')]);
+    const user = setup();
+    const box = await openEdit(user, '2026-01-05', '원래 이름');
+    const nameInput = within(box).getByDisplayValue('원래 이름');
+    await user.clear(nameInput);
+    await user.type(nameInput, '버릴 이름');
+    await user.click(buttonIn(box, '취소'));
+
+    expect(queryPopup('일정 수정')).toBeNull();
+    expect(within(cellOf('2026-01-05')).getByText('원래 이름')).toBeInTheDocument();
+    const again = await openEdit(user, '2026-01-05', '원래 이름');
+    expect(within(again).getByDisplayValue('원래 이름')).toBeInTheDocument();
+  });
+
+  it('같은 칸의 다른 일정은 건드리지 않는다', async () => {
+    seedEvents([makeEvent(1, '수정할 일정', '2026-01-05'), makeEvent(2, '그대로인 일정', '2026-01-05')]);
+    const user = setup();
+    const box = await openEdit(user, '2026-01-05', '수정할 일정');
+    const nameInput = within(box).getByDisplayValue('수정할 일정');
+    await user.clear(nameInput);
+    await user.type(nameInput, '수정됨');
+    await user.click(buttonIn(box, '변경 저장'));
+
+    const cell = cellOf('2026-01-05');
+    expect(within(cell).getByText('수정됨')).toBeInTheDocument();
+    expect(within(cell).getByText('그대로인 일정')).toBeInTheDocument();
+  });
+
+  it('예전 형식(소수) id로 저장된 일정도 수정할 수 있다', async () => {
+    seedEvents([makeEvent(1794558320889.4521, '옛날 종일 일정', '2026-01-05')]);
+    const user = setup();
+    const box = await openEdit(user, '2026-01-05', '옛날 종일 일정');
+    const nameInput = within(box).getByDisplayValue('옛날 종일 일정');
+    await user.clear(nameInput);
+    await user.type(nameInput, '고친 일정');
+    await user.click(buttonIn(box, '변경 저장'));
+
+    expect(within(cellOf('2026-01-05')).getByText('고친 일정')).toBeInTheDocument();
+    expect(stored('planner_events')[0].id).toBe(1794558320889.4521);
+  });
+});
+
+describe('일정 삭제', () => {
+  it('수정 팝업의 "삭제"를 누르면 확인 팝업이 그 위에 열리고, 취소하면 일정이 그대로 남는다', async () => {
+    seedEvents([makeEvent(1, '지울 일정', '2026-01-05')]);
+    const user = setup();
+    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '지울 일정')));
+    await user.click(buttonIn(popup('일정 수정'), '삭제'));
+
+    expect(popupCount()).toBe(2);
+    await user.click(buttonIn(popup('일정 삭제'), '취소'));
+
+    expect(queryPopup('일정 삭제')).toBeNull();
+    expect(queryPopup('일정 수정')).not.toBeNull(); // 수정 팝업은 남아 있다
+    expect(within(cellOf('2026-01-05')).getByText('지울 일정')).toBeInTheDocument();
+  });
+
+  it('확인하면 두 팝업이 모두 닫히고 일정이 달력과 저장소에서 사라진다', async () => {
+    seedEvents([makeEvent(1, '지울 일정', '2026-01-05', '2026-01-06')]);
+    const user = setup();
+    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '지울 일정')));
+    await user.click(buttonIn(popup('일정 수정'), '삭제'));
+    await user.click(buttonIn(popup('일정 삭제'), '확인'));
+
+    expect(popupCount()).toBe(0);
+    expect(within(cellOf('2026-01-05')).queryByText('지울 일정')).not.toBeInTheDocument();
+    expect(within(cellOf('2026-01-06')).queryByText('지울 일정')).not.toBeInTheDocument();
+    expect(stored('planner_events')).toEqual([]);
+  });
+
+  it('수정 팝업에서 일정을 지운 뒤, 다른 일정의 X를 눌러도 수정 팝업이 다시 나타나지 않는다', async () => {
+    seedEvents([makeEvent(1, '먼저 지울 일정', '2026-01-05'), makeEvent(2, '나중에 지울 일정', '2026-01-06')]);
+    const user = setup();
+    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '먼저 지울 일정')));
+    await user.click(buttonIn(popup('일정 수정'), '삭제'));
+    await user.click(buttonIn(popup('일정 삭제'), '확인'));
+    expect(popupCount()).toBe(0);
+
+    await user.click(deleteIconOf(barIn(cellOf('2026-01-06'), '나중에 지울 일정')));
+    expect(queryPopup('일정 삭제')).not.toBeNull();
+    expect(queryPopup('일정 수정')).toBeNull(); // 이전 수정 팝업의 "열림" 상태가 남아 있으면 여기서 같이 나타난다
+    expect(popupCount()).toBe(1);
+  });
+
+  it('막대의 X 버튼을 누르면 수정 팝업 없이 바로 삭제 확인 팝업만 열린다', async () => {
+    seedEvents([makeEvent(1, '지울 일정', '2026-01-05')]);
+    const user = setup();
+    await user.click(deleteIconOf(barIn(cellOf('2026-01-05'), '지울 일정')));
+
+    expect(popupCount()).toBe(1);
+    await user.click(buttonIn(popup('일정 삭제'), '확인'));
+    expect(within(cellOf('2026-01-05')).queryByText('지울 일정')).not.toBeInTheDocument();
+  });
+
+  it('같은 칸의 다른 일정은 지워지지 않는다', async () => {
+    seedEvents([makeEvent(1, '지울 일정', '2026-01-05'), makeEvent(2, '남을 일정', '2026-01-05')]);
+    const user = setup();
+    await user.click(deleteIconOf(barIn(cellOf('2026-01-05'), '지울 일정')));
+    await user.click(buttonIn(popup('일정 삭제'), '확인'));
+
+    const cell = cellOf('2026-01-05');
+    expect(within(cell).queryByText('지울 일정')).not.toBeInTheDocument();
+    expect(within(cell).getByText('남을 일정')).toBeInTheDocument();
+    expect(stored('planner_events').map((e) => e.title)).toEqual(['남을 일정']);
+  });
+
+  it('"더보기" 팝업 안에서 지울 수도 있다', async () => {
+    seedEvents([
+      makeEvent(1, '일정 하나', '2026-01-05'), makeEvent(2, '일정 둘', '2026-01-05'),
+      makeEvent(3, '일정 셋', '2026-01-05'), makeEvent(4, '일정 넷', '2026-01-05'),
+    ]);
+    const user = setup();
+    await user.click(within(cellOf('2026-01-05')).getByText('+1 더보기'));
+    const more = popup('2026-01-05 전체 일정');
+    await user.click(deleteIconOf(barIn(more, '일정 넷')));
+    await user.click(buttonIn(popup('일정 삭제'), '확인'));
+
+    expect(stored('planner_events').map((e) => e.title)).toEqual(['일정 하나', '일정 둘', '일정 셋']);
+    expect(within(cellOf('2026-01-05')).queryByText(/더보기/)).not.toBeInTheDocument(); // 이제 3개라서 더보기가 사라진다
+  });
+
+  it('예전 형식(소수) id로 저장된 일정도 지울 수 있다', async () => {
+    seedEvents([makeEvent(1794558320889.4521, '옛날 종일 일정', '2026-01-05')]);
+    const user = setup();
+    await user.click(deleteIconOf(barIn(cellOf('2026-01-05'), '옛날 종일 일정')));
+    await user.click(buttonIn(popup('일정 삭제'), '확인'));
+
+    expect(stored('planner_events')).toEqual([]);
+  });
+});
