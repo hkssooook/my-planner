@@ -58,7 +58,7 @@ src/
 │   ├── layout/Header.jsx          맨 위 연도 선택 + 보기 방식 버튼
 │   ├── calendar/                  달력 표: YearSection(한 해) → MonthRow(한 달) → DayCell(하루)
 │   ├── modals/                    팝업: 기간 등록 / 상세 일정 / 더보기 / 수정 / 삭제 확인
-│   ├── common/                    지금 팝업이 쓰는 공통 부품: ModalShell · ModalHeader · ModalFooter · Button · ColorPicker (shadcn 부품으로 교체 예정)
+│   ├── common/                    지금 팝업이 쓰는 공통 부품: ModalShell · ModalHeader · ModalFooter · ColorPicker (shadcn 부품으로 교체 예정)
 │   ├── ui/                        shadcn이 만들어 준 부품: button · dialog · select (아직 앱 화면에서는 쓰지 않음)
 │   └── icons/                     연필, X, + 아이콘
 ├── hooks/

@@ -28,7 +28,7 @@
 |---|---|---|---|
 | **destructive (alert)** | `#D6364D` | 삭제·경고. 위 글자는 흰색 | 차트 빨강 `#F65B69`, 알림 점 `#F67563` (흰 글자 대비 3.17이라 조정) |
 | destructive-hover | `#C42E45` | 마우스를 올렸을 때 | (파생) |
-| destructive-soft | 바탕 `#FEECEF` + 글자 `#C42E45` | 약한 삭제 버튼 (수정 팝업의 `삭제`) | (파생) |
+| destructive-soft | 바탕 `#FEECEF` + 글자 `#C42E45` | 약한 삭제 버튼. shadcn에서는 `destructive` 버튼이 이 모양(연한 바탕 + 진한 글자)이라 **별도 변형 없이** 이 값을 `--destructive` 계열로 반영 (수정 팝업의 `삭제`, 삭제 확인의 `확인`) | (파생) |
 | **warning** | `#FDB11A` + 글자 `#21242E` | 주의. 위 글자는 **진한 색** | 차트 앰버 `#FDB11A`, 별 `#F7A638` |
 | **success** | `#7AC4A4` + 글자 `#21242E` | 성공 배지. 위 글자는 **진한 색** | 체크 아이콘 `#7AC4A4` |
 | success-text | `#25805D` | 글자·아이콘으로 쓰는 초록 | (파생) |
@@ -119,9 +119,9 @@ WCAG 기준: 일반 글자 **4.5:1 이상**, 입력칸 경계·포커스 링 같
 
 색을 코드에 넣는 시점은 **shadcn 도입 단계**입니다. Tailwind 3 방식으로 임시 정의하면 Tailwind 4로 올릴 때 다시 써야 해서, 먼저 Tailwind 4로 전환한 뒤에 넣기로 했습니다.
 
-진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 팝업·버튼·드롭다운을 shadcn 것으로 교체 → **이 문서의 색을 CSS 변수로 반영**
+진행 순서: 팝업 정리(`ModalShell`, `Button`) ✅ → Tailwind 4 전환 ✅ → **shadcn 설치 ✅** → 버튼 교체 ✅ → 팝업(Dialog)·드롭다운(Select) 교체 → **이 문서의 색을 CSS 변수로 반영**
 
-**현재 상태 (shadcn 설치 직후):** shadcn(`base-nova`: Base UI + nova 스타일, 기준 색 `neutral`)이 설치되어 있고, `src/index.css`의 `:root`에는 **shadcn 기본(neutral) 색 변수**가 들어 있습니다. 이 문서의 새 색은 아직 적용되지 않았고, 앱 화면은 아직 shadcn 부품(`src/components/ui/`)을 쓰지 않습니다. 화면에 영향이 있는 것은 shadcn 기본 규칙(테두리·글자 색, 모서리 기준 `--radius`, Geist 글꼴)뿐입니다.
+**현재 상태 (shadcn 설치 직후):** shadcn(`base-nova`: Base UI + nova 스타일, 기준 색 `neutral`)이 설치되어 있고, `src/index.css`의 `:root`에는 **shadcn 기본(neutral) 색 변수**가 들어 있습니다. 이 문서의 새 색은 아직 적용되지 않았고, 앱 화면은 팝업 버튼만 shadcn `Button`을 쓰고, 팝업 틀과 연도 드롭다운은 아직 옛 부품입니다. 화면에 영향이 있는 것은 shadcn 기본 규칙(테두리·글자 색, 모서리 기준 `--radius`, Geist 글꼴)뿐입니다.
 
 | `src/index.css`의 설정 | 이유 | 새 색 적용 때 |
 |---|---|---|
@@ -161,8 +161,8 @@ WCAG 기준: 일반 글자 **4.5:1 이상**, 입력칸 경계·포커스 링 같
 | 지금 쓰는 것 | 해당하는 토큰 |
 |---|---|
 | `bg-blue-500`, `hover:bg-blue-600` + `text-white` | primary, primary-hover |
-| `bg-red-600`, `hover:bg-red-700` + `text-white` | destructive, destructive-hover |
-| `bg-red-50` + `text-red-700` | destructive-soft |
+| `bg-red-600`, `hover:bg-red-700` + `text-white` | (옛 진한 빨강 버튼. 지금은 쓰지 않음) |
+| `bg-red-50` + `text-red-700` | destructive-soft → 지금은 shadcn `destructive` 버튼 |
 | `bg-gray-100` + `text-gray-700` | secondary |
 | `bg-white` + `border-gray-300` (취소 버튼) | outline (흰 바탕 + border) |
 | 입력칸의 `border-gray-300` | input |
