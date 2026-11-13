@@ -61,7 +61,7 @@ describe('+N 더보기', () => {
     const user = setup();
     await user.click(within(cellOf(sameDay)).getByText('+1 더보기'));
     const box = popup(`${sameDay} 전체 일정`);
-    expect(box.firstChild).toHaveClass('max-h-[80vh]');
+    expect(box.firstChild).toHaveClass('max-h-[80vh]', 'max-w-sm'); // 팝업 너비: 중간
     expect([...box.firstChild.children].some((child) => child.classList.contains('overflow-y-auto'))).toBe(true);
   });
 
@@ -300,6 +300,21 @@ describe('팝업 버튼의 종류(모양)', () => {
     expect(buttonIn(box, '삭제').parentElement).toHaveClass('justify-between'); // 삭제가 들어 있는 버튼줄
     expect(buttonIn(box, '변경 저장').parentElement.parentElement).toBe(buttonIn(box, '삭제').parentElement); // 취소·변경 저장은 같은 줄의 오른쪽 묶음
     expect(buttonIn(box, '취소').parentElement).toBe(buttonIn(box, '변경 저장').parentElement);
+  });
+
+  it('삭제 확인 팝업도 다른 팝업과 같은 배경 어둡기(50%)와 모서리(xl)를 쓴다', async () => {
+    seedEvents([makeEvent(1, '모양 확인', '2026-01-05')]);
+    const user = setup();
+    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '모양 확인')));
+    const edit = popup('일정 수정');
+    await user.click(buttonIn(edit, '삭제'));
+    const confirm = popup('일정 삭제');
+
+    expect(confirm).toHaveClass('bg-black/50');
+    expect(confirm.firstChild).toHaveClass('rounded-xl');
+    expect(confirm.firstChild).toHaveClass('max-w-xs'); // 삭제 확인은 작은 확인창
+    expect(edit.firstChild).toHaveClass('max-w-sm'); // 수정은 중간 너비
+    expect(confirm.className).toBe(edit.className.replace('z-[70]', 'z-[80]')); // 층 번호만 다르고 배경은 같은 모양
   });
 
   it('삭제 확인 팝업: 제목 아래 안내 문구가 있고 버튼줄은 오른쪽 정렬이다', async () => {

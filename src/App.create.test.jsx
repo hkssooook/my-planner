@@ -188,6 +188,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
     await drag(user, '2026-01-05', '2026-01-07');
     const box = popup('기간 일정 등록');
     expect(box.querySelector('[class*="rounded-t-xl"], [class*="rounded-b-xl"]')).toBeNull(); // 제목줄·버튼줄의 회색 띠가 남아 있지 않다
+    expect(box.firstChild).toHaveClass('max-w-sm'); // 팝업 너비: 중간
     expect(buttonIn(box, '저장').parentElement).toHaveClass('justify-end');
     expect(buttonIn(box, '취소').parentElement).toHaveClass('justify-end');
     expect(buttonIn(box, '저장')).not.toHaveClass('flex-1'); // 폭을 반씩 나눠 갖지 않는다
