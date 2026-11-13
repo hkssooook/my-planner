@@ -118,7 +118,7 @@ src/
 
 ## 기술 스택
 
-React 19 · Vite 8 · Tailwind CSS 3 · ESLint · Vitest + Testing Library (시험)
+React 19 · Vite 8 · Tailwind CSS 4 · ESLint · Vitest + Testing Library (시험)
 
 ## 개발 규칙
 
