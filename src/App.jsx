@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
 import { STORAGE_KEYS, loadJSON, saveJSON } from './utils/storage';
+import useDragSelect from './hooks/useDragSelect';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import MoreEventsModal from './components/modals/MoreEventsModal';
@@ -16,12 +17,16 @@ export default function App() {
   const [currentYear, setCurrentYear] = useState(2026);
   const [isWrapMode, setIsWrapMode] = useState(false);
   
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectionStart, setSelectionStart] = useState(null);
-  const [selectionEnd, setSelectionEnd] = useState(null);
-  
   const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
+
+  // 날짜를 끌어서 고르면 기간 일정 등록 팝업을 연다
+  const { selectionStart, selectionEnd, handleMouseDown, handleMouseEnter, clearSelection } = useDragSelect({
+    onSelect: (start, end) => {
+      setNewEvent(prev => ({ ...prev, start_date: start, end_date: end }));
+      setShowPeriodModal(true);
+    },
+  });
   
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [dailyModalDate, setDailyModalDate] = useState(null);
@@ -41,39 +46,10 @@ export default function App() {
     if (savedDaily) setDailySchedules(savedDaily);
   }, []);
 
-  useEffect(() => {
-    const handleMouseUpGlobal = () => {
-      if (isDragging) {
-        setIsDragging(false);
-        if (selectionStart && selectionEnd && selectionStart !== selectionEnd) {
-          const sorted = [selectionStart, selectionEnd].sort();
-          setNewEvent(prev => ({ ...prev, start_date: sorted[0], end_date: sorted[1] }));
-          setShowPeriodModal(true);
-        } else {
-          setSelectionStart(null);
-          setSelectionEnd(null);
-        }
-      }
-    };
-    window.addEventListener('mouseup', handleMouseUpGlobal);
-    return () => window.removeEventListener('mouseup', handleMouseUpGlobal);
-  }, [isDragging, selectionStart, selectionEnd]);
-
-  const handleMouseDown = (dateString) => {
-    setIsDragging(true);
-    setSelectionStart(dateString);
-    setSelectionEnd(dateString);
-  };
-
-  const handleMouseEnter = (dateString) => {
-    if (isDragging) setSelectionEnd(dateString);
-  };
 
   const handleAddDailyClick = (e, dateString) => {
     e.stopPropagation();
-    setIsDragging(false);
-    setSelectionStart(null);
-    setSelectionEnd(null);
+    clearSelection();
     setDailyModalDate(dateString);
     setSingleDayEventTitle('');
     setSingleDayEventColor(COLOR_PALETTE[0].value);
@@ -127,8 +103,7 @@ export default function App() {
 
   const closePeriodModal = () => {
     setShowPeriodModal(false);
-    setSelectionStart(null);
-    setSelectionEnd(null);
+    clearSelection();
     setNewEvent({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
   };
 
