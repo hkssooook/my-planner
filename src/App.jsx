@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { COLOR_PALETTE } from './constants/colors';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
+import Header from './components/layout/Header';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import MoreEventsModal from './components/modals/MoreEventsModal';
@@ -136,35 +137,10 @@ export default function App() {
 
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
-      <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-lg shadow-sm gap-4 md:gap-0">
-        <div className="flex items-center gap-4">
-          <select 
-            value={currentYear} 
-            onChange={(e) => setCurrentYear(Number(e.target.value))}
-            className="text-2xl font-bold text-gray-900 border border-gray-300 rounded-md px-2 py-1 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
-          >
-            <option value={2026}>2026년 기준</option>
-            <option value={2027}>2027년 기준</option>
-            <option value={2028}>2028년 기준</option>
-          </select>
-          <h1 className="text-xl text-gray-600 hidden sm:block">연속 연간 플래너</h1>
-        </div>
-
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-md border border-gray-200">
-          <button 
-            onClick={() => setIsWrapMode(false)} 
-            className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-all ${!isWrapMode ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            가로 스크롤
-          </button>
-          <button 
-            onClick={() => setIsWrapMode(true)} 
-            className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-all ${isWrapMode ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            화면 맞춤
-          </button>
-        </div>
-      </div>
+      <Header
+        year={currentYear} onYearChange={setCurrentYear}
+        isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode}
+      />
 
       <div className={`border border-gray-200 rounded-lg shadow-inner bg-white relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
         <div className={`flex flex-col ${isWrapMode ? '' : 'min-w-max'}`}>
