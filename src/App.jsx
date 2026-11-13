@@ -15,7 +15,7 @@ export default function App() {
 
   const [currentYear, setCurrentYear] = useState(2026);
   const [isWrapMode, setIsWrapMode] = useState(false);
-  
+
   const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
 
@@ -26,18 +26,17 @@ export default function App() {
       setShowPeriodModal(true);
     },
   });
-  
+
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [dailyModalDate, setDailyModalDate] = useState(null);
   const [singleDayEventTitle, setSingleDayEventTitle] = useState('');
   const [singleDayEventColor, setSingleDayEventColor] = useState(COLOR_PALETTE[0].value);
   const [tempDaily, setTempDaily] = useState([]);
-  
+
   const [showMoreDate, setShowMoreDate] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-
 
   const handleAddDailyClick = (e, dateString) => {
     e.stopPropagation();
@@ -150,7 +149,7 @@ export default function App() {
           </select>
           <h1 className="text-xl text-gray-600 hidden sm:block">연속 연간 플래너</h1>
         </div>
-        
+
         <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-md border border-gray-200">
           <button 
             onClick={() => setIsWrapMode(false)} 
