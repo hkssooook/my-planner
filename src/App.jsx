@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-import { KR_HOLIDAYS } from './data/holidays';
-import { DAY_NAMES } from './constants/calendar';
 import { COLOR_PALETTE } from './constants/colors';
-import { getDaysInMonth, getDayOfWeek } from './utils/date';
 import EditIcon from './components/icons/EditIcon';
 import DeleteIcon from './components/icons/DeleteIcon';
-import PlusIcon from './components/icons/PlusIcon';
 import ColorPicker from './components/common/ColorPicker';
+import DayCell from './components/calendar/DayCell';
 
 export default function App() {
   const [events, setEvents] = useState([]);
@@ -172,100 +169,6 @@ export default function App() {
   // 기준 연도와 그 다음 연도를 동시 렌더링하기 위한 배열
   const displayYears = [currentYear, currentYear + 1];
 
-  const renderCell = (year, month, day) => {
-    const maxDays = getDaysInMonth(year, month);
-    
-    if (day > maxDays) {
-      if (isWrapMode) return null;
-      return <div key={`${year}-${month}-${day}`} className="bg-gray-100 border-r border-b border-gray-200 w-[120px] flex-shrink-0"></div>;
-    }
-
-    const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayOfWeek = getDayOfWeek(year, month, day);
-    const holidayName = KR_HOLIDAYS[year]?.[dateString];
-    const isHoliday = holidayName || dayOfWeek === 0;
-    
-    const dayEvents = events.filter(e => e.start_date <= dateString && e.end_date >= dateString);
-    const daySchedules = dailySchedules[dateString] || [];
-    const importantSchedules = daySchedules.filter(s => s.is_important).sort((a, b) => a.hour - b.hour);
-
-    const MAX_VISIBLE = 3;
-    const totalItems = dayEvents.length + importantSchedules.length;
-    
-    const visibleEvents = dayEvents.slice(0, MAX_VISIBLE);
-    const remainingSlots = Math.max(0, MAX_VISIBLE - visibleEvents.length);
-    const visibleSchedules = importantSchedules.slice(0, remainingSlots);
-    const hiddenCount = totalItems > MAX_VISIBLE ? totalItems - MAX_VISIBLE : 0;
-
-    let isSelected = false;
-    if (selectionStart && selectionEnd && selectionStart !== selectionEnd) {
-      const sorted = [selectionStart, selectionEnd].sort();
-      if (dateString >= sorted[0] && dateString <= sorted[1]) isSelected = true;
-    }
-
-    return (
-      <div 
-        key={dateString} 
-        onMouseDown={() => handleMouseDown(dateString)}
-        onMouseEnter={() => handleMouseEnter(dateString)}
-        className={`group/cell p-1 border-r border-b border-gray-200 w-[120px] flex-shrink-0 h-28 flex flex-col gap-1 relative select-none ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-      >
-        <div className="flex justify-between items-start text-xs min-w-0">
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <span className={`font-medium ${isHoliday ? 'text-[#D88C70]' : 'text-gray-700'}`}>
-              {day} <span className="text-gray-400 font-normal">({DAY_NAMES[dayOfWeek]})</span>
-            </span>
-            <button 
-              onMouseDown={(e) => e.stopPropagation()} 
-              onClick={(e) => handleAddDailyClick(e, dateString)}
-              className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 hover:bg-gray-200 p-0.5 rounded"
-              title="개별 일정 등록"
-            >
-              <PlusIcon />
-            </button>
-          </div>
-          {holidayName && (
-            <span className="text-[10px] text-[#D88C70] truncate text-right flex-1 ml-1">{holidayName}</span>
-          )}
-        </div>
-
-        <div className="flex-1 flex flex-col gap-0.5 overflow-hidden min-w-0">
-          {visibleEvents.map((evt) => (
-            <div 
-              key={evt.id} 
-              style={{ backgroundColor: evt.color }} 
-              className="group/evt text-white text-[10px] px-1.5 py-0.5 mb-0.5 rounded flex justify-between items-center shadow-sm relative font-medium w-full min-w-0"
-            >
-              <span className="truncate flex-1 pr-1">{evt.title}</span>
-              <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
-                <button onClick={(e) => openEditModal(e, evt)} className="text-white hover:text-gray-200"><EditIcon /></button>
-                <button onClick={(e) => openDeleteModal(e, evt)} className="text-red-100 hover:text-white"><DeleteIcon /></button>
-              </div>
-            </div>
-          ))}
-
-          {visibleSchedules.map((sch, idx) => (
-            <div key={idx} className="text-[9.5px] text-gray-700 flex gap-1.5 items-center px-1 w-full min-w-0">
-              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: sch.color }}></span>
-              <span className="font-semibold text-gray-500 flex-shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
-              <span className="truncate flex-1">{sch.content}</span>
-            </div>
-          ))}
-
-          {hiddenCount > 0 && (
-            <button 
-              onMouseDown={(e) => e.stopPropagation()} 
-              onClick={(e) => { e.stopPropagation(); setShowMoreDate(dateString); }}
-              className="text-[10px] text-gray-500 font-medium pl-1 mb-0.5 text-left hover:text-gray-800 transition-colors w-full"
-            >
-              +{hiddenCount} 더보기
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-lg shadow-sm gap-4 md:gap-0">
@@ -322,7 +225,19 @@ export default function App() {
                   <div className={`${isWrapMode ? 'w-full px-4 py-2 bg-gray-50 border-b border-gray-200 text-left' : 'w-16 flex-shrink-0 sticky left-0 z-10 border-r border-b border-gray-200 bg-gray-100 flex items-center justify-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'} font-semibold text-gray-700`}>
                     {month}월
                   </div>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => renderCell(year, month, day))}
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <DayCell
+                      key={`${year}-${month}-${day}`}
+                      year={year} month={month} day={day}
+                      isWrapMode={isWrapMode}
+                      events={events} dailySchedules={dailySchedules}
+                      selectionStart={selectionStart} selectionEnd={selectionEnd}
+                      onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter}
+                      onAddDaily={handleAddDailyClick}
+                      onEditEvent={openEditModal} onDeleteEvent={openDeleteModal}
+                      onShowMore={setShowMoreDate}
+                    />
+                  ))}
                 </div>
               ))}
             </React.Fragment>
