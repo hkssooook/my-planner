@@ -42,8 +42,23 @@ describe('src/index.css (Tailwind 4 설정)', () => {
     expect(theme.match(/--color-[a-z]+-\d+:/g)).toHaveLength(Object.keys(PINNED_COLORS).length);
   });
 
-  it('기본 테두리 색을 gray-200으로 되돌려 놓았다 (Tailwind 4 기본값은 글자색)', () => {
-    expect(css).toMatch(/border-color:\s*var\(--color-gray-200,\s*currentcolor\)/);
+  it('shadcn 기본 규칙: 모든 요소의 테두리 색은 --border 변수를 따른다', () => {
+    expect(css).toMatch(/\*\s*\{\s*@apply\s+border-border\s+outline-ring\/50;/);
+  });
+
+  it('shadcn 기본 규칙: 바탕과 글자는 --background, --foreground 변수를 따른다', () => {
+    expect(css).toMatch(/body\s*\{\s*@apply\s+bg-background\s+text-foreground;/);
+  });
+
+  it('shadcn 기본 테마(neutral) 변수가 있다', () => {
+    for (const name of ['background', 'foreground', 'primary', 'secondary', 'muted', 'accent', 'destructive', 'border', 'input', 'ring', 'radius']) {
+      expect(css, `--${name}`).toMatch(new RegExp(`:root\\s*\\{[^}]*--${name}:`));
+    }
+  });
+
+  it('shadcn 전용 Tailwind 규칙(복사해 온 shadcn.css)을 불러온다', () => {
+    expect(css).toContain('@import "./shadcn.css"');
+    expect(fs.existsSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'shadcn.css'))).toBe(true);
   });
 
   it('버튼 위에서 손가락 모양 커서를 유지한다', () => {
