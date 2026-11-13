@@ -1,32 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
-// 2026년, 2027년 (및 필요 시 그 이후) 대한민국 주요 공휴일 데이터
-const KR_HOLIDAYS = {
-  2026: {
-    "2026-01-01": "신정", "2026-02-16": "설날 연휴", "2026-02-17": "설날", "2026-02-18": "설날 연휴",
-    "2026-03-01": "삼일절", "2026-03-02": "대체공휴일", "2026-05-05": "어린이날", "2026-05-24": "부처님오신날",
-    "2026-05-25": "대체공휴일", "2026-06-06": "현충일", "2026-08-15": "광복절", "2026-08-17": "대체공휴일",
-    "2026-09-24": "추석 연휴", "2026-09-25": "추석", "2026-09-26": "추석 연휴", "2026-10-03": "개천절",
-    "2026-10-09": "한글날", "2026-12-25": "기독탄신일"
-  },
-  2027: {
-    "2027-01-01": "신정", "2027-02-05": "설날 연휴", "2027-02-06": "설날", "2027-02-07": "설날 연휴",
-    "2027-02-08": "대체공휴일", "2027-03-01": "삼일절", "2027-05-05": "어린이날", "2027-05-13": "부처님오신날",
-    "2027-06-06": "현충일", "2027-08-15": "광복절", "2027-08-16": "대체공휴일", "2027-09-14": "추석 연휴",
-    "2027-09-15": "추석", "2027-09-16": "추석 연휴", "2027-10-03": "개천절", "2027-10-04": "대체공휴일",
-    "2027-10-09": "한글날", "2027-12-25": "기독탄신일"
-  }
-};
-
-const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
-
-const COLOR_PALETTE = [
-  { name: '블루', value: '#3B82F6' },
-  { name: '그린', value: '#22C55E' },
-  { name: '오렌지', value: '#F97316' },
-  { name: '레드', value: '#EF4444' },
-  { name: '퍼플', value: '#A855F7' },
-];
+import { KR_HOLIDAYS } from './data/holidays';
+import { DAY_NAMES } from './constants/calendar';
+import { COLOR_PALETTE } from './constants/colors';
+import { getDaysInMonth, getDayOfWeek } from './utils/date';
 
 const EditIcon = () => (
   <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
@@ -95,10 +72,6 @@ export default function App() {
     window.addEventListener('mouseup', handleMouseUpGlobal);
     return () => window.removeEventListener('mouseup', handleMouseUpGlobal);
   }, [isDragging, selectionStart, selectionEnd]);
-
-  // 연도를 동적으로 받아 일수와 요일을 계산하도록 수정
-  const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
-  const getDayOfWeek = (year, month, day) => new Date(year, month - 1, day).getDay();
 
   const handleMouseDown = (dateString) => {
     setIsDragging(true);
