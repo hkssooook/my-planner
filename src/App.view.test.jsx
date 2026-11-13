@@ -91,7 +91,7 @@ describe('첫 화면', () => {
   it('"주요"로 저장해 둔 시간대별 일정만 칸에 시간과 함께 보인다', () => {
     seedDaily({
       '2026-01-05': [
-        { hour: 9, content: '주요 회의', is_important: true, color: COLOR.green },
+        { hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple },
         { hour: 14, content: '평범한 일정', is_important: false, color: COLOR.blue },
       ],
     });
@@ -192,3 +192,17 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(screen.queryByText('2027년 연간 일정')).not.toBeInTheDocument();
   });
 });
+
+describe('일정 막대의 글자색', () => {
+  it('파스텔 일정 색에는 진한 글자, 아주 어두운(예전에 만든) 색에는 흰 글자가 올라간다', () => {
+    seedEvents([
+      makeEvent(1, '파스텔 일정', '2026-01-05', '2026-01-05', COLOR.pink),
+      makeEvent(2, '어두운 일정', '2026-01-06', '2026-01-06', '#1D4ED8'),
+    ]);
+    render(<App />);
+    const bar = (date, title) => within(cellOf(date)).getByText(title).parentElement;
+    expect(bar('2026-01-05', '파스텔 일정')).toHaveStyle({ color: 'rgb(33, 36, 46)' }); // #21242E
+    expect(bar('2026-01-06', '어두운 일정')).toHaveStyle({ color: 'rgb(255, 255, 255)' });
+  });
+});
+

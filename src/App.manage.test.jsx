@@ -12,9 +12,9 @@ describe('+N 더보기', () => {
   const sameDay = '2026-01-05';
   const fourEvents = () => [
     makeEvent(1, '일정 하나', sameDay, sameDay, COLOR.blue),
-    makeEvent(2, '일정 둘', sameDay, sameDay, COLOR.green),
-    makeEvent(3, '일정 셋', sameDay, sameDay, COLOR.orange),
-    makeEvent(4, '일정 넷', sameDay, sameDay, COLOR.red),
+    makeEvent(2, '일정 둘', sameDay, sameDay, COLOR.purple),
+    makeEvent(3, '일정 셋', sameDay, sameDay, COLOR.pink),
+    makeEvent(4, '일정 넷', sameDay, sameDay, COLOR.amber),
   ];
 
   it('한 칸에 보여줄 수 있는 3개까지는 "더보기"가 없다', () => {
@@ -35,14 +35,14 @@ describe('+N 더보기', () => {
 
   it('일정과 "주요" 시간대 일정을 합쳐서 센다', () => {
     seedEvents(fourEvents());
-    seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.green }] });
+    seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple }] });
     render(<App />);
     expect(within(cellOf(sameDay)).getByText('+2 더보기')).toBeInTheDocument();
   });
 
   it('"더보기"를 누르면 그날의 전체 일정이 팝업에 나오고 X로 닫을 수 있다', async () => {
     seedEvents(fourEvents());
-    seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.green }] });
+    seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple }] });
     const user = setup();
     await user.click(within(cellOf(sameDay)).getByText('+2 더보기'));
 
@@ -113,7 +113,7 @@ describe('일정 수정', () => {
   };
 
   it('연필을 누르면 현재 이름·기간이 채워진 수정 팝업이 열린다', async () => {
-    seedEvents([makeEvent(1, '원래 이름', '2026-01-05', '2026-01-07', COLOR.green)]);
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05', '2026-01-07', COLOR.purple)]);
     const user = setup();
     const box = await openEdit(user, '2026-01-05', '원래 이름');
 
@@ -134,16 +134,16 @@ describe('일정 수정', () => {
     const [start, end] = box.querySelectorAll('input[type="date"]');
     fireEvent.change(start, { target: { value: '2026-02-03' } });
     fireEvent.change(end, { target: { value: '2026-02-04' } });
-    await user.click(colorButtonsIn(box)[3]); // 네 번째 색(레드)
+    await user.click(colorButtonsIn(box)[3]); // 네 번째 색(앰버)
     await user.click(buttonIn(box, '변경 저장'));
 
     expect(queryPopup('일정 수정')).toBeNull();
     expect(within(cellOf('2026-01-05')).queryByText('원래 이름')).not.toBeInTheDocument();
     expect(within(cellOf('2026-01-05')).queryByText('바뀐 이름')).not.toBeInTheDocument();
-    expect(barIn(cellOf('2026-02-03'), '바뀐 이름')).toHaveStyle({ backgroundColor: hexToRgb(COLOR.red) });
+    expect(barIn(cellOf('2026-02-03'), '바뀐 이름')).toHaveStyle({ backgroundColor: hexToRgb(COLOR.amber) });
     expect(within(cellOf('2026-02-04')).getByText('바뀐 이름')).toBeInTheDocument();
     expect(stored('planner_events')).toEqual([
-      { id: 1, title: '바뀐 이름', start_date: '2026-02-03', end_date: '2026-02-04', color: COLOR.red },
+      { id: 1, title: '바뀐 이름', start_date: '2026-02-03', end_date: '2026-02-04', color: COLOR.amber },
     ]);
   });
 

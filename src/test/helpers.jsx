@@ -52,9 +52,10 @@ export const hexToRgb = (hex) => {
 };
 export const COLOR = {
   blue: COLOR_PALETTE[0].value,
-  green: COLOR_PALETTE[1].value,
-  orange: COLOR_PALETTE[2].value,
-  red: COLOR_PALETTE[3].value,
+  purple: COLOR_PALETTE[1].value,
+  pink: COLOR_PALETTE[2].value,
+  amber: COLOR_PALETTE[3].value,
+  mint: COLOR_PALETTE[4].value,
 };
 
 // 저장소에 미리 넣어 두는 데이터

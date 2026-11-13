@@ -43,16 +43,16 @@ describe('기간 일정 만들기 (날짜 끌기)', () => {
     await drag(user, '2026-01-05', '2026-01-07');
     const box = popup('기간 일정 등록');
     await user.type(within(box).getByPlaceholderText('일정명 입력'), '여름 워크숍');
-    await user.click(colorButtonsIn(box)[2]); // 세 번째 색(오렌지)
+    await user.click(colorButtonsIn(box)[2]); // 세 번째 색(핑크)
     await user.click(buttonIn(box, '저장'));
 
     expect(queryPopup('기간 일정 등록')).toBeNull();
     for (const date of ['2026-01-05', '2026-01-06', '2026-01-07']) {
-      expect(barIn(cellOf(date), '여름 워크숍')).toHaveStyle({ backgroundColor: hexToRgb(COLOR.orange) });
+      expect(barIn(cellOf(date), '여름 워크숍')).toHaveStyle({ backgroundColor: hexToRgb(COLOR.pink) });
     }
     expect(within(cellOf('2026-01-08')).queryByText('여름 워크숍')).not.toBeInTheDocument();
     expect(stored('planner_events')).toEqual([
-      expect.objectContaining({ title: '여름 워크숍', start_date: '2026-01-05', end_date: '2026-01-07', color: COLOR.orange }),
+      expect.objectContaining({ title: '여름 워크숍', start_date: '2026-01-05', end_date: '2026-01-07', color: COLOR.pink }),
     ]);
   });
 
@@ -138,7 +138,7 @@ describe('상세 일정 (날짜 칸의 + 버튼)', () => {
   });
 
   it('같은 날짜를 다시 열면 저장해 둔 시간대별 내용이 채워져 있고 종일 입력칸은 비어 있다', async () => {
-    seedDaily({ '2026-01-05': [{ hour: 9, content: '아침 회의', is_important: true, color: COLOR.green }] });
+    seedDaily({ '2026-01-05': [{ hour: 9, content: '아침 회의', is_important: true, color: COLOR.purple }] });
     const user = setup();
     const box = await openDaily(user, '2026-01-05');
     const rows = within(box).getAllByPlaceholderText('내용 입력');

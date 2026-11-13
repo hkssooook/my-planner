@@ -1,6 +1,7 @@
 import { KR_HOLIDAYS } from '../../data/holidays';
 import { DAY_NAMES } from '../../constants/calendar';
 import { getDaysInMonth, getDayOfWeek } from '../../utils/date';
+import { readableTextOn } from '../../utils/color';
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
 import PlusIcon from '../icons/PlusIcon';
@@ -73,13 +74,13 @@ export default function DayCell({
         {visibleEvents.map((evt) => (
           <div 
             key={evt.id} 
-            style={{ backgroundColor: evt.color }} 
-            className="group/evt text-white text-[10px] px-1.5 py-0.5 mb-0.5 rounded-sm flex justify-between items-center shadow-xs relative font-medium w-full min-w-0"
+            style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }} 
+            className="group/evt text-[10px] px-1.5 py-0.5 mb-0.5 rounded-sm flex justify-between items-center shadow-xs relative font-medium w-full min-w-0"
           >
             <span className="truncate flex-1 pr-1">{evt.title}</span>
             <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
-              <button onClick={(e) => onEditEvent(e, evt)} className="text-white/90 hover:text-white"><EditIcon /></button>
-              <button onClick={(e) => onDeleteEvent(e, evt)} className="text-white/70 hover:text-white"><DeleteIcon /></button>
+              <button onClick={(e) => onEditEvent(e, evt)} className="opacity-80 hover:opacity-100"><EditIcon /></button>
+              <button onClick={(e) => onDeleteEvent(e, evt)} className="opacity-60 hover:opacity-100"><DeleteIcon /></button>
             </div>
           </div>
         ))}
