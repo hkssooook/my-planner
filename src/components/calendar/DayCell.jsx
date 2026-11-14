@@ -5,6 +5,7 @@ import { readableTextOn } from '../../utils/color';
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
 import PlusIcon from '../icons/PlusIcon';
+import StarIcon from '../icons/StarIcon';
 
 // 달력의 날짜 한 칸. 화면 맞춤 모드에서 없는 날(예: 2월 30일)은 아무것도 그리지 않는다.
 export default function DayCell({
@@ -28,15 +29,18 @@ export default function DayCell({
   const isHoliday = holidayName || dayOfWeek === 0;
   
   const dayEvents = events.filter(e => e.start_date <= dateString && e.end_date >= dateString);
-  const daySchedules = dailySchedules[dateString] || [];
-  const importantSchedules = daySchedules.filter(s => s.is_important).sort((a, b) => a.hour - b.hour);
+  const daySchedules = [...(dailySchedules[dateString] || [])].sort((a, b) => a.hour - b.hour);
 
   const MAX_VISIBLE = 3;
-  const totalItems = dayEvents.length + importantSchedules.length;
-  
+  const totalItems = dayEvents.length + daySchedules.length;
+
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE);
   const remainingSlots = Math.max(0, MAX_VISIBLE - visibleEvents.length);
-  const visibleSchedules = importantSchedules.slice(0, remainingSlots);
+  // 칸이 넘칠 때는 주요(★) 일정을 먼저 고르고, 고른 것은 다시 시간순으로 보여 준다.
+  const visibleSchedules = [...daySchedules]
+    .sort((a, b) => Number(b.is_important) - Number(a.is_important) || a.hour - b.hour)
+    .slice(0, remainingSlots)
+    .sort((a, b) => a.hour - b.hour);
   const hiddenCount = totalItems > MAX_VISIBLE ? totalItems - MAX_VISIBLE : 0;
 
   let isSelected = false;
@@ -86,11 +90,14 @@ export default function DayCell({
           </div>
         ))}
 
-        {visibleSchedules.map((sch, idx) => (
-          <div key={idx} className="text-[9.5px] text-foreground flex gap-1.5 items-center px-1 w-full min-w-0">
+        {visibleSchedules.map((sch) => (
+          <div key={sch.hour} className="text-[9.5px] text-foreground flex gap-1.5 items-center px-1 w-full min-w-0">
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
             <span className="font-semibold text-muted-foreground shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
             <span className="truncate flex-1">{sch.content}</span>
+            {sch.is_important && (
+              <span className="text-warning shrink-0" title="주요 일정"><StarIcon /><span className="sr-only">주요</span></span>
+            )}
           </div>
         ))}
 

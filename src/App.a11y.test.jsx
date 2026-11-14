@@ -138,7 +138,7 @@ describe('접근성: 입력칸의 이름', () => {
     const box = popup('상세 일정 관리');
     expect(within(box).getByRole('textbox', { name: '전체(종일) 일정명' })).toBeInTheDocument();
     expect(within(box).getByRole('textbox', { name: '09:00 일정 내용' })).toBeInTheDocument();
-    expect(within(box).getByRole('checkbox', { name: '09:00 주요 일정 (달력에 표시)' })).not.toBeChecked();
+    expect(within(box).getByRole('checkbox', { name: '09:00 주요 일정 (★ 표시)' })).not.toBeChecked();
 
     const textboxes = within(box).getAllByRole('textbox').map((t) => t.getAttribute('aria-label'));
     const checkboxes = within(box).getAllByRole('checkbox').map((t) => t.getAttribute('aria-label'));
@@ -153,7 +153,7 @@ describe('접근성: 입력칸의 이름', () => {
     await user.click(plusButtonOf('2026-01-05'));
     const box = popup('상세 일정 관리');
     await user.type(within(box).getByRole('textbox', { name: '10:00 일정 내용' }), '열 시 회의');
-    await user.click(within(box).getByRole('checkbox', { name: '10:00 주요 일정 (달력에 표시)' }));
+    await user.click(within(box).getByRole('checkbox', { name: '10:00 주요 일정 (★ 표시)' }));
     await user.click(within(box).getByRole('button', { name: '통합 저장' }));
     expect(JSON.parse(localStorage.getItem('planner_daily'))['2026-01-05']).toEqual([
       expect.objectContaining({ hour: 10, content: '열 시 회의', is_important: true }),

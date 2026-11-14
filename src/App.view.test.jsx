@@ -88,7 +88,7 @@ describe('첫 화면', () => {
     expect(within(cellOf('2026-01-07')).queryByText('저장된 일정')).not.toBeInTheDocument();
   });
 
-  it('"주요"로 저장해 둔 시간대별 일정만 칸에 시간과 함께 보인다', () => {
+  it('시간대별 일정은 모두 칸에 시간과 함께 보이고, "주요"인 것에만 ★(주요) 표시가 붙는다', () => {
     seedDaily({
       '2026-01-05': [
         { hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple },
@@ -98,8 +98,27 @@ describe('첫 화면', () => {
     render(<App />);
     const cell = cellOf('2026-01-05');
     expect(within(cell).getByText('09:00')).toBeInTheDocument();
-    expect(within(cell).getByText('주요 회의')).toBeInTheDocument();
-    expect(within(cell).queryByText('평범한 일정')).not.toBeInTheDocument();
+    expect(within(cell).getByText('14:00')).toBeInTheDocument();
+    expect(within(cell).getByText('주요 회의').parentElement).toHaveTextContent('주요');
+    expect(within(within(cell).getByText('평범한 일정').parentElement).queryByText('주요')).not.toBeInTheDocument();
+    expect(within(cell).getAllByText('주요')).toHaveLength(1);
+  });
+
+  it('칸이 넘칠 때는 "주요" 일정을 먼저 고르고, 고른 것은 시간순으로 보인다', () => {
+    seedDaily({
+      '2026-01-05': [
+        { hour: 9, content: '아침 일정', is_important: false, color: COLOR.blue },
+        { hour: 10, content: '열 시 일정', is_important: false, color: COLOR.blue },
+        { hour: 14, content: '오후 주요', is_important: true, color: COLOR.purple },
+        { hour: 17, content: '저녁 주요', is_important: true, color: COLOR.purple },
+      ],
+    });
+    render(<App />);
+    const cell = cellOf('2026-01-05');
+    const shown = within(cell).getAllByText(/^\d{2}:00$/).map((el) => el.textContent);
+    expect(shown).toEqual(['09:00', '14:00', '17:00']);
+    expect(within(cell).queryByText('열 시 일정')).not.toBeInTheDocument();
+    expect(within(cell).getByText('+1 더보기')).toBeInTheDocument();
   });
 
   it('공휴일 데이터가 있는 날은 칸에 공휴일 이름이 보인다', () => {

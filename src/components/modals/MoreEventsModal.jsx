@@ -1,5 +1,6 @@
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
+import StarIcon from '../icons/StarIcon';
 import PopupDialog from '../common/PopupDialog';
 import { readableTextOn } from '../../utils/color';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -21,11 +22,14 @@ export default function MoreEventsModal({ date, events, dailySchedules, onClose,
             </div>
           </div>
         ))}
-        {(dailySchedules[date] || []).filter(s => s.is_important).sort((a,b)=>a.hour-b.hour).map((sch, idx) => (
-          <div key={idx} className="text-xs text-foreground flex gap-2 items-center px-2 py-1.5 bg-muted rounded-sm border border-border w-full min-w-0">
+        {[...(dailySchedules[date] || [])].sort((a,b)=>a.hour-b.hour).map((sch) => (
+          <div key={sch.hour} className="text-xs text-foreground flex gap-2 items-center px-2 py-1.5 bg-muted rounded-sm border border-border w-full min-w-0">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
             <span className="font-semibold text-muted-foreground w-9 shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
             <span className="truncate flex-1">{sch.content}</span>
+            {sch.is_important && (
+              <span className="text-warning shrink-0" title="주요 일정"><StarIcon className="w-3 h-3" /><span className="sr-only">주요</span></span>
+            )}
           </div>
         ))}
       </div>

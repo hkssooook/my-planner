@@ -35,7 +35,7 @@ export default function DailyDetailModal({
         <section className="border-t border-border pt-5">
           <div className="flex justify-between items-end mb-3">
             <h3 className="text-sm font-semibold text-foreground">시간대별 개별 일정</h3>
-            <span className="text-[10px] text-muted-foreground">우측 체크 시 달력 표출</span>
+            <span className="text-[10px] text-muted-foreground">우측 체크 시 달력에 ★ 표시</span>
           </div>
           <div className="flex flex-col gap-2 max-h-[40vh] overflow-y-auto pr-2">
             {slots.map((item) => (
@@ -49,7 +49,7 @@ export default function DailyDetailModal({
                 <ColorPicker size="sm" label={`${String(item.hour).padStart(2, '0')}:00 일정 색`} value={item.color} onChange={(color) => onSlotChange(item.hour, 'color', color)} />
                 <label className="flex items-center gap-1 cursor-pointer w-12 justify-end shrink-0">
                   <input 
-                    type="checkbox" aria-label={`${String(item.hour).padStart(2, '0')}:00 주요 일정 (달력에 표시)`} checked={item.is_important}
+                    type="checkbox" aria-label={`${String(item.hour).padStart(2, '0')}:00 주요 일정 (★ 표시)`} checked={item.is_important}
                     onChange={(e) => onSlotChange(item.hour, 'is_important', e.target.checked)}
                     className="w-3.5 h-3.5 text-primary rounded-sm border-input"
                   />

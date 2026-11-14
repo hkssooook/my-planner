@@ -106,7 +106,7 @@ describe('상세 일정 (날짜 칸의 + 버튼)', () => {
     ]);
   });
 
-  it('시간대별 일정은 "주요"에 체크한 것만 달력에 보이고, 체크하지 않은 것도 저장은 된다', async () => {
+  it('시간대별 일정은 체크와 상관없이 모두 달력에 보이고, "주요" 체크도 함께 저장된다', async () => {
     const user = setup();
     const box = await openDaily(user, '2026-01-05');
     const rows = within(box).getAllByPlaceholderText('내용 입력');
@@ -119,7 +119,7 @@ describe('상세 일정 (날짜 칸의 + 버튼)', () => {
     const cell = cellOf('2026-01-05');
     expect(within(cell).getByText('09:00')).toBeInTheDocument();
     expect(within(cell).getByText('아침 회의')).toBeInTheDocument();
-    expect(within(cell).queryByText('체크 없는 일정')).not.toBeInTheDocument();
+    expect(within(cell).getByText('체크 없는 일정')).toBeInTheDocument();
 
     const saved = stored('planner_daily')['2026-01-05'];
     expect(saved.map((s) => [s.hour, s.content, s.is_important])).toEqual([

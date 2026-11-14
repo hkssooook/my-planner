@@ -33,7 +33,14 @@ describe('+N 더보기', () => {
     expect(within(cell).getByText('+1 더보기')).toBeInTheDocument();
   });
 
-  it('일정과 "주요" 시간대 일정을 합쳐서 센다', () => {
+  it('일정과 시간대 일정을 ("주요"가 아니어도) 합쳐서 센다', () => {
+    seedEvents(fourEvents());
+    seedDaily({ [sameDay]: [{ hour: 9, content: '평범한 일정', is_important: false, color: COLOR.blue }] });
+    render(<App />);
+    expect(within(cellOf(sameDay)).getByText('+2 더보기')).toBeInTheDocument();
+  });
+
+  it('"주요" 시간대 일정도 합쳐서 센다', () => {
     seedEvents(fourEvents());
     seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple }] });
     render(<App />);
