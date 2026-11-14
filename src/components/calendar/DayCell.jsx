@@ -67,7 +67,7 @@ export default function DayCell({
           </button>
         </div>
         {holidayName && (
-          <span className="text-[10px]/4 text-holiday truncate text-right flex-1 ml-1">{holidayName}</span>
+          <span title={holidayName} className="text-[10px]/4 text-holiday truncate text-right flex-1 ml-1">{holidayName}</span>
         )}
       </div>
 

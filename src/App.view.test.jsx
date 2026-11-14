@@ -125,6 +125,15 @@ describe('첫 화면', () => {
     }
   });
 
+  it('공휴일 이름은 칸이 좁아 잘려도, 마우스를 올리면 전체 이름이 툴팁(title)으로 나온다', () => {
+    render(<App />);
+    const name = within(cellOf('2026-06-03')).getByText('전국동시지방선거');
+    expect(name).toHaveAttribute('title', '전국동시지방선거');
+    expect(name).toHaveClass('truncate'); // 좁으면 말줄임표로 줄인다
+    const long = within(cellOf('2026-10-05')).getByText('대체공휴일(개천절)');
+    expect(long).toHaveAttribute('title', '대체공휴일(개천절)');
+  });
+
   it('깨진 저장 데이터가 있어도 앱이 멈추지 않고 일정 없이 시작한다', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     localStorage.setItem('planner_events', '{"broken": [');
