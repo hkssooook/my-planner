@@ -46,9 +46,10 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   // 그날의 상세 일정 관리 팝업을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter)
-  // hour를 주면(달력에서 시간 일정을 눌렀을 때) 그 시간 줄을 보여 주며 연다.
+  // hour를 주면(시간 일정이나 더보기의 ✏️를 눌렀을 때) 그 시간 줄을 보여 주며 연다.
+  // e는 달력 칸에서 누른 경우에만 있다. (더보기 팝업에서 열 때는 null)
   const openDailyModal = (e, dateString, hour = null) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     clearSelection();
     setDailyModalDate(dateString);
     setDailyFocusHour(hour);
@@ -191,6 +192,7 @@ export default function App() {
           onClose={() => setShowMoreDate(null)}
           onEditEvent={(evt) => openEditModal(null, evt)}
           onDeleteEvent={(evt) => openDeleteModal(null, evt)}
+          onEditSchedule={(hour) => openDailyModal(null, showMoreDate, hour)}
         />
       )}
 

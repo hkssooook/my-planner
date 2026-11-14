@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, within, fireEvent } from '@testing-library/react';
+import { render, within, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, deleteIconOf, editIconOf, hexToRgb, makeEvent, popup, popupCount, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 
@@ -70,6 +70,31 @@ describe('+N 더보기', () => {
     const box = popup(`${sameDay} 전체 일정`);
     expect(box).toHaveClass('max-h-[80vh]', 'sm:max-w-sm'); // 팝업 너비: 중간
     expect([...box.children].some((child) => child.classList.contains('overflow-y-auto'))).toBe(true);
+  });
+
+  it('"더보기"의 시간 일정 ✏️를 누르면 상세 일정이 그 시간 줄로 더보기 위에 열리고, 고쳐 저장하면 목록에 바로 보인다', async () => {
+    seedEvents(fourEvents());
+    seedDaily({ [sameDay]: [
+      { hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple },
+      { hour: 14, content: '평범한 일정', is_important: false, color: COLOR.blue },
+    ] });
+    const user = setup();
+    await user.click(within(cellOf(sameDay)).getByText('+3 더보기'));
+    const more = popup(`${sameDay} 전체 일정`);
+    await user.click(within(more).getByRole('button', { name: '14:00 평범한 일정 수정' }));
+
+    const box = popup('상세 일정 관리');
+    const input = within(box).getByRole('textbox', { name: '14:00 일정 내용' });
+    await waitFor(() => expect(input).toHaveFocus());
+    expect(input.parentElement).toHaveClass('border-primary');
+    const names = [...document.querySelectorAll('[role="dialog"]')].map((d) => d.querySelector('[data-slot="dialog-title"]').textContent);
+    expect(names).toEqual([`${sameDay} 전체 일정`, '상세 일정 관리']);
+
+    await user.clear(input);
+    await user.type(input, '고친 일정');
+    await user.click(buttonIn(box, '통합 저장'));
+    expect(queryPopup('상세 일정 관리')).toBeNull();
+    expect(within(popup(`${sameDay} 전체 일정`)).getByText('고친 일정')).toBeInTheDocument();
   });
 
   it('팝업이 겹쳐 뜰 때 나중에 연 팝업이 화면 구조에서도 뒤에 온다 (더보기 → 수정 → 삭제 확인 순. 같은 층이면 뒤에 그려진 것이 위에 뜬다)', async () => {

@@ -6,7 +6,8 @@ import { readableTextOn } from '../../utils/color';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // 한 날짜의 전체 일정 목록 팝업. 보일지 말지는 부모가 정한다.
-export default function MoreEventsModal({ date, events, dailySchedules, onClose, onEditEvent, onDeleteEvent }) {
+// onEditSchedule(hour): 시간 일정의 ✏️를 누르면 그 시간을 알려 준다. (부모가 상세 일정 관리를 그 시간 줄로 연다)
+export default function MoreEventsModal({ date, events, dailySchedules, onClose, onEditEvent, onDeleteEvent, onEditSchedule }) {
   return (
     <PopupDialog maxHeight="80vh" onClose={onClose}>
       <DialogHeader>
@@ -30,6 +31,13 @@ export default function MoreEventsModal({ date, events, dailySchedules, onClose,
             {sch.is_important && (
               <span className="text-warning shrink-0" title="주요 일정"><StarIcon className="w-3 h-3" /><span className="sr-only">주요</span></span>
             )}
+            <button
+              onClick={() => onEditSchedule(sch.hour)}
+              aria-label={`${String(sch.hour).padStart(2, '0')}:00 ${sch.content} 수정`}
+              className="text-muted-foreground opacity-80 hover:opacity-100 hover:text-foreground shrink-0 ml-1"
+            >
+              <EditIcon />
+            </button>
           </div>
         ))}
       </div>
