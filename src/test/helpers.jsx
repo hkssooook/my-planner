@@ -41,10 +41,10 @@ export const popupCount = () => document.querySelectorAll('[role="dialog"]').len
 export const buttonIn = (box, name) => within(box).getByRole('button', { name });
 export const colorButtonsIn = (box) => within(box).getAllByRole('button').filter((b) => b.classList.contains('rounded-full'));
 
-// 일정 막대(색 상자)와 그 안의 아이콘 버튼. 아이콘 버튼에 이름이 없어서 순서로 찾는다: [0]=연필(수정), [1]=X(삭제)
+// 일정 막대(색 상자)와 그 안의 아이콘 버튼. 아이콘 버튼은 접근성 이름("<일정명> 수정", "<일정명> 삭제")으로 찾는다.
 export const barIn = (container, title) => within(container).getByText(title).parentElement;
-export const editIconOf = (bar) => within(bar).getAllByRole('button')[0];
-export const deleteIconOf = (bar) => within(bar).getAllByRole('button')[1];
+export const editIconOf = (bar) => within(bar).getByRole('button', { name: /수정$/ });
+export const deleteIconOf = (bar) => within(bar).getByRole('button', { name: /삭제$/ });
 
 export const hexToRgb = (hex) => {
   const n = parseInt(hex.slice(1), 16);

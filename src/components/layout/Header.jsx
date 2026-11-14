@@ -25,12 +25,14 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
       <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border">
         <button 
           onClick={() => onWrapModeChange(false)} 
+          aria-pressed={!isWrapMode}
           className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-all ${!isWrapMode ? 'bg-card shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
         >
           가로 스크롤
         </button>
         <button 
           onClick={() => onWrapModeChange(true)} 
+          aria-pressed={isWrapMode}
           className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-all ${isWrapMode ? 'bg-card shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
         >
           화면 맞춤

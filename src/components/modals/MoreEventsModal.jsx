@@ -16,8 +16,8 @@ export default function MoreEventsModal({ date, events, dailySchedules, onClose,
           <div key={evt.id} style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }} className="text-xs px-2.5 py-1.5 rounded-sm flex justify-between items-center shadow-xs font-medium w-full min-w-0">
             <span className="truncate flex-1">{evt.title}</span>
             <div className="flex gap-2 items-center shrink-0 ml-2">
-              <button onClick={() => onEditEvent(evt)} className="opacity-80 hover:opacity-100"><EditIcon /></button>
-              <button onClick={() => onDeleteEvent(evt)} className="opacity-60 hover:opacity-100"><DeleteIcon /></button>
+              <button onClick={() => onEditEvent(evt)} aria-label={`${evt.title} 수정`} className="opacity-80 hover:opacity-100"><EditIcon /></button>
+              <button onClick={() => onDeleteEvent(evt)} aria-label={`${evt.title} 삭제`} className="opacity-60 hover:opacity-100"><DeleteIcon /></button>
             </div>
           </div>
         ))}

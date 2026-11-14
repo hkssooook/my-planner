@@ -61,6 +61,7 @@ export default function DayCell({
             onClick={(e) => onAddDaily(e, dateString)}
             className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-muted-foreground hover:text-primary hover:bg-accent p-0.5 rounded-sm"
             title="개별 일정 등록"
+            aria-label={`${dateString} 개별 일정 등록`}
           >
             <PlusIcon />
           </button>
@@ -79,8 +80,8 @@ export default function DayCell({
           >
             <span className="truncate flex-1 pr-1">{evt.title}</span>
             <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
-              <button onClick={(e) => onEditEvent(e, evt)} className="opacity-80 hover:opacity-100"><EditIcon /></button>
-              <button onClick={(e) => onDeleteEvent(e, evt)} className="opacity-60 hover:opacity-100"><DeleteIcon /></button>
+              <button onClick={(e) => onEditEvent(e, evt)} aria-label={`${evt.title} 수정`} className="opacity-80 hover:opacity-100"><EditIcon /></button>
+              <button onClick={(e) => onDeleteEvent(e, evt)} aria-label={`${evt.title} 삭제`} className="opacity-60 hover:opacity-100"><DeleteIcon /></button>
             </div>
           </div>
         ))}
