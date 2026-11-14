@@ -3,7 +3,7 @@
 // 사용법 (프로젝트 폴더에서):
 //   npm run sync-holidays                 앱의 연도 선택지와 같은 범위 (올해 -1년 ~ +3년)
 //   npm run sync-holidays -- 2026 2027    연도를 직접 지정
-//   npm run sync-holidays -- --dry-run    파일은 쓰지 않고 결과와 현재 앱 데이터와의 차이만 보여 준다
+//   npm run sync-holidays -- --dry-run    파일은 쓰지 않고 결과와 저장된 데이터와의 차이만 보여 준다
 //
 // 인증키는 .env 파일의 DATA_GO_KR_SERVICE_KEY 에서 읽는다. (.env는 git에 올라가지 않는다. 설명: docs/holiday-data.md)
 // 이 스크립트는 브라우저가 아니라 내 컴퓨터에서만 돌고, 앱에는 결과 파일(JSON)만 들어간다. 그래서 키가 배포물에 섞이지 않는다.
@@ -12,7 +12,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeServiceKey, sortByDate } from './holidays-parse.mjs';
 import { fetchYearHolidays } from './holidays-fetch.mjs';
-import { KR_HOLIDAYS } from '../src/data/holidays.js';
 import { getCurrentYear, getYearOptions } from '../src/utils/date.js';
 import { YEAR_RANGE } from '../src/constants/calendar.js';
 
@@ -22,16 +21,16 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // 앱의 연도 선택지와 같은 범위 (앱과 같은 함수를 써서, 앱의 범위가 바뀌면 자동으로 따라간다)
 const defaultYears = () => getYearOptions(getCurrentYear(), YEAR_RANGE);
 
-// 현재 앱 데이터와 새로 받은 데이터를 비교해, 사람이 읽을 수 있는 줄들로 돌려준다
-const diffLines = (year, fresh) => {
-  const current = KR_HOLIDAYS[year] ?? {};
+// 지금 저장되어 있는 데이터(= 앱이 쓰는 데이터)와 새로 받은 데이터를 비교해, 사람이 읽을 수 있는 줄들로 돌려준다
+const diffLines = (previous, year, fresh) => {
+  const current = previous[year] ?? {};
   const lines = [];
   for (const [date, name] of Object.entries(fresh)) {
-    if (!(date in current)) lines.push(`    + ${date} ${name}   (앱에 없던 날)`);
+    if (!(date in current)) lines.push(`    + ${date} ${name}   (새로 생긴 날)`);
     else if (current[date] !== name) lines.push(`    ~ ${date} ${current[date]} → ${name}   (이름이 다름)`);
   }
   for (const [date, name] of Object.entries(current)) {
-    if (!(date in fresh)) lines.push(`    - ${date} ${name}   (API에는 없는 날)`);
+    if (!(date in fresh)) lines.push(`    - ${date} ${name}   (이번 응답에는 없는 날)`);
   }
   return lines;
 };
@@ -83,8 +82,8 @@ const main = async () => {
       continue;
     }
     next[year] = holidays;
-    const lines = diffLines(year, holidays);
-    console.log(`\n${year}년: 공휴일 ${count}일. 현재 앱 데이터와 ${lines.length === 0 ? '같습니다' : `다른 곳 ${lines.length}군데`}`);
+    const lines = diffLines(previous, year, holidays);
+    console.log(`\n${year}년: 공휴일 ${count}일. 저장된 데이터와 ${lines.length === 0 ? '같습니다' : `다른 곳 ${lines.length}군데`}`);
     for (const line of lines) console.log(line);
   }
 
@@ -95,7 +94,7 @@ const main = async () => {
   }
   fs.writeFileSync(OUTPUT, `${JSON.stringify(sorted, null, 2)}\n`);
   console.log(`\n저장했습니다: ${path.relative(process.cwd(), OUTPUT)}`);
-  console.log('다음 단계: 결과를 확인한 뒤 앱이 이 파일을 읽도록 바꿉니다. (docs/holiday-data.md)');
+  console.log('앱은 이 파일을 읽습니다. 바뀐 내용을 확인한 뒤 커밋하세요. (docs/holiday-data.md)');
 };
 
 main().catch((error) => {

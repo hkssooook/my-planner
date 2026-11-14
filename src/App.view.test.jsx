@@ -108,6 +108,23 @@ describe('첫 화면', () => {
     expect(within(cellOf(date)).getByText(name)).toBeInTheDocument();
   });
 
+  it('쉬는 날(공휴일·일요일)은 날짜가 붉게, 평일과 토요일은 보통 색으로 보인다', () => {
+    render(<App />);
+    const dateOf = (iso) => cellOf(iso).querySelector('span.font-medium');
+    expect(dateOf('2026-05-01')).toHaveClass('text-holiday'); // 금요일이지만 노동절
+    expect(dateOf('2026-05-03')).toHaveClass('text-holiday'); // 일요일
+    expect(dateOf('2026-05-04')).toHaveClass('text-foreground'); // 평일(월)
+    expect(dateOf('2026-05-02')).toHaveClass('text-foreground'); // 토요일은 붉지 않다
+    expect(dateOf('2026-05-01')).not.toHaveClass('text-foreground');
+  });
+
+  it('새로 들어온 공휴일(노동절, 제헌절, 대체공휴일)도 칸에서 붉은 이름으로 보인다', () => {
+    render(<App />);
+    for (const [date, name] of [['2026-05-01', '노동절'], ['2026-07-17', '제헌절'], ['2026-10-05', '대체공휴일(개천절)']]) {
+      expect(within(cellOf(date)).getByText(name)).toHaveClass('text-holiday');
+    }
+  });
+
   it('깨진 저장 데이터가 있어도 앱이 멈추지 않고 일정 없이 시작한다', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     localStorage.setItem('planner_events', '{"broken": [');
