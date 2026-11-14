@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { within } from '@testing-library/react';
-import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, drag, hexToRgb, plusButtonOf, popup, queryPopup, seedDaily, setup, stored } from './test/helpers';
+import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, drag, hexToRgb, dayButtonOf, makeEvent, popup, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 
-// 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸의 + 버튼)을 확인하는 시험.
+// 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸 누르기)을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
 
 setupTestEnvironment();
@@ -79,13 +79,41 @@ describe('기간 일정 만들기 (날짜 끌기)', () => {
   });
 });
 
-describe('상세 일정 (날짜 칸의 + 버튼)', () => {
+describe('상세 일정 (날짜 칸 누르기)', () => {
   const openDaily = async (user, date) => {
-    await user.click(plusButtonOf(date));
+    await user.click(dayButtonOf(date));
     return popup('상세 일정 관리');
   };
 
-  it('+ 버튼을 누르면 그 날짜의 상세 일정 팝업이 열리고 시간대 입력줄이 24개 있다', async () => {
+  it('날짜 칸의 빈 곳을 누르면 그 날짜의 상세 일정 팝업이 열린다', async () => {
+    const user = setup();
+    await user.click(cellOf('2026-01-05'));
+    expect(within(popup('상세 일정 관리')).getByText('2026-01-05')).toBeInTheDocument();
+  });
+
+  it('키보드로 날짜 버튼에 가서 Enter를 누르면 상세 일정 팝업이 열린다', async () => {
+    const user = setup();
+    dayButtonOf('2026-01-05').focus();
+    await user.keyboard('{Enter}');
+    expect(within(popup('상세 일정 관리')).getByText('2026-01-05')).toBeInTheDocument();
+  });
+
+  it('칸 안의 일정 막대를 누르면 상세 일정이 아니라 그 일정의 수정 팝업이 열린다', async () => {
+    seedEvents([makeEvent(1, '여름 워크숍', '2026-01-05', '2026-01-06')]);
+    const user = setup();
+    await user.click(within(cellOf('2026-01-05')).getByText('여름 워크숍'));
+    expect(popup('일정 수정')).toBeInTheDocument();
+    expect(queryPopup('상세 일정 관리')).toBeNull();
+  });
+
+  it('두 칸 이상 끌면 기간 일정 등록만 열리고 상세 일정은 열리지 않는다', async () => {
+    const user = setup();
+    await drag(user, '2026-01-05', '2026-01-07');
+    expect(popup('기간 일정 등록')).toBeInTheDocument();
+    expect(queryPopup('상세 일정 관리')).toBeNull();
+  });
+
+  it('날짜 버튼을 누르면 그 날짜의 상세 일정 팝업이 열리고 시간대 입력줄이 24개 있다', async () => {
     const user = setup();
     const box = await openDaily(user, '2026-01-05');
 
@@ -195,7 +223,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
 
   it('상세 일정 팝업: 버튼줄은 오른쪽 정렬이다', async () => {
     const user = setup();
-    await user.click(plusButtonOf('2026-01-05'));
+    await user.click(dayButtonOf('2026-01-05'));
     const box = popup('상세 일정 관리');
     expect(buttonIn(box, '통합 저장').parentElement).toHaveClass('sm:justify-end');
     expect(buttonIn(box, '통합 저장')).not.toHaveClass('flex-1');
@@ -213,7 +241,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
 
   it('상세 일정 팝업: 제목줄의 X 버튼으로 닫을 수 있다 (저장하지 않는다)', async () => {
     const user = setup();
-    await user.click(plusButtonOf('2026-01-05'));
+    await user.click(dayButtonOf('2026-01-05'));
     await user.type(within(popup('상세 일정 관리')).getByPlaceholderText('예: 워크숍 일정'), '저장되면 안 됨');
     await user.click(within(popup('상세 일정 관리')).getByRole('button', { name: '닫기' }));
 
@@ -223,7 +251,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
 
   it('상세 일정 팝업: 화면의 90%까지만 커지고, 넘치면 안쪽 내용이 스크롤된다', async () => {
     const user = setup();
-    await user.click(plusButtonOf('2026-01-05'));
+    await user.click(dayButtonOf('2026-01-05'));
     const box = popup('상세 일정 관리');
     expect(box).toHaveClass('max-h-[90vh]', 'sm:max-w-lg'); // 흰 상자의 크기 제한
     // 스크롤 영역은 흰 상자의 바로 아래 자식이어야 한다. (안쪽 시간대 목록에도 스크롤이 있어서 그냥 찾으면 하나가 빠져도 통과한다)
@@ -232,7 +260,7 @@ describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary'
 
   it('상세 일정 팝업', async () => {
     const user = setup();
-    await user.click(plusButtonOf('2026-01-05'));
+    await user.click(dayButtonOf('2026-01-05'));
     const box = popup('상세 일정 관리');
     expect(buttonIn(box, '취소')).toHaveClass('border-border', 'bg-background');
     expect(buttonIn(box, '통합 저장')).toHaveClass('bg-primary', 'text-primary-foreground');

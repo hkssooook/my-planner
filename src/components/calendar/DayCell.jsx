@@ -4,7 +4,6 @@ import { getDaysInMonth, getDayOfWeek } from '../../utils/date';
 import { readableTextOn } from '../../utils/color';
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
-import PlusIcon from '../icons/PlusIcon';
 import StarIcon from '../icons/StarIcon';
 
 // 달력의 날짜 한 칸. 화면 맞춤 모드에서 없는 날(예: 2월 30일)은 아무것도 그리지 않는다.
@@ -14,7 +13,7 @@ export default function DayCell({
   events, dailySchedules,
   selectionStart, selectionEnd,
   onMouseDown, onMouseEnter,
-  onAddDaily, onEditEvent, onDeleteEvent, onShowMore,
+  onOpenDay, onEditEvent, onDeleteEvent, onShowMore,
 }) {
   const maxDays = getDaysInMonth(year, month);
   
@@ -53,23 +52,20 @@ export default function DayCell({
     <div 
       onMouseDown={() => onMouseDown(dateString)}
       onMouseEnter={() => onMouseEnter(dateString)}
-      className={`group/cell p-1 border-r border-b border-border w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none ${isSelected ? 'bg-selection' : 'hover:bg-muted'}`}
+      // 칸 아무 곳이나 누르면 그날 상세 일정 관리가 열린다. (두 칸 이상 끌면 드래그라서 여기까지 오지 않는다)
+      onClick={(e) => onOpenDay(e, dateString)}
+      className={`group/cell p-1 border-r border-b border-border w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none cursor-pointer ${isSelected ? 'bg-selection' : 'hover:bg-muted'}`}
     >
       <div className="flex justify-between items-start text-xs min-w-0">
-        <div className="flex items-center gap-1 shrink-0">
-          <span className={`font-medium ${isHoliday ? 'text-holiday' : 'text-foreground'}`}>
-            {day} <span className="text-muted-foreground font-normal">({DAY_NAMES[dayOfWeek]})</span>
-          </span>
-          <button 
-            onMouseDown={(e) => e.stopPropagation()} 
-            onClick={(e) => onAddDaily(e, dateString)}
-            className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-muted-foreground hover:text-primary hover:bg-accent p-0.5 rounded-sm"
-            title="개별 일정 등록"
-            aria-label={`${dateString} 개별 일정 등록`}
-          >
-            <PlusIcon />
-          </button>
-        </div>
+        {/* 키보드·화면 낭독기용 입구. 누르면 클릭이 칸까지 올라가 위의 onClick이 상세 창을 연다. */}
+        <button
+          type="button"
+          title="상세 일정 관리"
+          aria-label={`${dateString} 상세 일정 관리`}
+          className={`shrink-0 font-medium rounded-sm px-0.5 -mx-0.5 hover:underline focus-visible:outline-2 focus-visible:outline-ring ${isHoliday ? 'text-holiday' : 'text-foreground'}`}
+        >
+          {day} <span className="text-muted-foreground font-normal">({DAY_NAMES[dayOfWeek]})</span>
+        </button>
         {holidayName && (
           <span title={holidayName} className="text-[10px]/4 text-holiday truncate text-right flex-1 ml-1">{holidayName}</span>
         )}
@@ -77,9 +73,10 @@ export default function DayCell({
 
       <div className="flex-1 flex flex-col gap-0.5 overflow-hidden min-w-0">
         {visibleEvents.map((evt) => (
-          <div 
-            key={evt.id} 
-            style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }} 
+          <div
+            key={evt.id}
+            onClick={(e) => onEditEvent(e, evt)}
+            style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }}
             className="group/evt text-[10px] px-1.5 py-0.5 mb-0.5 rounded-sm flex justify-between items-center shadow-xs relative font-medium w-full min-w-0"
           >
             <span className="truncate flex-1 pr-1">{evt.title}</span>

@@ -44,7 +44,8 @@ export default function App() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const handleAddDailyClick = (e, dateString) => {
+  // 그날의 상세 일정 관리 팝업을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter)
+  const openDailyModal = (e, dateString) => {
     e.stopPropagation();
     clearSelection();
     setDailyModalDate(dateString);
@@ -135,7 +136,7 @@ export default function App() {
     events, dailySchedules,
     selectionStart, selectionEnd,
     onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
-    onAddDaily: handleAddDailyClick,
+    onOpenDay: openDailyModal,
     onEditEvent: openEditModal, onDeleteEvent: openDeleteModal,
     onShowMore: setShowMoreDate,
   };

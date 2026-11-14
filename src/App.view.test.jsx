@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
 import { KR_HOLIDAYS } from './data/holidays';
-import { setupTestEnvironment, COLOR, cellOf, makeEvent, seedDaily, seedEvents, setup } from './test/helpers';
+import { setupTestEnvironment, COLOR, cellOf, dayButtonOf, makeEvent, seedDaily, seedEvents, setup } from './test/helpers';
 
 // 앱의 첫 화면과 머리말(연도 선택, 보기 방식)을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
@@ -26,7 +26,7 @@ const pickYear = async (user, label) => {
 };
 
 describe('시험 도우미 점검 (이게 틀리면 아래 시험 전체를 믿을 수 없다)', () => {
-  it('+ 버튼 순서로 계산한 칸이 실제 날짜와 요일에 맞다', () => {
+  it('날짜 버튼 순서로 계산한 칸이 실제 날짜와 요일에 맞다', () => {
     render(<App />);
     expect(cellOf('2026-01-01')).toHaveTextContent(/^1 \(목\)/);
     expect(cellOf('2026-01-05')).toHaveTextContent(/^5 \(월\)/);
@@ -77,7 +77,7 @@ describe('첫 화면', () => {
 
   it('두 해 분량(730일)의 날짜 칸이 있다', () => {
     render(<App />);
-    expect(screen.getAllByTitle('개별 일정 등록')).toHaveLength(365 + 365);
+    expect(screen.getAllByTitle('상세 일정 관리')).toHaveLength(365 + 365);
   });
 
   it('저장해 둔 일정이 처음부터 해당 날짜 칸에 보인다', () => {
@@ -129,7 +129,7 @@ describe('첫 화면', () => {
 
   it('쉬는 날(공휴일·일요일)은 날짜가 붉게, 평일과 토요일은 보통 색으로 보인다', () => {
     render(<App />);
-    const dateOf = (iso) => cellOf(iso).querySelector('span.font-medium');
+    const dateOf = (iso) => dayButtonOf(iso);
     expect(dateOf('2026-05-01')).toHaveClass('text-holiday'); // 금요일이지만 노동절
     expect(dateOf('2026-05-03')).toHaveClass('text-holiday'); // 일요일
     expect(dateOf('2026-05-04')).toHaveClass('text-foreground'); // 평일(월)
@@ -185,7 +185,7 @@ describe('머리말: 연도와 보기 방식', () => {
     await pickYear(user, '2029년 기준');
 
     expect(screen.getByText('2029년 연간 일정')).toBeInTheDocument();
-    expect(screen.getAllByTitle('개별 일정 등록').length).toBeGreaterThan(700);
+    expect(screen.getAllByTitle('상세 일정 관리').length).toBeGreaterThan(700);
     for (const name of holidayNames) {
       expect(screen.queryAllByText(name)).toHaveLength(0);
     }
@@ -199,7 +199,7 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
     expect(screen.getByText('가로 스크롤')).not.toHaveClass('bg-card');
     expect(screen.queryByText('2026년 연간 일정')).not.toBeInTheDocument(); // 화면 맞춤에서는 연도 구분선이 숫자만 보인다
-    expect(screen.getAllByTitle('개별 일정 등록')).toHaveLength(730); // 날짜 칸은 그대로
+    expect(screen.getAllByTitle('상세 일정 관리')).toHaveLength(730); // 날짜 칸은 그대로
 
     await user.click(screen.getByText('가로 스크롤'));
     expect(screen.getByText('가로 스크롤')).toHaveClass('bg-card');
