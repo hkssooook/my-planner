@@ -19,6 +19,12 @@ const renderSelect = ({ value = '2026', onValueChange = () => {}, items, size } 
     </Select>,
   );
 
+// 목록 열기는 키보드(Enter)로 한다. 마우스 클릭은 누르고 떼는 사이가 너무 짧으면 Base UI Select가 열렸다 바로 닫혀서, 시험이 가끔 실패했다.
+const openSelect = async (user) => {
+  screen.getByRole('combobox').focus();
+  await user.keyboard('{Enter}');
+};
+
 describe('shadcn Select (Base UI)', () => {
   it('접근성 이름을 가진 콤보박스로 그려진다', () => {
     renderSelect();
@@ -32,13 +38,13 @@ describe('shadcn Select (Base UI)', () => {
 
   it('누르면 옵션 목록이 열리고 모든 선택지가 보인다', async () => {
     renderSelect();
-    await userEvent.setup().click(screen.getByRole('combobox'));
+    await openSelect(userEvent.setup());
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['2025년 기준', '2026년 기준', '2027년 기준']);
   });
 
   it('현재 선택된 옵션이 선택 표시(aria-selected)를 갖는다', async () => {
     renderSelect({ value: '2027' });
-    await userEvent.setup().click(screen.getByRole('combobox'));
+    await openSelect(userEvent.setup());
     expect(screen.getByRole('option', { name: '2027년 기준' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('option', { name: '2025년 기준' })).toHaveAttribute('aria-selected', 'false');
   });
@@ -47,7 +53,7 @@ describe('shadcn Select (Base UI)', () => {
     const onValueChange = vi.fn();
     renderSelect({ onValueChange });
     const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox'));
+    await openSelect(user);
     await user.click(screen.getByRole('option', { name: '2027년 기준' }));
 
     expect(onValueChange).toHaveBeenCalledTimes(1);
@@ -70,7 +76,7 @@ describe('shadcn Select (Base UI)', () => {
     const onValueChange = vi.fn();
     renderSelect({ onValueChange });
     const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox'));
+    await openSelect(user);
     await user.keyboard('{Escape}');
     expect(screen.queryAllByRole('option')).toHaveLength(0);
     expect(onValueChange).not.toHaveBeenCalled();
