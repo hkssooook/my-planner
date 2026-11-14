@@ -24,7 +24,7 @@ export default function DailyDetailModal({
           <h3 className="text-sm font-semibold text-foreground mb-3">전체(종일) 일정 추가 <span className="font-normal text-muted-foreground text-xs ml-1">(선택 사항)</span></h3>
           <div className="flex gap-3 items-center">
             <input 
-              type="text" placeholder="예: 워크숍 일정" value={allDayTitle} 
+              type="text" placeholder="예: 워크숍 일정" aria-label="전체(종일) 일정명" value={allDayTitle} 
               onChange={(e) => onAllDayTitleChange(e.target.value)}
               className="flex-1 px-3 py-2 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
             />
@@ -42,14 +42,14 @@ export default function DailyDetailModal({
               <div key={item.hour} className="flex gap-2 items-center bg-card p-1 rounded-sm hover:bg-muted border border-transparent hover:border-border">
                 <span className="text-xs font-medium text-muted-foreground w-10 text-right shrink-0">{String(item.hour).padStart(2, '0')}:00</span>
                 <input 
-                  type="text" placeholder="내용 입력" value={item.content}
+                  type="text" placeholder="내용 입력" aria-label={`${String(item.hour).padStart(2, '0')}:00 일정 내용`} value={item.content}
                   onChange={(e) => onSlotChange(item.hour, 'content', e.target.value)}
                   className="flex-1 px-2 py-1.5 border border-border rounded-sm text-sm focus:outline-hidden focus:border-ring min-w-0"
                 />
                 <ColorPicker size="sm" label={`${String(item.hour).padStart(2, '0')}:00 일정 색`} value={item.color} onChange={(color) => onSlotChange(item.hour, 'color', color)} />
                 <label className="flex items-center gap-1 cursor-pointer w-12 justify-end shrink-0">
                   <input 
-                    type="checkbox" checked={item.is_important}
+                    type="checkbox" aria-label={`${String(item.hour).padStart(2, '0')}:00 주요 일정 (달력에 표시)`} checked={item.is_important}
                     onChange={(e) => onSlotChange(item.hour, 'is_important', e.target.checked)}
                     className="w-3.5 h-3.5 text-primary rounded-sm border-input"
                   />

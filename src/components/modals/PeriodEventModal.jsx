@@ -15,13 +15,13 @@ export default function PeriodEventModal({ event, onChange, onClose, onSave }) {
       <div className="flex flex-col gap-5">
         <div>
           <input 
-            type="text" placeholder="일정명 입력" value={event.title} 
+            type="text" placeholder="일정명 입력" aria-label="일정명" value={event.title} 
             onChange={(e) => onChange({ title: e.target.value })}
             className="w-full px-3 py-2 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">지정색</label>
+          <p className="text-xs font-medium text-muted-foreground mb-2 block">지정색</p>
           <ColorPicker
             value={event.color}
             onChange={(color) => onChange({ color })}

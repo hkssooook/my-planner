@@ -105,3 +105,59 @@ describe('접근성: 색 선택 버튼', () => {
   });
 });
 
+describe('접근성: 입력칸의 이름', () => {
+  it('수정 팝업: 일정명·시작일·종료일 이름표가 입력칸과 이어져 있다 (이름표로 입력칸을 찾을 수 있다)', async () => {
+    seedEvents([makeEvent(1, '이름 확인', '2026-01-05', '2026-01-07')]);
+    const user = setup();
+    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '이름 확인')));
+    const box = popup('일정 수정');
+    expect(within(box).getByLabelText('일정명')).toHaveValue('이름 확인');
+    expect(within(box).getByLabelText('시작일')).toHaveValue('2026-01-05');
+    expect(within(box).getByLabelText('종료일')).toHaveValue('2026-01-07');
+  });
+
+  it('수정 팝업의 이름표를 눌러도 입력칸에 글자가 들어간다 (이름표와 입력칸이 실제로 연결됨)', async () => {
+    seedEvents([makeEvent(1, '이름 확인', '2026-01-05')]);
+    const user = setup();
+    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '이름 확인')));
+    const box = popup('일정 수정');
+    await user.click(within(box).getByText('일정명'));
+    await user.keyboard('!');
+    expect(within(box).getByLabelText('일정명')).toHaveValue('이름 확인!');
+  });
+
+  it('기간 등록 팝업의 일정명 입력칸에 이름이 있다 (안내 글자만 있으면 이름이 아니다)', async () => {
+    const user = setup();
+    await drag(user, '2026-01-05', '2026-01-07');
+    expect(within(popup('기간 일정 등록')).getByRole('textbox', { name: '일정명' })).toBeInTheDocument();
+  });
+
+  it('상세 일정 팝업: 종일 입력칸과 24개 시간대 입력칸·체크박스가 모두 서로 다른 이름이다', async () => {
+    const user = setup();
+    await user.click(plusButtonOf('2026-01-05'));
+    const box = popup('상세 일정 관리');
+    expect(within(box).getByRole('textbox', { name: '전체(종일) 일정명' })).toBeInTheDocument();
+    expect(within(box).getByRole('textbox', { name: '09:00 일정 내용' })).toBeInTheDocument();
+    expect(within(box).getByRole('checkbox', { name: '09:00 주요 일정 (달력에 표시)' })).not.toBeChecked();
+
+    const textboxes = within(box).getAllByRole('textbox').map((t) => t.getAttribute('aria-label'));
+    const checkboxes = within(box).getAllByRole('checkbox').map((t) => t.getAttribute('aria-label'));
+    expect(textboxes).toHaveLength(25); // 종일 1 + 시간대 24
+    expect(checkboxes).toHaveLength(24);
+    expect(new Set(textboxes).size).toBe(25);
+    expect(new Set(checkboxes).size).toBe(24);
+  });
+
+  it('이름으로 찾은 시간대 입력칸에 쓰면 그 시간대에 저장된다', async () => {
+    const user = setup();
+    await user.click(plusButtonOf('2026-01-05'));
+    const box = popup('상세 일정 관리');
+    await user.type(within(box).getByRole('textbox', { name: '10:00 일정 내용' }), '열 시 회의');
+    await user.click(within(box).getByRole('checkbox', { name: '10:00 주요 일정 (달력에 표시)' }));
+    await user.click(within(box).getByRole('button', { name: '통합 저장' }));
+    expect(JSON.parse(localStorage.getItem('planner_daily'))['2026-01-05']).toEqual([
+      expect.objectContaining({ hour: 10, content: '열 시 회의', is_important: true }),
+    ]);
+  });
+});
+
