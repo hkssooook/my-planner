@@ -31,6 +31,7 @@ npm run dev        # 개발 서버 실행 → 터미널에 나오는 주소(보�
 | `npm run lint` | 코드 검사기를 돌립니다. 오류가 없어야 정상입니다. |
 | `npm test` | 자동 시험을 한 번 돌립니다. 모두 통과해야 정상입니다. (약 15초) |
 | `npm run test:watch` | 파일을 저장할 때마다 관련 시험을 다시 돌립니다. 개발 중에 켜 둘 때 편합니다. |
+| `npm run sync-holidays` | 공휴일을 공식 API에서 받아 옵니다. **인증키가 필요하고 아직 준비 단계입니다.** 설명: [docs/holiday-data.md](docs/holiday-data.md) |
 
 > 개발 서버를 끄면 브라우저에서 `localhost:5173`이 "연결할 수 없음"으로 나옵니다. 앱이 고장 난 것이 아니니 `npm run dev`를 다시 실행하면 됩니다. 저장한 일정은 브라우저에 남아 있습니다.
 
@@ -74,6 +75,8 @@ src/
 ├── shadcn.css                 shadcn 부품이 쓰는 Tailwind 규칙 (shadcn 패키지에서 복사해 온 파일)
 └── test/                      시험 공통 설정(setup.js)과 도우미(helpers.jsx)
 ```
+
+`scripts/`는 앱이 아니라 내 컴퓨터에서 돌리는 도구 스크립트(공휴일 동기화)이고, 앱 배포물에는 들어가지 않습니다. `.env.example`은 인증키를 적는 `.env` 파일의 견본입니다. (진짜 `.env`는 git에 올라가지 않습니다)
 
 프로젝트 맨 위의 `components.json`은 shadcn 설정(스타일 `base-nova`, JavaScript, 기준 색 `neutral`)이고, `jsconfig.json`은 `@/`가 `src/` 폴더를 가리키게 하는 경로 별칭입니다.
 
