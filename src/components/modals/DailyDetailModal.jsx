@@ -28,7 +28,7 @@ export default function DailyDetailModal({
               onChange={(e) => onAllDayTitleChange(e.target.value)}
               className="flex-1 px-3 py-2 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
             />
-            <ColorPicker size="md" value={allDayColor} onChange={onAllDayColorChange} />
+            <ColorPicker size="md" label="전체(종일) 일정 색" value={allDayColor} onChange={onAllDayColorChange} />
           </div>
         </section>
 
@@ -46,7 +46,7 @@ export default function DailyDetailModal({
                   onChange={(e) => onSlotChange(item.hour, 'content', e.target.value)}
                   className="flex-1 px-2 py-1.5 border border-border rounded-sm text-sm focus:outline-hidden focus:border-ring min-w-0"
                 />
-                <ColorPicker size="sm" value={item.color} onChange={(color) => onSlotChange(item.hour, 'color', color)} />
+                <ColorPicker size="sm" label={`${String(item.hour).padStart(2, '0')}:00 일정 색`} value={item.color} onChange={(color) => onSlotChange(item.hour, 'color', color)} />
                 <label className="flex items-center gap-1 cursor-pointer w-12 justify-end shrink-0">
                   <input 
                     type="checkbox" checked={item.is_important}

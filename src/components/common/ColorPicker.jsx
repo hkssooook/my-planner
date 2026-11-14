@@ -26,15 +26,19 @@ const SIZES = {
   },
 };
 
-export default function ColorPicker({ value, onChange, size = 'lg' }) {
+// 색 동그라미 버튼 묶음. 각 버튼의 이름은 색 이름(블루 등)이고, 지금 고른 색은 눌림(aria-pressed) 상태로 알려진다.
+//   label  이 묶음의 이름. 한 화면에 선택기가 여러 개일 때(시간대마다 하나씩) 구분하려고 쓴다.
+export default function ColorPicker({ value, onChange, size = 'lg', label = '일정 색' }) {
   const s = SIZES[size];
 
   return (
-    <div className={s.wrapper}>
+    <div className={s.wrapper} role="group" aria-label={label}>
       {COLOR_PALETTE.map(color => (
         <button
           key={color.value}
           onClick={() => onChange(color.value)}
+          aria-label={color.name}
+          aria-pressed={value === color.value}
           style={{ backgroundColor: color.value }}
           className={`${s.base} ${value === color.value ? s.selected : s.unselected}`}
           title={s.showName ? color.name : undefined}

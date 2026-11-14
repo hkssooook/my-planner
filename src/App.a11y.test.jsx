@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, plusButtonOf, barIn } from './test/helpers';
+import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, plusButtonOf, barIn, popup, drag, editIconOf } from './test/helpers';
+import { COLOR_PALETTE } from './constants/colors';
 
 // 화면을 눈으로 못 보는 사람(스크린 리더)이 버튼을 알아들을 수 있는지 확인하는 시험.
 // 이름이 없는 버튼은 "버튼"이라고만 읽혀서 무엇을 하는 버튼인지 알 수 없다.
@@ -68,3 +69,39 @@ describe('접근성: 보기 방식 버튼', () => {
     expect(screen.getByRole('button', { name: '화면 맞춤' })).toHaveAttribute('aria-pressed', 'true');
   });
 });
+
+describe('접근성: 색 선택 버튼', () => {
+  it('색 버튼마다 색 이름이 있고, 지금 고른 색만 눌림 상태다 (기간 등록 팝업)', async () => {
+    const user = setup();
+    await drag(user, '2026-01-05', '2026-01-07');
+    const group = within(popup('기간 일정 등록')).getByRole('group', { name: '일정 색' });
+    const buttons = within(group).getAllByRole('button');
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(COLOR_PALETTE.map((c) => c.name));
+    expect(buttons.map((b) => b.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false', 'false', 'false']);
+
+    await user.click(within(group).getByRole('button', { name: '핑크' }));
+    expect(within(group).getByRole('button', { name: '핑크' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(group).getByRole('button', { name: '블루' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('상세 일정 팝업에는 선택기가 여러 개라서, 묶음 이름이 서로 다르다 (종일 1개 + 시간대마다 1개)', async () => {
+    const user = setup();
+    await user.click(plusButtonOf('2026-01-05'));
+    const box = popup('상세 일정 관리');
+    expect(within(box).getByRole('group', { name: '전체(종일) 일정 색' })).toBeInTheDocument();
+    expect(within(box).getByRole('group', { name: '00:00 일정 색' })).toBeInTheDocument();
+    expect(within(box).getByRole('group', { name: '09:00 일정 색' })).toBeInTheDocument();
+    const names = within(box).getAllByRole('group').map((g) => g.getAttribute('aria-label'));
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('수정 팝업은 일정의 현재 색이 눌림 상태로 보인다', async () => {
+    seedEvents([makeEvent(1, '색 확인', '2026-01-05', '2026-01-05', COLOR_PALETTE[3].value)]);
+    const user = setup();
+    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '색 확인')));
+    const group = within(popup('일정 수정')).getByRole('group', { name: '일정 색' });
+    expect(within(group).getByRole('button', { name: '앰버' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(group).getByRole('button', { name: '블루' })).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
