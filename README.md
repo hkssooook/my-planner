@@ -31,7 +31,7 @@ npm run dev        # 개발 서버 실행 → 터미널에 나오는 주소(보�
 | `npm run lint` | 코드 검사기를 돌립니다. 오류가 없어야 정상입니다. |
 | `npm test` | 자동 시험을 한 번 돌립니다. 모두 통과해야 정상입니다. (약 15초) |
 | `npm run test:watch` | 파일을 저장할 때마다 관련 시험을 다시 돌립니다. 개발 중에 켜 둘 때 편합니다. |
-| `npm run sync-holidays` | 공휴일을 공식 API에서 받아 옵니다. **인증키가 필요하고 아직 준비 단계입니다.** 설명: [docs/holiday-data.md](docs/holiday-data.md) |
+| `npm run sync-holidays` | 공휴일을 공식 API에서 받아 `src/data/holidays.generated.json`에 저장합니다. 공공데이터포털 **인증키(`.env`)가 필요합니다.** `-- --dry-run`을 붙이면 저장하지 않고 바뀔 내용만 봅니다. 설명: [docs/holiday-data.md](docs/holiday-data.md) |
 
 > 개발 서버를 끄면 브라우저에서 `localhost:5173`이 "연결할 수 없음"으로 나옵니다. 앱이 고장 난 것이 아니니 `npm run dev`를 다시 실행하면 됩니다. 저장한 일정은 브라우저에 남아 있습니다.
 
@@ -70,7 +70,7 @@ src/
 │   └── date.js                날짜 계산 (한 달의 일수, 요일, 올해, 연도 목록)
 ├── lib/utils.js               cn(): 여러 클래스 이름을 합치고 충돌을 정리하는 도우미 (shadcn)
 ├── constants/                 색 팔레트, 요일 이름, 연도 선택 범위
-├── data/holidays.js           공휴일 데이터
+├── data/                      공휴일: holidays.generated.json(공식 API에서 받아 온 원본) + holidays.js(앱이 읽는 곳, 표시 이름 보정)
 ├── index.css                  Tailwind 4 설정 + shadcn 기본 테마(색·모서리 변수)
 ├── shadcn.css                 shadcn 부품이 쓰는 Tailwind 규칙 (shadcn 패키지에서 복사해 온 파일)
 └── test/                      시험 공통 설정(setup.js)과 도우미(helpers.jsx)
@@ -90,7 +90,7 @@ src/
 |---|---|
 | 일정 색 추가·변경 | `src/constants/colors.js` |
 | 연도 선택 범위 (몇 년 전 ~ 몇 년 뒤) | `src/constants/calendar.js`의 `YEAR_RANGE` |
-| 공휴일 추가·수정 | `src/data/holidays.js` |
+| 공휴일 갱신 | 직접 고치지 않고 `npm run sync-holidays` ([설명](docs/holiday-data.md)). 화면에 보일 이름만 바꾸려면 `src/data/holidays.js`의 `NAME_OVERRIDES` |
 | 일정 저장 방식 (예: 서버로 옮기기) | `src/utils/storage.js`, `src/hooks/usePlannerData.js` |
 | 팝업 모양·문구 | `src/components/modals/` 안의 해당 파일 |
 | 날짜 칸 모양 | `src/components/calendar/DayCell.jsx` |
