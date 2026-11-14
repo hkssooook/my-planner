@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import ColorPicker from '../common/ColorPicker';
 import PopupDialog from '../common/PopupDialog';
 import { DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -6,14 +7,23 @@ import { Button } from '@/components/ui/button';
 // 상세 일정 관리 팝업: 위쪽은 종일 일정, 아래쪽은 시간대별(0~23시) 24줄.
 // 입력값은 모두 부모(App)가 들고 있고, 이 부품은 보여 주고 "바뀌었다"고 알리기만 한다.
 // slots: [{ hour, content, color, is_important }]  /  onSlotChange(hour, 바뀐항목, 값)
+// focusHour: 달력에서 시간 일정을 눌러 열었을 때 그 시간(0~23). 그 줄을 가운데로 스크롤해 강조하고 입력칸에 커서를 둔다.
 export default function DailyDetailModal({
   date,
   allDayTitle, allDayColor, onAllDayTitleChange, onAllDayColorChange,
   slots, onSlotChange,
+  focusHour = null,
   onSave, onClose,
 }) {
+  const focusInputRef = useRef(null);
+  const focusOnHour = focusHour === null ? undefined : () => {
+    const input = focusInputRef.current;
+    input?.parentElement.scrollIntoView?.({ block: 'center' }); // 시험 환경(jsdom)에는 scrollIntoView가 없어서 ?.
+    return input;
+  };
+
   return (
-    <PopupDialog width="lg" maxHeight="90vh" onClose={onClose}>
+    <PopupDialog width="lg" maxHeight="90vh" onClose={onClose} initialFocus={focusOnHour}>
       <DialogHeader>
         <DialogTitle>상세 일정 관리</DialogTitle>
         <DialogDescription>{date}</DialogDescription>
@@ -39,9 +49,10 @@ export default function DailyDetailModal({
           </div>
           <div className="flex flex-col gap-2 max-h-[40vh] overflow-y-auto pr-2">
             {slots.map((item) => (
-              <div key={item.hour} className="flex gap-2 items-center bg-card p-1 rounded-sm hover:bg-muted border border-transparent hover:border-border">
+              <div key={item.hour} className={`flex gap-2 items-center p-1 rounded-sm border ${item.hour === focusHour ? 'bg-accent border-primary' : 'bg-card border-transparent hover:bg-muted hover:border-border'}`}>
                 <span className="text-xs font-medium text-muted-foreground w-10 text-right shrink-0">{String(item.hour).padStart(2, '0')}:00</span>
-                <input 
+                <input
+                  ref={item.hour === focusHour ? focusInputRef : undefined}
                   type="text" placeholder="내용 입력" aria-label={`${String(item.hour).padStart(2, '0')}:00 일정 내용`} value={item.content}
                   onChange={(e) => onSlotChange(item.hour, 'content', e.target.value)}
                   className="flex-1 px-2 py-1.5 border border-border rounded-sm text-sm focus:outline-hidden focus:border-ring min-w-0"

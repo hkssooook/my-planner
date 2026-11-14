@@ -88,7 +88,11 @@ export default function DayCell({
         ))}
 
         {visibleSchedules.map((sch) => (
-          <div key={sch.hour} className="text-[9.5px] text-foreground flex gap-1.5 items-center px-1 w-full min-w-0">
+          <div
+            key={sch.hour}
+            onClick={(e) => onOpenDay(e, dateString, sch.hour)}
+            className="text-[9.5px] text-foreground flex gap-1.5 items-center px-1 w-full min-w-0 rounded-sm hover:bg-accent"
+          >
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
             <span className="font-semibold text-muted-foreground shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
             <span className="truncate flex-1">{sch.content}</span>

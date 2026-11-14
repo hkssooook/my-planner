@@ -35,6 +35,7 @@ export default function App() {
 
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [dailyModalDate, setDailyModalDate] = useState(null);
+  const [dailyFocusHour, setDailyFocusHour] = useState(null); // 시간 일정을 눌러 열었으면 그 시간, 아니면 null
   const [singleDayEventTitle, setSingleDayEventTitle] = useState('');
   const [singleDayEventColor, setSingleDayEventColor] = useState(COLOR_PALETTE[0].value);
   const [tempDaily, setTempDaily] = useState([]);
@@ -45,10 +46,12 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   // 그날의 상세 일정 관리 팝업을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter)
-  const openDailyModal = (e, dateString) => {
+  // hour를 주면(달력에서 시간 일정을 눌렀을 때) 그 시간 줄을 보여 주며 연다.
+  const openDailyModal = (e, dateString, hour = null) => {
     e.stopPropagation();
     clearSelection();
     setDailyModalDate(dateString);
+    setDailyFocusHour(hour);
     setSingleDayEventTitle('');
     setSingleDayEventColor(COLOR_PALETTE[0].value);
     loadDailyScheduleData(dateString);
@@ -98,6 +101,7 @@ export default function App() {
   const closeDailyModal = () => {
     setShowDailyModal(false);
     setDailyModalDate(null);
+    setDailyFocusHour(null);
     setSingleDayEventTitle('');
     setTempDaily([]);
   };
@@ -174,6 +178,7 @@ export default function App() {
           allDayTitle={singleDayEventTitle} allDayColor={singleDayEventColor}
           onAllDayTitleChange={setSingleDayEventTitle} onAllDayColorChange={setSingleDayEventColor}
           slots={tempDaily} onSlotChange={handleTempDailyChange}
+          focusHour={dailyFocusHour}
           onSave={saveDailySchedules} onClose={closeDailyModal}
         />
       )}

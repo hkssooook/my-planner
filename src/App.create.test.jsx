@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { within } from '@testing-library/react';
+import { within, waitFor } from '@testing-library/react';
 import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, drag, hexToRgb, dayButtonOf, makeEvent, popup, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 
 // 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸 누르기)을 확인하는 시험.
@@ -104,6 +104,33 @@ describe('상세 일정 (날짜 칸 누르기)', () => {
     await user.click(within(cellOf('2026-01-05')).getByText('여름 워크숍'));
     expect(popup('일정 수정')).toBeInTheDocument();
     expect(queryPopup('상세 일정 관리')).toBeNull();
+  });
+
+  it('칸의 시간 일정을 누르면 상세 일정이 열리고, 그 시간 줄이 강조되며 입력칸에 커서가 놓인다', async () => {
+    seedDaily({ '2026-01-05': [
+      { hour: 9, content: '아침 회의', is_important: false, color: COLOR.blue },
+      { hour: 14, content: '고객사 미팅', is_important: true, color: COLOR.amber },
+    ] });
+    const user = setup();
+    await user.click(within(cellOf('2026-01-05')).getByText('고객사 미팅'));
+
+    const box = popup('상세 일정 관리');
+    const input = within(box).getByRole('textbox', { name: '14:00 일정 내용' });
+    await waitFor(() => expect(input).toHaveFocus());
+    expect(input.parentElement).toHaveClass('border-primary');
+    expect(within(box).getByRole('textbox', { name: '09:00 일정 내용' }).parentElement).not.toHaveClass('border-primary');
+  });
+
+  it('칸의 빈 곳으로 열면 강조된 시간 줄이 없다', async () => {
+    seedDaily({ '2026-01-05': [{ hour: 14, content: '고객사 미팅', is_important: true, color: COLOR.amber }] });
+    const user = setup();
+    await user.click(within(cellOf('2026-01-05')).getByText('고객사 미팅'));
+    await user.click(buttonIn(popup('상세 일정 관리'), '취소'));
+
+    await user.click(cellOf('2026-01-05'));
+    const box = popup('상세 일정 관리');
+    expect(box.querySelector('.border-primary')).toBeNull();
+    expect(within(box).getByRole('textbox', { name: '14:00 일정 내용' })).not.toHaveFocus();
   });
 
   it('두 칸 이상 끌면 기간 일정 등록만 열리고 상세 일정은 열리지 않는다', async () => {
