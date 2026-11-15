@@ -23,6 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Claude Code: 개발 서버 실행 설정(.claude/launch.json)은 함께 쓰고, 내 컴퓨터 전용 설정은 올리지 않는다
+.claude/settings.local.json
+
 # Environment variables (secrets)
 .env
 .env.*
