@@ -8,12 +8,15 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
     // 넓은 화면: 3칸 격자(빈 왼쪽 1fr | 가운데 제목+연도 | 오른쪽 1fr 보기 버튼). 양옆 칸 너비가 같아서 가운데 묶음이 정확히 한가운데에 온다.
     // 좁은 화면: 위에서 아래로 가운데 맞춰 쌓는다. 여백·간격은 shadcn 카드(Card) 기본값인 24px(p-6, gap-6)을 쓴다.
     <div className="mb-6 flex flex-col items-center gap-6 md:grid md:grid-cols-[1fr_auto_1fr] bg-card p-6 rounded-lg shadow-xs">
-      {/* 가운데 묶음: 제목 밑에 연도 선택 */}
-      <div className="flex flex-col items-center gap-3 md:col-start-2">
-        <h1 className="text-xl font-semibold text-foreground hidden sm:block">연간 플래너</h1>
+      {/* 가운데 묶음: 크게 보이는 연도(누르면 연도 목록) 밑에 앱 이름을 부제목으로 */}
+      <div className="flex flex-col items-center gap-1 md:col-start-2">
         {/* shadcn Select. items는 "값 → 화면에 보일 글자" 짝이라서, 닫혀 있을 때도 "2026년"처럼 글자가 보인다 */}
         <Select value={year} onValueChange={onYearChange} items={yearItems}>
-          <SelectTrigger aria-label="연도 선택">
+          {/* 입력칸 상자가 아니라 제목처럼 보이게: 테두리 없이 24px 반굵게. 마우스를 올리면 옅은 바탕이 생겨 누를 수 있음을 알린다 */}
+          <SelectTrigger
+            aria-label="연도 선택"
+            className="h-auto data-[size=default]:h-auto border-transparent px-3 py-1 text-2xl font-semibold text-foreground hover:bg-accent"
+          >
             <SelectValue />
           </SelectTrigger>
           {/* 머리말은 화면 맨 위라서, 선택된 항목을 트리거 자리에 맞추는 shadcn 기본 배치 대신 트리거 아래로 펼친다 (안 그러면 위쪽 선택지가 잘린다) */}
@@ -23,6 +26,7 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
             ))}
           </SelectContent>
         </Select>
+        <h1 className="text-sm text-muted-foreground hidden sm:block">연간 플래너</h1>
       </div>
 
       <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border md:col-start-3 md:justify-self-end">

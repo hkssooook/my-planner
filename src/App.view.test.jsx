@@ -206,10 +206,13 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(screen.getByText('2026')).toBeInTheDocument();
   });
 
-  it('연도 드롭다운은 shadcn 기본 크기다 (높이 32px, 글자 14px 보통 굵기)', () => {
+  it('연도 드롭다운은 입력칸 상자가 아니라 제목처럼 보인다 (테두리 없이 24px 반굵게), 앱 이름은 그 밑의 작은 부제목이다', () => {
     render(<App />);
-    expect(yearSelect()).toHaveClass('data-[size=default]:h-8', 'text-sm', 'rounded-lg', 'border-input');
-    expect(yearSelect()).not.toHaveClass('text-2xl', 'font-bold'); // 예전의 큰 글자 크기가 돌아오지 않게
+    expect(yearSelect()).toHaveClass('text-2xl', 'font-semibold', 'border-transparent', 'data-[size=default]:h-auto');
+    expect(yearSelect()).not.toHaveClass('text-sm', 'border-input', 'data-[size=default]:h-8'); // shadcn 기본 상자 모양은 덮어쓴다
+    const subtitle = screen.getByText('연간 플래너');
+    expect(subtitle).toHaveClass('text-sm', 'text-muted-foreground');
+    expect(yearSelect().compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // 연도가 먼저, 부제목이 뒤
   });
 
   it('연도 드롭다운을 열면 지금 연도에 선택 표시가 있고, 고르면 닫힌다', async () => {
