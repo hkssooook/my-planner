@@ -30,7 +30,7 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
         <h1 className="text-sm text-muted-foreground hidden sm:block">연간 플래너</h1>
       </div>
 
-      <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border md:col-start-3 md:justify-self-end">
+      <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border md:col-start-3 md:justify-self-end md:self-end">
         <button 
           onClick={() => onWrapModeChange(false)} 
           aria-pressed={!isWrapMode}
