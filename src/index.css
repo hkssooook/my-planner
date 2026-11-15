@@ -72,6 +72,7 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-holiday: var(--holiday);
+  --color-holiday-surface: var(--holiday-surface);
   --color-selection: var(--selection);
   --color-surface-blue-1: var(--surface-blue-1);
   --color-surface-blue-2: var(--surface-blue-2);
@@ -146,6 +147,7 @@
   --warning-foreground: #21242e;
   --info: #3a8ced;
   --holiday: #a64031;
+  --holiday-surface: #fdf0ee; /* 쉬는 날(공휴일·토·일) 칸 바탕 */
   --selection: #dbdcff; /* 파랑 2단계 */
   --radius: 15px;
   /* 바탕 단계 색: 파랑 1~5단계 (#FFFFFF → #6D72FD). src/constants/colors.js의 BACKGROUND_SCALES.blue와 같다 */

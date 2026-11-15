@@ -90,17 +90,18 @@ describe('src/index.css의 색 변수 (docs/design-tokens.md와 같아야 한다
     expect(css).toContain('--radius-lg: var(--radius);');
   });
 
-  it('추가 이름(success·warning·info·holiday·selection)도 문서의 값이다', () => {
+  it('추가 이름(success·warning·info·holiday·holiday-surface·selection)도 문서의 값이다', () => {
     expect(rootValue('success')).toBe('#7ac4a4');
     expect(rootValue('success-text')).toBe('#25805d');
     expect(rootValue('warning')).toBe('#fdb11a');
     expect(rootValue('info')).toBe('#3a8ced');
     expect(rootValue('holiday')).toBe('#a64031');
+    expect(rootValue('holiday-surface')).toBe('#fdf0ee');
     expect(rootValue('selection')).toBe('#dbdcff');
   });
 
   it('추가 이름은 Tailwind 색 이름(bg-success 등)으로도 쓸 수 있게 연결되어 있다', () => {
-    for (const name of ['success', 'warning', 'info', 'holiday', 'selection']) {
+    for (const name of ['success', 'warning', 'info', 'holiday', 'holiday-surface', 'selection']) {
       expect(css).toContain(`--color-${name}: var(--${name});`);
     }
   });

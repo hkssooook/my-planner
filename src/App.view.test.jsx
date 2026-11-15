@@ -138,6 +138,12 @@ describe('첫 화면', () => {
     expect(dateOf('2026-05-04')).toHaveClass('text-foreground'); // 평일(월)
     expect(dateOf('2026-05-02')).toHaveClass('text-holiday'); // 토요일
     expect(dateOf('2026-05-01')).not.toHaveClass('text-foreground');
+    // 쉬는 날은 칸 바탕도 연한 빨강, 평일은 흰색
+    expect(cellOf('2026-05-01')).toHaveClass('bg-holiday-surface'); // 노동절
+    expect(cellOf('2026-05-02')).toHaveClass('bg-holiday-surface'); // 토요일
+    expect(cellOf('2026-05-03')).toHaveClass('bg-holiday-surface'); // 일요일
+    expect(cellOf('2026-05-04')).toHaveClass('bg-card');
+    expect(cellOf('2026-05-04')).not.toHaveClass('bg-holiday-surface');
   });
 
   it('새로 들어온 공휴일(노동절, 제헌절, 대체공휴일)도 칸에서 붉은 이름으로 보인다', () => {
