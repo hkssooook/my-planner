@@ -5,8 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export default function Header({ year, years, onYearChange, isWrapMode, onWrapModeChange }) {
   const yearItems = years.map((y) => ({ value: y, label: `${y}년` }));
   return (
-    <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-card p-4 rounded-lg shadow-xs gap-4 md:gap-0">
-      <div className="flex items-center gap-4">
+    // 넓은 화면: 3칸 격자(왼쪽 1fr | 가운데 제목 | 오른쪽 1fr). 양옆 칸 너비가 같아서 제목이 정확히 한가운데에 온다.
+    // 좁은 화면: 위에서 아래로 쌓는다. 여백·간격은 shadcn 카드(Card) 기본값인 24px(p-6, gap-6)을 쓴다.
+    <div className="mb-6 flex flex-col gap-6 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center bg-card p-6 rounded-lg shadow-xs">
+      <div className="flex items-center self-start md:self-center">
         {/* shadcn Select. items는 "값 → 화면에 보일 글자" 짝이라서, 닫혀 있을 때도 "2026년"처럼 글자가 보인다 */}
         <Select value={year} onValueChange={onYearChange} items={yearItems}>
           <SelectTrigger aria-label="연도 선택">
@@ -19,10 +21,11 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
             ))}
           </SelectContent>
         </Select>
-        <h1 className="text-xl text-muted-foreground hidden sm:block">연간 플래너</h1>
       </div>
 
-      <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border">
+      <h1 className="text-xl text-muted-foreground hidden sm:block self-center text-center">연간 플래너</h1>
+
+      <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border self-start md:self-center md:justify-self-end">
         <button 
           onClick={() => onWrapModeChange(false)} 
           aria-pressed={!isWrapMode}
