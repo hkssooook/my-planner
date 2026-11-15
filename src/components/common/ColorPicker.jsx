@@ -36,6 +36,7 @@ export default function ColorPicker({ value, onChange, size = 'lg', label = '일
       {COLOR_PALETTE.map(color => (
         <button
           key={color.value}
+          type="button" // 입력 양식(form) 안에 있어도 색만 고르고 양식을 제출하지 않게
           onClick={() => onChange(color.value)}
           aria-label={color.name}
           aria-pressed={value === color.value}

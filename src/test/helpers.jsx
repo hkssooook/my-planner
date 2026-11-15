@@ -39,6 +39,10 @@ export const popup = (title) => screen.getByRole('dialog', { name: title, hidden
 export const queryPopup = (title) => screen.queryByRole('dialog', { name: title, hidden: true });
 export const popupCount = () => document.querySelectorAll('[role="dialog"]').length;
 
+// 오른쪽 일정 패널(<aside aria-label="상세 일정 관리">). 팝업이 아니라서 role이 complementary(보조 영역)다.
+export const dayPanel = () => screen.getByRole('complementary', { name: '상세 일정 관리', hidden: true });
+export const queryDayPanel = () => screen.queryByRole('complementary', { name: '상세 일정 관리', hidden: true });
+
 export const buttonIn = (box, name) => within(box).getByRole('button', { name });
 export const colorButtonsIn = (box) => within(box).getAllByRole('button').filter((b) => b.classList.contains('rounded-full'));
 

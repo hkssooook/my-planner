@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getDaysInMonth, getDayOfWeek, getCurrentYear, getYearOptions } from './date';
+import { getDaysInMonth, getDayOfWeek, getCurrentYear, getYearOptions, addDays, daysBetween, formatLongDate, formatShortDate } from './date';
 
 describe('getDaysInMonth (한 달의 일수)', () => {
   it('31일인 달과 30일인 달을 구분한다', () => {
@@ -61,5 +61,23 @@ describe('getYearOptions (연도 선택 목록)', () => {
   it('범위를 바꾸면 목록도 바뀐다', () => {
     expect(getYearOptions(2026, { before: 0, after: 0 })).toEqual([2026]);
     expect(getYearOptions(2030, { before: 2, after: 1 })).toEqual([2028, 2029, 2030, 2031]);
+  });
+});
+
+describe('날짜 글자 계산', () => {
+  it('addDays: 달·해가 바뀌는 경우도 맞게 넘긴다', () => {
+    expect(addDays('2026-01-31', 1)).toBe('2026-02-01');
+    expect(addDays('2026-01-01', -1)).toBe('2025-12-31');
+    expect(addDays('2028-02-28', 1)).toBe('2028-02-29'); // 윤년
+  });
+  it('daysBetween: 두 날짜 사이 일수', () => {
+    expect(daysBetween('2026-01-05', '2026-01-07')).toBe(2);
+    expect(daysBetween('2026-01-05', '2026-01-05')).toBe(0);
+    expect(daysBetween('2026-03-28', '2026-04-02')).toBe(5);
+  });
+  it('formatLongDate / formatShortDate', () => {
+    expect(formatLongDate('2026-01-05')).toBe('2026년 1월 5일 (월)');
+    expect(formatLongDate('2026-11-15')).toBe('2026년 11월 15일 (일)');
+    expect(formatShortDate('2026-01-05')).toBe('1/5');
   });
 });

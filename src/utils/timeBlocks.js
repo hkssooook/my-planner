@@ -59,6 +59,7 @@ export function blocksToSlots(blocks, defaultColor) {
 // 상세 일정 창의 24줄 → 그날의 카드 목록.
 // - 내용이 빈 줄은 저장하지 않는다.
 // - 원래 있던 카드는 id와 (나중에 붙을) 다른 속성을 그대로 이어받는다.
+// - 줄에 id가 미리 붙어 있으면 새 카드도 그 id를 쓴다. (자동 저장 때 글자를 칠 때마다 id가 바뀌지 않게)
 // - 24줄 창으로 보여 줄 수 없던 카드(예: 9:30 시작)는 손대지 않고 남겨 둔다.
 export function slotsToBlocks(slots, existingBlocks) {
   const untouched = existingBlocks.filter((b) => !isHourBlock(b));
@@ -66,7 +67,7 @@ export function slotsToBlocks(slots, existingBlocks) {
     .filter((slot) => slot.content.trim() !== '')
     .map(({ id, ...slot }) => {
       const old = existingBlocks.find((b) => b.id === id);
-      return { ...old, ...slotToBlock(slot, old ? old.id : makeBlockId()) };
+      return { ...old, ...slotToBlock(slot, id ?? makeBlockId()) };
     });
   return [...untouched, ...fromSlots].sort(byStart);
 }

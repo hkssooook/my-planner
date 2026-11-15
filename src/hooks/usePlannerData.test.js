@@ -287,7 +287,7 @@ describe('saveDayBlocks (날짜별 시간 일정 카드 저장)', () => {
   });
 });
 
-describe('일정과 시간대별 일정을 한 번에 저장하는 경우 (상세 일정 팝업의 "통합 저장")', () => {
+describe('일정과 시간 일정을 한 번에 저장하는 경우', () => {
   it('서로 다른 데이터라서 둘 다 정상적으로 저장된다', () => {
     const { result } = renderHook(() => usePlannerData());
     act(() => {

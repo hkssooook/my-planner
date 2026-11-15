@@ -2,18 +2,16 @@ import { useState } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
 import { YEAR_RANGE } from './constants/calendar';
-import { getCurrentYear, getYearOptions } from './utils/date';
+import { addDays, getCurrentYear, getYearOptions } from './utils/date';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
-import { blocksToSlots, slotsToBlocks } from './utils/timeBlocks';
 import Header from './components/layout/Header';
 import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
-import MoreEventsModal from './components/modals/MoreEventsModal';
 import PeriodEventModal from './components/modals/PeriodEventModal';
 import EditEventModal from './components/modals/EditEventModal';
-import DailyDetailModal from './components/modals/DailyDetailModal';
+import DayPanel from './components/panels/DayPanel';
 
 export default function App() {
   const { events, timeBlocks, addEvent, changeEvent, removeEvent, saveDayBlocks } = usePlannerData();
@@ -35,39 +33,28 @@ export default function App() {
     },
   });
 
-  const [showDailyModal, setShowDailyModal] = useState(false);
-  const [dailyModalDate, setDailyModalDate] = useState(null);
-  const [dailyFocusHour, setDailyFocusHour] = useState(null); // 시간 일정을 눌러 열었으면 그 시간, 아니면 null
-  const [singleDayEventTitle, setSingleDayEventTitle] = useState('');
-  const [singleDayEventColor, setSingleDayEventColor] = useState(COLOR_PALETTE[0].value);
-  const [tempDaily, setTempDaily] = useState([]);
+  // 오른쪽 일정 패널. null이면 닫힘.
+  //   date       열린 날짜
+  //   focusHour  시간 일정을 눌러 열었으면 그 시간, 아니면 null
+  //   openCount  열 때마다 1씩 늘린다. 같은 날짜를 다시 눌러도 패널을 새로 그려 커서·강조를 다시 잡게 한다.
+  const [panel, setPanel] = useState(null);
 
-  const [showMoreDate, setShowMoreDate] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // 그날의 상세 일정 관리 팝업을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter)
-  // hour를 주면(시간 일정이나 더보기의 ✏️를 눌렀을 때) 그 시간 줄을 보여 주며 연다.
-  // e는 달력 칸에서 누른 경우에만 있다. (더보기 팝업에서 열 때는 null)
-  const openDailyModal = (e, dateString, hour = null) => {
+  // 그날의 일정 패널을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter, 또는 +N 더보기)
+  // hour를 주면(칸의 시간 일정을 눌렀을 때) 그 시간 줄을 보여 주며 연다.
+  // e는 달력 칸에서 누른 경우에만 있다.
+  const openDayPanel = (e, dateString, hour = null) => {
     if (e) e.stopPropagation();
     clearSelection();
-    setDailyModalDate(dateString);
-    setDailyFocusHour(hour);
-    setSingleDayEventTitle('');
-    setSingleDayEventColor(COLOR_PALETTE[0].value);
-    loadDailyScheduleData(dateString);
-    setShowDailyModal(true);
+    setPanel(prev => ({ date: dateString, focusHour: hour, openCount: (prev?.openCount ?? 0) + 1 }));
   };
 
-  // 저장된 카드(시작~끝)를 상세 일정 창의 24줄로 바꿔 채운다.
-  const loadDailyScheduleData = (targetDate) => {
-    setTempDaily(blocksToSlots(timeBlocks[targetDate] || [], COLOR_PALETTE[0].value));
-  };
-
-  const handleTempDailyChange = (hour, field, value) => {
-    setTempDaily(prev => prev.map(item => item.hour === hour ? { ...item, [field]: value } : item));
+  // 패널의 ‹ › 버튼: 전날·다음 날로 넘긴다.
+  const moveDayPanel = (days) => {
+    setPanel(prev => ({ date: addDays(prev.date, days), focusHour: null, openCount: prev.openCount + 1 }));
   };
 
   const savePeriodEvent = () => {
@@ -75,34 +62,10 @@ export default function App() {
     closePeriodModal();
   };
 
-  const saveDailySchedules = () => {
-    if (singleDayEventTitle.trim()) {
-      addEvent({
-        title: singleDayEventTitle,
-        start_date: dailyModalDate,
-        end_date: dailyModalDate,
-        color: singleDayEventColor,
-      });
-    }
-
-    // 24줄을 다시 카드 목록으로 바꿔 저장한다. (빈 줄은 빠지고, 원래 카드의 id는 이어받는다)
-    saveDayBlocks(dailyModalDate, slotsToBlocks(tempDaily, timeBlocks[dailyModalDate] || []));
-
-    closeDailyModal();
-  };
-
   const closePeriodModal = () => {
     setShowPeriodModal(false);
     clearSelection();
     setNewEvent({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
-  };
-
-  const closeDailyModal = () => {
-    setShowDailyModal(false);
-    setDailyModalDate(null);
-    setDailyFocusHour(null);
-    setSingleDayEventTitle('');
-    setTempDaily([]);
   };
 
   const openEditModal = (e, eventItem) => {
@@ -139,29 +102,52 @@ export default function App() {
     events, timeBlocks,
     selectionStart, selectionEnd,
     onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
-    onOpenDay: openDailyModal,
+    panelDate: panel?.date ?? null,
+    onOpenDay: openDayPanel,
     onEditEvent: openEditModal, onDeleteEvent: openDeleteModal,
-    onShowMore: setShowMoreDate,
+    onShowMore: (dateString) => openDayPanel(null, dateString),
   };
 
+  const panelEvents = panel ? events.filter(e => e.start_date <= panel.date && e.end_date >= panel.date) : [];
+
   return (
-    // 화면 바깥 여백은 머리말 안쪽 여백과 같은 24px(p-6)로 맞춘다
-    <div className="p-6 bg-background min-h-screen">
-      <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} />
+    // 왼쪽은 달력, 오른쪽은 (열려 있으면) 일정 패널. 달력은 패널이 열려도 계속 보인다.
+    <div className="flex bg-background min-h-screen">
+      {/* 화면 바깥 여백은 머리말 안쪽 여백과 같은 24px(p-6)로 맞춘다 */}
+      <main className="flex-1 min-w-0 p-6">
+        <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} />
 
-      {/* 보기 방식 버튼은 달력의 설정이라 달력 상자 바로 위 오른쪽에, 달력과 한 묶음으로 보이게 좁은 간격(12px)으로 둔다 */}
-      <div className="flex justify-end mb-3">
-        <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
-      </div>
-
-      <div className={`border border-border rounded-lg shadow-inner bg-card relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
-        <div className={`flex flex-col ${isWrapMode ? '' : 'min-w-max'}`}>
-          {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
-          {displayYears.map(year => (
-            <YearSection key={year} year={year} isWrapMode={isWrapMode} cellProps={cellProps} />
-          ))}
+        {/* 보기 방식 버튼은 달력의 설정이라 달력 상자 바로 위 오른쪽에, 달력과 한 묶음으로 보이게 좁은 간격(12px)으로 둔다 */}
+        <div className="flex justify-end mb-3">
+          <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
         </div>
-      </div>
+
+        <div className={`border border-border rounded-lg shadow-inner bg-card relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
+          <div className={`flex flex-col ${isWrapMode ? '' : 'min-w-max'}`}>
+            {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
+            {displayYears.map(year => (
+              <YearSection key={year} year={year} isWrapMode={isWrapMode} cellProps={cellProps} />
+            ))}
+          </div>
+        </div>
+      </main>
+
+      {/* --- 오른쪽 일정 패널 (이 날의 일정 + 시간 일정) --- */}
+      {panel && (
+        <DayPanel
+          key={`${panel.date}-${panel.openCount}`}
+          date={panel.date}
+          dayEvents={panelEvents}
+          blocks={timeBlocks[panel.date] || []}
+          focusHour={panel.focusHour}
+          onClose={() => setPanel(null)}
+          onMoveDay={moveDayPanel}
+          onAddAllDay={({ title, color }) => addEvent({ title, start_date: panel.date, end_date: panel.date, color })}
+          onEditEvent={(evt) => openEditModal(null, evt)}
+          onDeleteEvent={(evt) => openDeleteModal(null, evt)}
+          onSaveBlocks={(blocks) => saveDayBlocks(panel.date, blocks)}
+        />
+      )}
 
       {/* --- 기간 일정 등록 모달 --- */}
       {showPeriodModal && (
@@ -170,30 +156,6 @@ export default function App() {
           onChange={(changes) => setNewEvent(prev => ({ ...prev, ...changes }))}
           onClose={closePeriodModal}
           onSave={savePeriodEvent}
-        />
-      )}
-
-      {/* --- 상세 일정 모달 (종일 + 개별 타임블록) --- */}
-      {showDailyModal && (
-        <DailyDetailModal
-          date={dailyModalDate}
-          allDayTitle={singleDayEventTitle} allDayColor={singleDayEventColor}
-          onAllDayTitleChange={setSingleDayEventTitle} onAllDayColorChange={setSingleDayEventColor}
-          slots={tempDaily} onSlotChange={handleTempDailyChange}
-          focusHour={dailyFocusHour}
-          onSave={saveDailySchedules} onClose={closeDailyModal}
-        />
-      )}
-
-      {/* --- 더보기 모달 --- */}
-      {showMoreDate && (
-        <MoreEventsModal
-          date={showMoreDate}
-          events={events} timeBlocks={timeBlocks}
-          onClose={() => setShowMoreDate(null)}
-          onEditEvent={(evt) => openEditModal(null, evt)}
-          onDeleteEvent={(evt) => openDeleteModal(null, evt)}
-          onEditSchedule={(hour) => openDailyModal(null, showMoreDate, hour)}
         />
       )}
 

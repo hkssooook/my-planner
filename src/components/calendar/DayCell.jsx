@@ -8,11 +8,13 @@ import StarIcon from '../icons/StarIcon';
 import { timeToHour } from '../../utils/timeBlocks';
 
 // 달력의 날짜 한 칸. 화면 맞춤 모드에서 없는 날(예: 2월 30일)은 아무것도 그리지 않는다.
+// panelDate: 오른쪽 일정 패널에 열린 날짜. 그 칸에는 테두리를 둘러 지금 보고 있는 날임을 알린다.
 export default function DayCell({
   year, month, day,
   isWrapMode,
   events, timeBlocks,
   selectionStart, selectionEnd,
+  panelDate,
   onMouseDown, onMouseEnter,
   onOpenDay, onEditEvent, onDeleteEvent, onShowMore,
 }) {
@@ -53,12 +55,13 @@ export default function DayCell({
     <div 
       onMouseDown={() => onMouseDown(dateString)}
       onMouseEnter={() => onMouseEnter(dateString)}
-      // 칸 아무 곳이나 누르면 그날 상세 일정 관리가 열린다. (두 칸 이상 끌면 드래그라서 여기까지 오지 않는다)
+      // 칸 아무 곳이나 누르면 오른쪽에 그날 일정 패널이 열린다. (두 칸 이상 끌면 드래그라서 여기까지 오지 않는다)
       onClick={(e) => onOpenDay(e, dateString)}
-      className={`group/cell p-1 border-r border-b border-border w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none cursor-pointer ${isSelected ? 'bg-selection' : 'hover:bg-muted'}`}
+      aria-current={dateString === panelDate ? 'date' : undefined}
+      className={`group/cell p-1 border-r border-b border-border w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none cursor-pointer ${isSelected ? 'bg-selection' : 'hover:bg-muted'} ${dateString === panelDate ? 'ring-2 ring-inset ring-primary' : ''}`}
     >
       <div className="flex justify-between items-start text-xs min-w-0">
-        {/* 키보드·화면 낭독기용 입구. 누르면 클릭이 칸까지 올라가 위의 onClick이 상세 창을 연다. */}
+        {/* 키보드·화면 낭독기용 입구. 누르면 클릭이 칸까지 올라가 위의 onClick이 일정 패널을 연다. */}
         <button
           type="button"
           title="상세 일정 관리"

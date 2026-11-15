@@ -96,6 +96,15 @@ describe('slotsToBlocks (상세 일정 창 24줄 → 카드)', () => {
     expect(result[1]).toMatchObject({ start: '14:00', end: '15:00', content: '새 일정' });
     expect(result[1].id).not.toBe('a');
   });
+  it('줄에 id가 미리 붙어 있으면 새 카드가 그 id를 쓴다 (여러 번 저장해도 같은 카드)', () => {
+    const slots = blocksToSlots([], BLUE);
+    slots[9] = { ...slots[9], id: 'pre', content: '회' };
+    const first = slotsToBlocks(slots, []);
+    slots[9] = { ...slots[9], content: '회의' };
+    const second = slotsToBlocks(slots, first);
+    expect(first[0].id).toBe('pre');
+    expect(second).toEqual([{ ...first[0], content: '회의' }]);
+  });
   it('줄의 내용을 지우면 그 카드는 사라진다', () => {
     const existing = [block('a', '09:00', '10:00', '회의')];
     const slots = blocksToSlots(existing, BLUE);

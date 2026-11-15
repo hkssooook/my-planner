@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, within, fireEvent, waitFor } from '@testing-library/react';
+import { render, within, fireEvent } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, deleteIconOf, editIconOf, hexToRgb, makeEvent, popup, popupCount, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, dayPanel, deleteIconOf, editIconOf, hexToRgb, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 
 // 만들어 둔 일정을 보고(+N 더보기), 고치고, 지우는 동작을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
@@ -47,94 +47,62 @@ describe('+N 더보기', () => {
     expect(within(cellOf(sameDay)).getByText('+2 더보기')).toBeInTheDocument();
   });
 
-  it('"더보기"를 누르면 그날의 전체 일정이 팝업에 나오고 X로 닫을 수 있다', async () => {
+  it('"더보기"를 누르면 오른쪽 일정 패널이 열려 그날의 모든 일정이 나오고, X로 닫을 수 있다', async () => {
     seedEvents(fourEvents());
     seedDaily({ [sameDay]: [{ hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple }] });
     const user = setup();
     await user.click(within(cellOf(sameDay)).getByText('+2 더보기'));
 
-    const box = popup(`${sameDay} 전체 일정`);
-    for (const title of ['일정 하나', '일정 둘', '일정 셋', '일정 넷', '주요 회의']) {
-      expect(within(box).getByText(title)).toBeInTheDocument();
+    const box = dayPanel();
+    for (const title of ['일정 하나', '일정 둘', '일정 셋', '일정 넷']) {
+      expect(barIn(box, title)).toBeInTheDocument();
     }
-    expect(within(box).getByText('09:00')).toBeInTheDocument();
+    expect(within(box).getByRole('textbox', { name: '09:00 일정 내용' })).toHaveValue('주요 회의');
+    expect(popupCount()).toBe(0); // 더보기 팝업은 없어졌다
 
-    await user.click(within(box).getByRole('button', { name: '닫기' })); // 오른쪽 위 X
-    expect(queryPopup(`${sameDay} 전체 일정`)).toBeNull();
+    await user.click(buttonIn(box, '닫기'));
+    expect(queryDayPanel()).toBeNull();
   });
 
-  it('"더보기" 팝업: 화면의 80%까지만 커지고, 넘치면 일정 목록이 스크롤된다', async () => {
+  it('패널 위에 팝업이 겹쳐 뜰 때 나중에 연 팝업이 화면 구조에서도 뒤에 온다 (수정 → 삭제 확인 순)', async () => {
     seedEvents(fourEvents());
     const user = setup();
     await user.click(within(cellOf(sameDay)).getByText('+1 더보기'));
-    const box = popup(`${sameDay} 전체 일정`);
-    expect(box).toHaveClass('max-h-[80vh]', 'sm:max-w-sm'); // 팝업 너비: 중간
-    expect([...box.children].some((child) => child.classList.contains('overflow-y-auto'))).toBe(true);
-  });
-
-  it('"더보기"의 시간 일정 ✏️를 누르면 상세 일정이 그 시간 줄로 더보기 위에 열리고, 고쳐 저장하면 목록에 바로 보인다', async () => {
-    seedEvents(fourEvents());
-    seedDaily({ [sameDay]: [
-      { hour: 9, content: '주요 회의', is_important: true, color: COLOR.purple },
-      { hour: 14, content: '평범한 일정', is_important: false, color: COLOR.blue },
-    ] });
-    const user = setup();
-    await user.click(within(cellOf(sameDay)).getByText('+3 더보기'));
-    const more = popup(`${sameDay} 전체 일정`);
-    await user.click(within(more).getByRole('button', { name: '14:00 평범한 일정 수정' }));
-
-    const box = popup('상세 일정 관리');
-    const input = within(box).getByRole('textbox', { name: '14:00 일정 내용' });
-    await waitFor(() => expect(input).toHaveFocus());
-    expect(input.parentElement).toHaveClass('border-primary');
-    const names = [...document.querySelectorAll('[role="dialog"]')].map((d) => d.querySelector('[data-slot="dialog-title"]').textContent);
-    expect(names).toEqual([`${sameDay} 전체 일정`, '상세 일정 관리']);
-
-    await user.clear(input);
-    await user.type(input, '고친 일정');
-    await user.click(buttonIn(box, '통합 저장'));
-    expect(queryPopup('상세 일정 관리')).toBeNull();
-    expect(within(popup(`${sameDay} 전체 일정`)).getByText('고친 일정')).toBeInTheDocument();
-  });
-
-  it('팝업이 겹쳐 뜰 때 나중에 연 팝업이 화면 구조에서도 뒤에 온다 (더보기 → 수정 → 삭제 확인 순. 같은 층이면 뒤에 그려진 것이 위에 뜬다)', async () => {
-    seedEvents(fourEvents());
-    const user = setup();
-    await user.click(within(cellOf(sameDay)).getByText('+1 더보기'));
-    await user.click(editIconOf(barIn(popup(`${sameDay} 전체 일정`), '일정 넷')));
+    await user.click(editIconOf(barIn(dayPanel(), '일정 넷')));
     await user.click(buttonIn(popup('일정 수정'), '삭제'));
 
     const names = [...document.querySelectorAll('[role="dialog"]')].map((d) => d.querySelector('[data-slot="dialog-title"]').textContent);
-    expect(names).toEqual([`${sameDay} 전체 일정`, '일정 수정', '일정 삭제']);
+    expect(names).toEqual(['일정 수정', '일정 삭제']);
   });
 
-  it('겹친 팝업의 맨 위를 닫으면 아래 팝업이 다시 눌리고 입력된다 (삭제 확인 취소 → 수정 팝업 → 더보기 팝업 순으로 닫기)', async () => {
+  it('겹친 팝업의 맨 위를 닫으면 아래 팝업이 다시 입력되고, 팝업을 모두 닫으면 패널이 다시 눌린다', async () => {
     seedEvents(fourEvents());
     const user = setup();
     await user.click(within(cellOf(sameDay)).getByText('+1 더보기'));
-    await user.click(editIconOf(barIn(popup(`${sameDay} 전체 일정`), '일정 넷')));
+    await user.click(editIconOf(barIn(dayPanel(), '일정 넷')));
     await user.click(buttonIn(popup('일정 수정'), '삭제'));
     await user.click(buttonIn(popup('일정 삭제'), '취소'));
 
-    expect(popupCount()).toBe(2);
+    expect(popupCount()).toBe(1);
     await user.type(within(popup('일정 수정')).getByDisplayValue('일정 넷'), '!'); // 수정 팝업이 다시 입력된다
     expect(within(popup('일정 수정')).getByDisplayValue('일정 넷!')).toBeInTheDocument();
     await user.click(buttonIn(popup('일정 수정'), '취소'));
-    expect(popupCount()).toBe(1);
-    await user.click(within(popup(`${sameDay} 전체 일정`)).getByRole('button', { name: '닫기' })); // 더보기 팝업도 다시 눌린다
     expect(popupCount()).toBe(0);
+    await user.click(buttonIn(dayPanel(), '닫기')); // 패널도 다시 눌린다
+    expect(queryDayPanel()).toBeNull();
   });
 
-  it('"더보기" 팝업에서 연필을 누르면 수정 팝업이 그 위에 겹쳐 열리고 "더보기" 팝업은 그대로 남는다', async () => {
+  it('패널에서 연필로 일정을 고쳐 저장하면 패널 목록에도 바로 바뀐 이름이 보인다', async () => {
     seedEvents(fourEvents());
     const user = setup();
     await user.click(within(cellOf(sameDay)).getByText('+1 더보기'));
-    const more = popup(`${sameDay} 전체 일정`);
-    await user.click(editIconOf(barIn(more, '일정 넷')));
+    await user.click(editIconOf(barIn(dayPanel(), '일정 넷')));
+    const box = popup('일정 수정');
+    await user.type(within(box).getByDisplayValue('일정 넷'), ' (고침)');
+    await user.click(buttonIn(box, '변경 저장'));
 
-    expect(popupCount()).toBe(2);
-    expect(within(popup('일정 수정')).getByDisplayValue('일정 넷')).toBeInTheDocument();
-    expect(queryPopup(`${sameDay} 전체 일정`)).not.toBeNull();
+    expect(popupCount()).toBe(0);
+    expect(barIn(dayPanel(), '일정 넷 (고침)')).toBeInTheDocument();
   });
 });
 
@@ -299,15 +267,14 @@ describe('일정 삭제', () => {
     expect(stored('planner_events').map((e) => e.title)).toEqual(['남을 일정']);
   });
 
-  it('"더보기" 팝업 안에서 지울 수도 있다', async () => {
+  it('일정 패널 안에서 지울 수도 있다', async () => {
     seedEvents([
       makeEvent(1, '일정 하나', '2026-01-05'), makeEvent(2, '일정 둘', '2026-01-05'),
       makeEvent(3, '일정 셋', '2026-01-05'), makeEvent(4, '일정 넷', '2026-01-05'),
     ]);
     const user = setup();
     await user.click(within(cellOf('2026-01-05')).getByText('+1 더보기'));
-    const more = popup('2026-01-05 전체 일정');
-    await user.click(deleteIconOf(barIn(more, '일정 넷')));
+    await user.click(deleteIconOf(barIn(dayPanel(), '일정 넷')));
     await user.click(buttonIn(popup('일정 삭제'), '확인'));
 
     expect(stored('planner_events').map((e) => e.title)).toEqual(['일정 하나', '일정 둘', '일정 셋']);
