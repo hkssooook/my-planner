@@ -19,7 +19,7 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
             ))}
           </SelectContent>
         </Select>
-        <h1 className="text-xl text-muted-foreground hidden sm:block">연속 연간 플래너</h1>
+        <h1 className="text-xl text-muted-foreground hidden sm:block">연간 플래너</h1>
       </div>
 
       <div className="flex items-center gap-2 bg-muted p-1 rounded-md border border-border">

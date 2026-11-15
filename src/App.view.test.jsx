@@ -40,7 +40,7 @@ describe('시험 도우미 점검 (이게 틀리면 아래 시험 전체를 믿�
 describe('첫 화면', () => {
   it('제목, 올해로 시작하는 연도 선택, 올해와 다음 해의 달력이 보인다', () => {
     render(<App />);
-    expect(screen.getByText('연속 연간 플래너')).toBeInTheDocument();
+    expect(screen.getByText('연간 플래너')).toBeInTheDocument();
     expect(yearSelect()).toHaveTextContent('2026년 기준');
     expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
     expect(screen.getByText('2027년 연간 일정')).toBeInTheDocument();
