@@ -240,6 +240,7 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(divider2026).toHaveClass('bg-surface-blue-4', '-mx-1', '-mt-1', 'rounded-t-lg');
     expect(divider2027).toHaveClass('bg-surface-blue-4', '-mx-1');
     expect(divider2027).not.toHaveClass('-mt-1', 'rounded-t-lg', 'rounded-sm');
+    expect(screen.getByText('2026')).toHaveClass('text-surface-blue-2'); // 연도 글자는 파랑 2단계
     // 연도 글자 칸은 월 이름 칸과 같은 자리에 선다 (섹션 끝에서 4px 안쪽부터 64px, 가운데 맞춤)
     expect(screen.getByText('2026')).toHaveClass('w-[calc(4rem+0.25rem)]', 'pl-1', 'justify-center');
     expect(cell.closest('.overflow-x-auto')).toHaveClass('bg-surface-blue-4');
