@@ -147,7 +147,8 @@ export default function App() {
   };
 
   return (
-    <div className="p-4 bg-background min-h-screen">
+    // 화면 바깥 여백은 머리말 안쪽 여백과 같은 24px(p-6)로 맞춘다
+    <div className="p-6 bg-background min-h-screen">
       <Header
         year={currentYear} onYearChange={setCurrentYear} years={yearOptions}
         isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode}
