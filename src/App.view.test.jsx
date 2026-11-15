@@ -130,13 +130,13 @@ describe('첫 화면', () => {
     expect(within(cellOf(date)).getByText(name)).toBeInTheDocument();
   });
 
-  it('쉬는 날(공휴일·일요일)은 날짜가 붉게, 평일과 토요일은 보통 색으로 보인다', () => {
+  it('쉬는 날(공휴일·토요일·일요일)은 날짜가 붉게, 평일은 보통 색으로 보인다', () => {
     render(<App />);
     const dateOf = (iso) => dayButtonOf(iso);
     expect(dateOf('2026-05-01')).toHaveClass('text-holiday'); // 금요일이지만 노동절
     expect(dateOf('2026-05-03')).toHaveClass('text-holiday'); // 일요일
     expect(dateOf('2026-05-04')).toHaveClass('text-foreground'); // 평일(월)
-    expect(dateOf('2026-05-02')).toHaveClass('text-foreground'); // 토요일은 붉지 않다
+    expect(dateOf('2026-05-02')).toHaveClass('text-holiday'); // 토요일
     expect(dateOf('2026-05-01')).not.toHaveClass('text-foreground');
   });
 

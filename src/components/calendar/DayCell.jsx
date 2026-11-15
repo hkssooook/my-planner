@@ -29,7 +29,7 @@ export default function DayCell({
   const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const dayOfWeek = getDayOfWeek(year, month, day);
   const holidayName = KR_HOLIDAYS[year]?.[dateString];
-  const isHoliday = holidayName || dayOfWeek === 0;
+  const isHoliday = holidayName || dayOfWeek === 0 || dayOfWeek === 6; // 공휴일·일요일(0)·토요일(6)은 쉬는 날
   
   const dayEvents = events.filter(e => e.start_date <= dateString && e.end_date >= dateString);
   const daySchedules = [...(timeBlocks[dateString] || [])].sort((a, b) => a.start.localeCompare(b.start));
