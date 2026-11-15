@@ -10,7 +10,7 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
     <div className="mb-6 flex flex-col items-center gap-6 md:grid md:grid-cols-[1fr_auto_1fr] bg-card p-6 rounded-lg shadow-xs">
       {/* 가운데 묶음: 제목 밑에 연도 선택 */}
       <div className="flex flex-col items-center gap-3 md:col-start-2">
-        <h1 className="text-xl text-muted-foreground hidden sm:block">연간 플래너</h1>
+        <h1 className="text-xl font-semibold text-foreground hidden sm:block">연간 플래너</h1>
         {/* shadcn Select. items는 "값 → 화면에 보일 글자" 짝이라서, 닫혀 있을 때도 "2026년"처럼 글자가 보인다 */}
         <Select value={year} onValueChange={onYearChange} items={yearItems}>
           <SelectTrigger aria-label="연도 선택">
