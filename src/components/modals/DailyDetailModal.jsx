@@ -29,7 +29,9 @@ export default function DailyDetailModal({
         <DialogDescription>{date}</DialogDescription>
       </DialogHeader>
 
-      <div className="overflow-y-auto flex flex-col gap-6">
+      {/* 스크롤 상자는 밖으로 나간 부분을 자르므로, 안쪽에 4px 여백(px-1)을 두어 입력칸의 포커스 테두리가 잘리지 않게 하고
+          같은 만큼 바깥으로 당겨(-mx-1) 내용 위치는 그대로 둔다 */}
+      <div className="overflow-y-auto flex flex-col gap-6 -mx-1 px-1">
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">전체(종일) 일정 추가 <span className="font-normal text-muted-foreground text-xs ml-1">(선택 사항)</span></h3>
           <div className="flex gap-3 items-center">
