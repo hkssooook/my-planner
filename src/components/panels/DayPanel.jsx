@@ -74,10 +74,9 @@ export default function DayPanel({
   return (
     <aside
       aria-label="상세 일정 관리"
-      // 위쪽과 오른쪽은 왼쪽 연도 카드처럼 화면 가장자리에서 24px 떨어지고, 아래쪽은 화면 끝까지 내려간다 (아래 여백이 있으면 패널이 짧아 보여서).
-      // 그래서 위쪽 모서리만 둥글고(15px) 화면 끝에 닿는 아래쪽은 각지며 아래 테두리도 없다.
-      // 스크롤해도 그 자리에 머물고(sticky top-6), 높이는 화면 높이에서 위 여백 24px을 뺀 만큼이다.
-      className="w-[380px] shrink-0 self-start sticky top-6 mt-6 mr-6 h-[calc(100vh-24px)] rounded-t-lg border border-b-0 border-border bg-card shadow-xs overflow-y-auto flex flex-col"
+      // 위쪽과 오른쪽은 왼쪽 연도 카드처럼 화면 가장자리에서 24px, 아래쪽은 12px 떨어진다 (아래를 24px 띄우면 패널이 짧아 보여서 절반으로).
+      // 네 모서리 모두 둥글다(15px). 스크롤해도 그 자리에 머물고(sticky top-6), 높이는 화면 높이에서 위 24px + 아래 12px을 뺀 만큼이다.
+      className="w-[380px] shrink-0 self-start sticky top-6 mt-6 mb-3 mr-6 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
     >
       {/* 머리말과 "이 날의 일정"은 패널을 스크롤해도 위에 붙어 있다 (그날 무슨 일이 있는지 늘 보이게).
           목록이 길어지면 고정 영역이 화면을 다 덮지 않도록 목록 높이를 200px(일정 5개 반쯤)로 제한하고 그 안에서만 스크롤한다. */}
@@ -128,7 +127,8 @@ export default function DayPanel({
                 onChange={(e) => setAllDayTitle(e.target.value)}
                 className="flex-1 min-w-0 px-3 py-1.5 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
               />
-              <Button type="submit" variant="outline" size="sm">추가</Button>
+              {/* 바탕은 파랑 2단계 (secondary 토큰 = #DBDCFF) */}
+              <Button type="submit" variant="secondary" size="sm">추가</Button>
             </div>
             <ColorPicker size="md" label="종일 일정 색" value={allDayColor} onChange={setAllDayColor} />
           </form>

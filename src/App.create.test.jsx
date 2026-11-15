@@ -170,11 +170,19 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(within(pinned).getByRole('list')).toHaveClass('max-h-[200px]', 'overflow-y-auto');
     });
 
-    it('패널은 위·오른쪽이 화면 가장자리에서 24px 떨어지고 아래는 화면 끝까지 닿는다 (위쪽 모서리만 둥글다)', async () => {
+    it('패널은 위·오른쪽이 화면 가장자리에서 24px, 아래는 12px 떨어진 둥근 카드다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      expect(box).toHaveClass('sticky', 'top-6', 'mt-6', 'mr-6', 'h-[calc(100vh-24px)]', 'rounded-t-lg', 'border-b-0');
-      expect(box).not.toHaveClass('my-6', 'rounded-lg');
+      expect(box).toHaveClass('sticky', 'top-6', 'mt-6', 'mb-3', 'mr-6', 'h-[calc(100vh-36px)]', 'rounded-lg', 'border');
+      expect(box).not.toHaveClass('my-6', 'rounded-t-lg', 'border-b-0');
+    });
+
+    it('종일 일정 "추가" 버튼은 파랑 2단계 바탕(secondary)이다', async () => {
+      const user = setup();
+      const box = await openPanel(user, '2026-01-05');
+      const add = buttonIn(within(box).getByRole('region', { name: '종일 일정 추가' }), '추가');
+      expect(add).toHaveClass('bg-secondary');
+      expect(add).not.toHaveClass('bg-background');
     });
 
     it('목록과 종일 일정 추가는 따로 나뉜 영역이고, 일정이 없으면 없다는 안내가 보인다', async () => {
