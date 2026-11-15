@@ -159,12 +159,22 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(within(box).queryByText('다른 날 일정')).toBeNull();
     });
 
+    it('목록과 종일 일정 추가는 따로 나뉜 영역이고, 일정이 없으면 없다는 안내가 보인다', async () => {
+      const user = setup();
+      const box = await openPanel(user, '2026-01-05');
+      const list = within(box).getByRole('region', { name: /이 날의 일정/ });
+      const add = within(box).getByRole('region', { name: '종일 일정 추가' });
+      expect(within(list).getByText('이 날에 걸친 기간·종일 일정이 없어요.')).toBeInTheDocument();
+      expect(within(list).queryByRole('textbox')).toBeNull();
+      expect(within(add).getByRole('textbox', { name: '종일 일정명' })).toBeInTheDocument();
+    });
+
     it('종일 일정을 입력하고 추가하면 곧바로 패널 목록과 달력 칸에 생기고 저장된다. 입력칸은 비워진다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
       await user.type(within(box).getByRole('textbox', { name: '종일 일정명' }), '종일 워크숍');
       await user.click(within(within(box).getByRole('group', { name: '종일 일정 색' })).getByRole('button', { name: '앰버' }));
-      await user.click(buttonIn(box, '종일 일정 추가'));
+      await user.click(buttonIn(within(box).getByRole('region', { name: '종일 일정 추가' }), '추가'));
 
       expect(barIn(box, '종일 워크숍')).toBeInTheDocument();
       expect(within(cellOf('2026-01-05')).getByText('종일 워크숍')).toBeInTheDocument();

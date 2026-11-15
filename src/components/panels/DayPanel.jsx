@@ -25,8 +25,9 @@ const initialSlots = (blocks) =>
 
 // 날짜를 누르면 화면 오른쪽에 열리는 그날의 일정 패널. 왼쪽 달력은 계속 보인다.
 //   ① 머리말: 날짜, 전날/다음 날, 닫기
-//   ② 이 날의 일정: 그날에 걸친 기간·종일 일정 + 종일 일정 추가
-//   ③ 시간 일정: 0~23시 24줄 (입력하는 즉시 저장)
+//   ② 이 날의 일정: 그날에 걸친 기간·종일 일정 목록
+//   ③ 종일 일정 추가: 이름 + 색
+//   ④ 시간 일정: 0~23시 24줄 (입력하는 즉시 저장)
 // 날짜가 바뀌면 부모가 key를 바꿔 이 부품을 새로 그린다. (입력 중이던 줄 상태가 다른 날짜로 넘어가지 않게)
 //
 //   dayEvents   그날에 걸친 기간·종일 일정 목록
@@ -103,9 +104,15 @@ export default function DayPanel({
               </li>
             ))}
           </ul>
+          {dayEvents.length === 0 && (
+            <p className="text-xs text-muted-foreground">이 날에 걸친 기간·종일 일정이 없어요.</p>
+          )}
+        </section>
 
+        <section aria-labelledby="day-panel-add" className="border-t border-border pt-5">
+          <h3 id="day-panel-add" className="text-sm font-semibold text-foreground mb-2">종일 일정 추가</h3>
           <form
-            className="flex flex-col gap-2 mt-3"
+            className="flex flex-col gap-2"
             onSubmit={(e) => { e.preventDefault(); addAllDay(); }}
           >
             <div className="flex gap-2">
@@ -114,7 +121,7 @@ export default function DayPanel({
                 onChange={(e) => setAllDayTitle(e.target.value)}
                 className="flex-1 min-w-0 px-3 py-1.5 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
               />
-              <Button type="submit" variant="outline" size="sm">종일 일정 추가</Button>
+              <Button type="submit" variant="outline" size="sm">추가</Button>
             </div>
             <ColorPicker size="md" label="종일 일정 색" value={allDayColor} onChange={setAllDayColor} />
           </form>

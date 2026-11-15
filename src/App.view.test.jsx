@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import App from './App';
 import { KR_HOLIDAYS } from './data/holidays';
 import { setupTestEnvironment, COLOR, cellOf, dayButtonOf, makeEvent, seedDaily, seedEvents, setup } from './test/helpers';
@@ -9,20 +9,23 @@ import { setupTestEnvironment, COLOR, cellOf, dayButtonOf, makeEvent, seedDaily,
 
 setupTestEnvironment();
 
-// 연도 드롭다운(shadcn Select). 닫혀 있을 때 보이는 글자는 combobox의 글자로, 선택지는 눌러서 연 뒤에 읽는다.
-const yearSelect = () => screen.getByRole('combobox', { name: '연도 선택' });
-// 열기는 키보드(Enter)로 한다. (마우스를 누르자마자 떼는 시험용 빠른 클릭에서는 Base UI Select가 열렸다 바로 닫혀 결과가 흔들린다)
+// 연도 버튼("2026년 ⌄"). 누르면 펼침 상자(shadcn Popover) 안에 연도가 세로 탭(shadcn Tabs)으로 나온다.
+const yearSelect = () => screen.getByRole('button', { name: /^연도 선택/ });
 const openYear = async (user) => {
-  yearSelect().focus();
-  await user.keyboard('{Enter}');
+  await user.click(yearSelect());
+};
+// 보기 방식도 탭이라서, 연도 탭은 "연도" 탭 묶음 안에서만 찾는다. (상자가 닫혀 있으면 빈 목록)
+const yearTabs = () => {
+  const list = screen.queryByRole('tablist', { name: '연도' });
+  return list ? within(list).getAllByRole('tab') : [];
 };
 const yearOptions = async (user) => {
   await openYear(user);
-  return screen.getAllByRole('option').map((o) => o.textContent);
+  return yearTabs().map((o) => o.textContent);
 };
 const pickYear = async (user, label) => {
   await openYear(user);
-  await user.click(screen.getByRole('option', { name: label }));
+  await user.click(screen.getByRole('tab', { name: label }));
 };
 
 describe('시험 도우미 점검 (이게 틀리면 아래 시험 전체를 믿을 수 없다)', () => {
@@ -193,41 +196,61 @@ describe('머리말: 연도와 보기 방식', () => {
 
   it('"화면 맞춤"을 누르면 보기 방식이 바뀌고, "가로 스크롤"을 누르면 돌아온다', async () => {
     const user = setup();
-    expect(screen.getByText('가로 스크롤')).toHaveClass('bg-card'); // 처음에는 가로 스크롤이 선택된 모양
+    const tab = (name) => screen.getByRole('tab', { name });
+    expect(tab('가로 스크롤')).toHaveAttribute('data-active'); // 처음에는 가로 스크롤이 선택된 모양 (shadcn Tabs는 data-active일 때 흰 바탕)
 
     await user.click(screen.getByText('화면 맞춤'));
-    expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
-    expect(screen.getByText('가로 스크롤')).not.toHaveClass('bg-card');
+    expect(tab('화면 맞춤')).toHaveAttribute('data-active');
+    expect(tab('가로 스크롤')).not.toHaveAttribute('data-active');
     expect(screen.getByText('2026')).toBeInTheDocument(); // 화면 맞춤에서도 연도 구분선에 연도 숫자가 보인다
     expect(screen.getAllByTitle('상세 일정 관리')).toHaveLength(730); // 날짜 칸은 그대로
 
     await user.click(screen.getByText('가로 스크롤'));
-    expect(screen.getByText('가로 스크롤')).toHaveClass('bg-card');
+    expect(tab('가로 스크롤')).toHaveAttribute('data-active');
     expect(screen.getByText('2026')).toBeInTheDocument();
   });
 
-  it('연도 드롭다운은 입력칸 상자가 아니라 제목처럼 보인다 (테두리 없이 24px 반굵게), 앱 이름은 그 밑의 작은 부제목이다', () => {
+  it('연도 버튼은 입력칸 상자가 아니라 제목처럼 보이고(24px 반굵게) 좌우 여백이 같다(12px), 앱 이름은 그 밑의 작은 부제목이다', () => {
     render(<App />);
-    expect(yearSelect()).toHaveClass('text-2xl', 'font-semibold', 'border-transparent', 'data-[size=default]:h-auto');
-    expect(yearSelect()).not.toHaveClass('text-sm', 'border-input', 'data-[size=default]:h-8'); // shadcn 기본 상자 모양은 덮어쓴다
+    expect(yearSelect()).toHaveClass('text-2xl', 'font-semibold', 'px-3');
+    expect(yearSelect()).not.toHaveClass('border', 'pl-[34px]');
+    expect(yearSelect()).toHaveAccessibleName('연도 선택 (지금 2026년)');
     const subtitle = screen.getByText('연간 플래너');
     expect(subtitle).toHaveClass('text-sm', 'text-muted-foreground');
     expect(yearSelect().compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // 연도가 먼저, 부제목이 뒤
   });
 
-  it('연도 드롭다운을 열면 지금 연도에 선택 표시가 있고, 고르면 닫힌다', async () => {
+  it('연도 버튼을 누르면 연도가 세로 탭으로 나오고 지금 연도가 선택돼 있으며, 고르면 닫힌다', async () => {
     const user = setup();
     await openYear(user);
-    expect(screen.getByRole('option', { name: '2026년' })).toHaveAttribute('aria-selected', 'true');
-    await user.click(screen.getByRole('option', { name: '2028년' }));
-    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    expect(screen.getByRole('tablist', { name: '연도' })).toHaveAttribute('aria-orientation', 'vertical');
+    expect(screen.getByRole('tab', { name: '2026년' })).toHaveAttribute('aria-selected', 'true');
+    await user.click(screen.getByRole('tab', { name: '2028년' }));
+    await waitFor(() => expect(yearTabs()).toHaveLength(0));
     expect(yearSelect()).toHaveTextContent('2028년');
   });
 
-  it('연도 목록은 트리거 아래로 펼쳐진다 (shadcn 기본 "선택값을 트리거 자리에 맞춤"은 맨 위 머리말에서 선택지가 잘려서 끈다)', async () => {
+  it('지금 연도를 다시 눌러도 상자가 닫히고 연도는 그대로다', async () => {
     const user = setup();
     await openYear(user);
-    expect(document.querySelector('[data-slot="select-content"]')).toHaveAttribute('data-align-trigger', 'false');
+    await user.click(screen.getByRole('tab', { name: '2026년' }));
+    await waitFor(() => expect(yearTabs()).toHaveLength(0));
+    expect(yearSelect()).toHaveTextContent('2026년');
+  });
+
+  it('키보드로도 고를 수 있다 (↓로 옮겨 Enter)', async () => {
+    const user = setup();
+    await openYear(user);
+    await waitFor(() => expect(screen.getByRole('tab', { name: '2026년' })).toHaveFocus());
+    await user.keyboard('{ArrowDown}{Enter}');
+    await waitFor(() => expect(yearTabs()).toHaveLength(0));
+    expect(yearSelect()).toHaveTextContent('2027년');
+  });
+
+  it('연도 목록은 버튼 아래로 펼쳐진다 (맨 위 머리말이라 위로 펼치면 잘린다)', async () => {
+    const user = setup();
+    await openYear(user);
+    expect(document.querySelector('[data-slot="popover-content"]')).toHaveAttribute('data-side', 'bottom');
   });
 
   it('화면 맞춤 상태에서 연도를 바꿔도 보기 방식이 유지된다', async () => {
@@ -236,7 +259,7 @@ describe('머리말: 연도와 보기 방식', () => {
     await pickYear(user, '2027년');
 
     expect(yearSelect()).toHaveTextContent('2027년');
-    expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
+    expect(screen.getByRole('tab', { name: '화면 맞춤' })).toHaveAttribute('data-active');
     expect(screen.getByText('2027')).toBeInTheDocument(); // 바꾼 해의 달력이 화면 맞춤으로 보인다
     expect(screen.queryByText('2026')).not.toBeInTheDocument();
   });

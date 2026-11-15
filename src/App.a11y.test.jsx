@@ -67,14 +67,15 @@ describe('접근성: 아이콘 버튼의 이름', () => {
   });
 });
 
-describe('접근성: 보기 방식 버튼', () => {
-  it('지금 선택된 보기 방식이 눌림(aria-pressed) 상태로 알려진다', async () => {
+describe('접근성: 보기 방식 탭', () => {
+  it('보기 방식은 이름 있는 탭 묶음이고, 지금 선택된 것이 선택(aria-selected) 상태로 알려진다', async () => {
     const user = setup();
-    expect(screen.getByRole('button', { name: '가로 스크롤' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: '화면 맞춤' })).toHaveAttribute('aria-pressed', 'false');
-    await user.click(screen.getByRole('button', { name: '화면 맞춤' }));
-    expect(screen.getByRole('button', { name: '가로 스크롤' })).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('button', { name: '화면 맞춤' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('tablist', { name: '보기 방식' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '가로 스크롤' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: '화면 맞춤' })).toHaveAttribute('aria-selected', 'false');
+    await user.click(screen.getByRole('tab', { name: '화면 맞춤' }));
+    expect(screen.getByRole('tab', { name: '가로 스크롤' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: '화면 맞춤' })).toHaveAttribute('aria-selected', 'true');
   });
 });
 
