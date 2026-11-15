@@ -15,8 +15,10 @@ export default function MonthRow({ year, month, isWrapMode, cellProps }) {
 
   if (isWrapMode) {
     return (
-      <div className="flex flex-wrap gap-1">
-        <div className="w-full px-4 py-2 bg-surface-blue-3 rounded-sm text-left font-semibold text-foreground">
+      // 화면 맞춤: 격자(grid)로 놓는다. 칸은 최소 120px, 한 줄에 들어가는 만큼 놓고 남는 폭은 모든 칸이 똑같이 나눠 가진다.
+      // 그래서 줄의 마지막 칸 오른쪽 끝이 항상 월 이름 줄(col-span-full, 한 줄 전체)의 오른쪽 끝과 맞는다.
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-1">
+        <div className="col-span-full px-4 py-2 bg-surface-blue-3 rounded-sm text-left font-semibold text-foreground">
           {month}월
         </div>
         {dayCells}

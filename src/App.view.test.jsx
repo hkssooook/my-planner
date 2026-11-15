@@ -209,6 +209,11 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(tab('화면 맞춤')).toHaveAttribute('data-active');
     expect(tab('가로 스크롤')).not.toHaveAttribute('data-active');
     expect(screen.getByText('2026')).toBeInTheDocument(); // 화면 맞춤에서도 연도 구분선에 연도 숫자가 보인다
+    // 화면 맞춤에서는 날짜 칸이 고정 너비가 아니라 격자를 채워서, 줄의 오른쪽 끝이 월 이름 줄과 맞는다
+    const wrapRow = cellOf('2026-01-01').parentElement;
+    expect(wrapRow).toHaveClass('grid', 'grid-cols-[repeat(auto-fill,minmax(120px,1fr))]');
+    expect(within(wrapRow).getByText('1월')).toHaveClass('col-span-full');
+    expect(cellOf('2026-01-01')).not.toHaveClass('w-[120px]');
     expect(screen.getAllByTitle('상세 일정 관리')).toHaveLength(730); // 날짜 칸은 그대로
 
     await user.click(screen.getByText('가로 스크롤'));

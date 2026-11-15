@@ -63,7 +63,8 @@ export default function DayCell({
       onClick={(e) => onOpenDay(e, dateString)}
       aria-current={dateString === panelDate ? 'date' : undefined}
       // 칸마다 자기 테두리와 9px 모서리(rounded-sm)를 갖는다. 칸 사이 4px 틈은 MonthRow가 둔다.
-      className={`group/cell p-1 border border-border rounded-sm ${cellBg} w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none cursor-pointer ${dateString === panelDate ? 'ring-2 ring-inset ring-primary' : ''}`}
+      // 너비: 가로 스크롤은 120px 고정, 화면 맞춤은 MonthRow의 격자가 정한다(최소 120px, 남는 폭을 나눠 가짐).
+      className={`group/cell p-1 border border-border rounded-sm ${cellBg} ${isWrapMode ? 'min-w-0' : 'w-[120px] shrink-0'} h-28 flex flex-col gap-1 relative select-none cursor-pointer ${dateString === panelDate ? 'ring-2 ring-inset ring-primary' : ''}`}
     >
       <div className="flex justify-between items-start text-xs min-w-0">
         {/* 키보드·화면 낭독기용 입구. 누르면 클릭이 칸까지 올라가 위의 onClick이 일정 패널을 연다. */}
