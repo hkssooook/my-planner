@@ -17,6 +17,7 @@ describe('STORAGE_KEYS (저장소 이름표)', () => {
     expect(STORAGE_KEYS).toEqual({
       events: 'planner_events',
       daily: 'planner_daily',
+      timeBlocks: 'planner_time_blocks',
     });
   });
 });

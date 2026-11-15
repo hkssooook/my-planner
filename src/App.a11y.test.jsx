@@ -154,8 +154,8 @@ describe('접근성: 입력칸의 이름', () => {
     await user.type(within(box).getByRole('textbox', { name: '10:00 일정 내용' }), '열 시 회의');
     await user.click(within(box).getByRole('checkbox', { name: '10:00 주요 일정 (★ 표시)' }));
     await user.click(within(box).getByRole('button', { name: '통합 저장' }));
-    expect(JSON.parse(localStorage.getItem('planner_daily'))['2026-01-05']).toEqual([
-      expect.objectContaining({ hour: 10, content: '열 시 회의', is_important: true }),
+    expect(JSON.parse(localStorage.getItem('planner_time_blocks'))['2026-01-05']).toEqual([
+      expect.objectContaining({ start: '10:00', end: '11:00', content: '열 시 회의', is_important: true }),
     ]);
   });
 });

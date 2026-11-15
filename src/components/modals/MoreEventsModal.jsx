@@ -3,11 +3,12 @@ import DeleteIcon from '../icons/DeleteIcon';
 import StarIcon from '../icons/StarIcon';
 import PopupDialog from '../common/PopupDialog';
 import { readableTextOn } from '../../utils/color';
+import { timeToHour } from '../../utils/timeBlocks';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // 한 날짜의 전체 일정 목록 팝업. 보일지 말지는 부모가 정한다.
 // onEditSchedule(hour): 시간 일정의 ✏️를 누르면 그 시간을 알려 준다. (부모가 상세 일정 관리를 그 시간 줄로 연다)
-export default function MoreEventsModal({ date, events, dailySchedules, onClose, onEditEvent, onDeleteEvent, onEditSchedule }) {
+export default function MoreEventsModal({ date, events, timeBlocks, onClose, onEditEvent, onDeleteEvent, onEditSchedule }) {
   return (
     <PopupDialog maxHeight="80vh" onClose={onClose}>
       <DialogHeader>
@@ -23,17 +24,17 @@ export default function MoreEventsModal({ date, events, dailySchedules, onClose,
             </div>
           </div>
         ))}
-        {[...(dailySchedules[date] || [])].sort((a,b)=>a.hour-b.hour).map((sch) => (
-          <div key={sch.hour} className="text-xs text-foreground flex gap-2 items-center px-2 py-1.5 bg-muted rounded-sm border border-border w-full min-w-0">
+        {[...(timeBlocks[date] || [])].sort((a, b) => a.start.localeCompare(b.start)).map((sch) => (
+          <div key={sch.id} className="text-xs text-foreground flex gap-2 items-center px-2 py-1.5 bg-muted rounded-sm border border-border w-full min-w-0">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
-            <span className="font-semibold text-muted-foreground w-9 shrink-0">{String(sch.hour).padStart(2, '0')}:00</span>
+            <span className="font-semibold text-muted-foreground w-9 shrink-0">{sch.start}</span>
             <span className="truncate flex-1">{sch.content}</span>
             {sch.is_important && (
               <span className="text-warning shrink-0" title="주요 일정"><StarIcon className="w-3 h-3" /><span className="sr-only">주요</span></span>
             )}
             <button
-              onClick={() => onEditSchedule(sch.hour)}
-              aria-label={`${String(sch.hour).padStart(2, '0')}:00 ${sch.content} 수정`}
+              onClick={() => onEditSchedule(timeToHour(sch.start))}
+              aria-label={`${sch.start} ${sch.content} 수정`}
               className="text-muted-foreground opacity-80 hover:opacity-100 hover:text-foreground shrink-0 ml-1"
             >
               <EditIcon />

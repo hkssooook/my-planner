@@ -176,10 +176,10 @@ describe('상세 일정 (날짜 칸 누르기)', () => {
     expect(within(cell).getByText('아침 회의')).toBeInTheDocument();
     expect(within(cell).getByText('체크 없는 일정')).toBeInTheDocument();
 
-    const saved = stored('planner_daily')['2026-01-05'];
-    expect(saved.map((s) => [s.hour, s.content, s.is_important])).toEqual([
-      [9, '아침 회의', true],
-      [10, '체크 없는 일정', false],
+    const saved = stored('planner_time_blocks')['2026-01-05'];
+    expect(saved.map((s) => [s.start, s.end, s.content, s.is_important])).toEqual([
+      ['09:00', '10:00', '아침 회의', true],
+      ['10:00', '11:00', '체크 없는 일정', false],
     ]);
   });
 
@@ -189,7 +189,7 @@ describe('상세 일정 (날짜 칸 누르기)', () => {
     await user.type(within(box).getAllByPlaceholderText('내용 입력')[3], '새벽 일정');
     await user.click(buttonIn(box, '통합 저장'));
 
-    expect(stored('planner_daily')['2026-01-05']).toHaveLength(1);
+    expect(stored('planner_time_blocks')['2026-01-05']).toHaveLength(1);
   });
 
   it('같은 날짜를 다시 열면 저장해 둔 시간대별 내용이 채워져 있고 종일 입력칸은 비어 있다', async () => {
@@ -212,7 +212,7 @@ describe('상세 일정 (날짜 칸 누르기)', () => {
     await user.click(buttonIn(box, '취소'));
 
     expect(queryPopup('상세 일정 관리')).toBeNull();
-    expect(localStorage.getItem('planner_daily')).toBeNull();
+    expect(localStorage.getItem('planner_time_blocks')).toBeNull();
     expect(localStorage.getItem('planner_events')).toBeNull();
   });
 
@@ -223,7 +223,7 @@ describe('상세 일정 (날짜 칸 누르기)', () => {
     await user.type(within(box).getAllByPlaceholderText('내용 입력')[9], '이 날 일정');
     await user.click(buttonIn(box, '통합 저장'));
 
-    const daily = stored('planner_daily');
+    const daily = stored('planner_time_blocks');
     expect(daily['2026-01-06'][0].content).toBe('다른 날 일정');
     expect(daily['2026-01-05'][0].content).toBe('이 날 일정');
   });

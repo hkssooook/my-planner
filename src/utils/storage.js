@@ -3,7 +3,8 @@
 
 export const STORAGE_KEYS = {
   events: 'planner_events',
-  daily: 'planner_daily',
+  daily: 'planner_daily', // 옛 모양(시간 칸). 새 모양으로 옮긴 뒤에도 백업으로 남겨 둔다.
+  timeBlocks: 'planner_time_blocks', // 새 모양(시작~끝 카드)
 };
 
 // 저장된 값을 읽는다. 저장된 게 없거나 내용이 깨져 있으면 fallback을 돌려줘서 앱이 멈추지 않게 한다.

@@ -28,28 +28,29 @@ describe('시작할 때의 값', () => {
   it('저장된 게 없으면 빈 목록 / 빈 객체로 시작한다', () => {
     const { result } = renderHook(() => usePlannerData());
     expect(result.current.events).toEqual([]);
-    expect(result.current.dailySchedules).toEqual({});
+    expect(result.current.timeBlocks).toEqual({});
   });
 
   it('저장된 값이 있으면 첫 화면부터 그 값으로 시작한다 (빈 상태를 거치지 않음)', () => {
     const events = [{ id: 1, ...eventData('저장된 일정') }];
-    const daily = { '2026-01-05': [{ hour: 9, content: '회의', is_important: true, color: '#22C55E' }] };
+    const blocks = { '2026-01-05': [{ id: 'a', start: '09:00', end: '10:00', content: '회의', is_important: true, color: '#22C55E' }] };
     localStorage.setItem('planner_events', JSON.stringify(events));
-    localStorage.setItem('planner_daily', JSON.stringify(daily));
+    localStorage.setItem('planner_time_blocks', JSON.stringify(blocks));
 
     const { result } = renderHook(() => usePlannerData());
     // renderHook 직후의 첫 값이다. 추가 렌더를 기다리지 않았다.
     expect(result.current.events).toEqual(events);
-    expect(result.current.dailySchedules).toEqual(daily);
+    expect(result.current.timeBlocks).toEqual(blocks);
   });
 
   it('깨진 저장 데이터는 무시하고 빈 값으로 시작한다', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     localStorage.setItem('planner_events', '{"broken": [');
     localStorage.setItem('planner_daily', 'not json');
+    localStorage.setItem('planner_time_blocks', 'not json');
     const { result } = renderHook(() => usePlannerData());
     expect(result.current.events).toEqual([]);
-    expect(result.current.dailySchedules).toEqual({});
+    expect(result.current.timeBlocks).toEqual({});
   });
 
   it.each([
@@ -68,10 +69,54 @@ describe('시작할 때의 값', () => {
     ['숫자', '5'],
     ['문자열', '"x"'],
     ['null', 'null'],
-  ])('시간대별 일정이 올바른 JSON이지만 객체가 아니면(%s) 빈 객체로 시작한다', (_이름, raw) => {
+  ])('시간 일정이 올바른 JSON이지만 객체가 아니면(%s) 빈 객체로 시작한다', (_이름, raw) => {
+    localStorage.setItem('planner_time_blocks', raw);
     localStorage.setItem('planner_daily', raw);
     const { result } = renderHook(() => usePlannerData());
-    expect(result.current.dailySchedules).toEqual({});
+    expect(result.current.timeBlocks).toEqual({});
+  });
+});
+
+describe('옛 모양(시간 칸) → 새 모양(카드) 자동 변환', () => {
+  const oldDaily = {
+    '2026-01-05': [
+      { hour: 14, content: '미팅', is_important: false, color: '#3B82F6' },
+      { hour: 9, content: '회의', is_important: true, color: '#22C55E' },
+    ],
+  };
+
+  it('새 모양이 없고 옛 데이터가 있으면, 카드로 바꿔 시간순으로 보여 주고 새 이름표로 저장한다', () => {
+    localStorage.setItem('planner_daily', JSON.stringify(oldDaily));
+    const { result } = renderHook(() => usePlannerData());
+
+    const day = result.current.timeBlocks['2026-01-05'];
+    expect(day).toEqual([
+      { id: expect.any(String), start: '09:00', end: '10:00', content: '회의', is_important: true, color: '#22C55E' },
+      { id: expect.any(String), start: '14:00', end: '15:00', content: '미팅', is_important: false, color: '#3B82F6' },
+    ]);
+    expect(day[0].id).not.toBe(day[1].id);
+    expect(saved('planner_time_blocks')).toEqual(result.current.timeBlocks);
+  });
+
+  it('옛 데이터는 지우지 않고 백업으로 남겨 둔다', () => {
+    localStorage.setItem('planner_daily', JSON.stringify(oldDaily));
+    renderHook(() => usePlannerData());
+    expect(saved('planner_daily')).toEqual(oldDaily);
+  });
+
+  it('한 번 바꾼 뒤에는 다시 바꾸지 않는다 (다시 열어도 카드 id가 그대로)', () => {
+    localStorage.setItem('planner_daily', JSON.stringify(oldDaily));
+    const first = renderHook(() => usePlannerData()).result.current.timeBlocks;
+    const second = renderHook(() => usePlannerData()).result.current.timeBlocks;
+    expect(second).toEqual(first);
+  });
+
+  it('새 모양이 이미 있으면 옛 데이터는 무시한다', () => {
+    const blocks = { '2026-01-06': [] };
+    localStorage.setItem('planner_time_blocks', JSON.stringify(blocks));
+    localStorage.setItem('planner_daily', JSON.stringify(oldDaily));
+    const { result } = renderHook(() => usePlannerData());
+    expect(result.current.timeBlocks).toEqual(blocks);
   });
 });
 
@@ -206,39 +251,39 @@ describe('옛 형식의 id (소수)로 저장된 일정', () => {
   });
 });
 
-describe('saveDaySchedule (날짜별 시간대 일정 저장)', () => {
-  const nine = { hour: 9, content: '회의', is_important: true, color: '#22C55E' };
-  const ten = { hour: 10, content: '운동', is_important: false, color: '#3B82F6' };
+describe('saveDayBlocks (날짜별 시간 일정 카드 저장)', () => {
+  const nine = { id: 'n', start: '09:00', end: '10:00', content: '회의', is_important: true, color: '#22C55E' };
+  const ten = { id: 't', start: '10:00', end: '11:00', content: '운동', is_important: false, color: '#3B82F6' };
 
   it('그 날짜 아래에 저장하고 저장소에도 반영한다', () => {
     const { result } = renderHook(() => usePlannerData());
-    act(() => result.current.saveDaySchedule('2026-01-05', [nine, ten]));
+    act(() => result.current.saveDayBlocks('2026-01-05', [nine, ten]));
 
-    expect(result.current.dailySchedules).toEqual({ '2026-01-05': [nine, ten] });
-    expect(saved('planner_daily')).toEqual({ '2026-01-05': [nine, ten] });
+    expect(result.current.timeBlocks).toEqual({ '2026-01-05': [nine, ten] });
+    expect(saved('planner_time_blocks')).toEqual({ '2026-01-05': [nine, ten] });
   });
 
   it('다른 날짜의 일정은 건드리지 않는다', () => {
     const { result } = renderHook(() => usePlannerData());
-    act(() => result.current.saveDaySchedule('2026-01-05', [nine]));
-    act(() => result.current.saveDaySchedule('2026-01-06', [ten]));
+    act(() => result.current.saveDayBlocks('2026-01-05', [nine]));
+    act(() => result.current.saveDayBlocks('2026-01-06', [ten]));
 
-    expect(result.current.dailySchedules).toEqual({ '2026-01-05': [nine], '2026-01-06': [ten] });
+    expect(result.current.timeBlocks).toEqual({ '2026-01-05': [nine], '2026-01-06': [ten] });
   });
 
   it('같은 날짜에 다시 저장하면 이전 내용을 통째로 덮어쓴다', () => {
     const { result } = renderHook(() => usePlannerData());
-    act(() => result.current.saveDaySchedule('2026-01-05', [nine, ten]));
-    act(() => result.current.saveDaySchedule('2026-01-05', [ten]));
+    act(() => result.current.saveDayBlocks('2026-01-05', [nine, ten]));
+    act(() => result.current.saveDayBlocks('2026-01-05', [ten]));
 
-    expect(result.current.dailySchedules['2026-01-05']).toEqual([ten]);
+    expect(result.current.timeBlocks['2026-01-05']).toEqual([ten]);
   });
 
   it('빈 목록으로 저장하면 그 날짜는 빈 목록이 된다', () => {
     const { result } = renderHook(() => usePlannerData());
-    act(() => result.current.saveDaySchedule('2026-01-05', [nine]));
-    act(() => result.current.saveDaySchedule('2026-01-05', []));
-    expect(result.current.dailySchedules['2026-01-05']).toEqual([]);
+    act(() => result.current.saveDayBlocks('2026-01-05', [nine]));
+    act(() => result.current.saveDayBlocks('2026-01-05', []));
+    expect(result.current.timeBlocks['2026-01-05']).toEqual([]);
   });
 });
 
@@ -247,12 +292,12 @@ describe('일정과 시간대별 일정을 한 번에 저장하는 경우 (상�
     const { result } = renderHook(() => usePlannerData());
     act(() => {
       result.current.addEvent(eventData('종일 일정'));
-      result.current.saveDaySchedule('2026-01-05', [{ hour: 9, content: '회의', is_important: true, color: '#22C55E' }]);
+      result.current.saveDayBlocks('2026-01-05', [{ id: 'n', start: '09:00', end: '10:00', content: '회의', is_important: true, color: '#22C55E' }]);
     });
 
     expect(result.current.events.map((e) => e.title)).toEqual(['종일 일정']);
-    expect(result.current.dailySchedules['2026-01-05']).toHaveLength(1);
+    expect(result.current.timeBlocks['2026-01-05']).toHaveLength(1);
     expect(saved('planner_events')).toHaveLength(1);
-    expect(saved('planner_daily')['2026-01-05']).toHaveLength(1);
+    expect(saved('planner_time_blocks')['2026-01-05']).toHaveLength(1);
   });
 });

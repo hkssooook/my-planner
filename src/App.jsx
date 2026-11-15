@@ -5,6 +5,7 @@ import { YEAR_RANGE } from './constants/calendar';
 import { getCurrentYear, getYearOptions } from './utils/date';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
+import { blocksToSlots, slotsToBlocks } from './utils/timeBlocks';
 import Header from './components/layout/Header';
 import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
@@ -15,7 +16,7 @@ import EditEventModal from './components/modals/EditEventModal';
 import DailyDetailModal from './components/modals/DailyDetailModal';
 
 export default function App() {
-  const { events, dailySchedules, addEvent, changeEvent, removeEvent, saveDaySchedule } = usePlannerData();
+  const { events, timeBlocks, addEvent, changeEvent, removeEvent, saveDayBlocks } = usePlannerData();
 
   // 앱을 연 해(올해)를 한 번 읽어 고정하고, 그 해로 시작한다. 선택 칸의 연도 목록도 이 해를 기준으로 만든다.
   const [thisYear] = useState(getCurrentYear);
@@ -60,13 +61,9 @@ export default function App() {
     setShowDailyModal(true);
   };
 
+  // 저장된 카드(시작~끝)를 상세 일정 창의 24줄로 바꿔 채운다.
   const loadDailyScheduleData = (targetDate) => {
-    const existingDaily = dailySchedules[targetDate] || [];
-    const initialTemp = Array.from({ length: 24 }, (_, hour) => {
-      const found = existingDaily.find(d => d.hour === hour);
-      return found ? { ...found, color: found.color || COLOR_PALETTE[0].value } : { hour, content: '', is_important: false, color: COLOR_PALETTE[0].value };
-    });
-    setTempDaily(initialTemp);
+    setTempDaily(blocksToSlots(timeBlocks[targetDate] || [], COLOR_PALETTE[0].value));
   };
 
   const handleTempDailyChange = (hour, field, value) => {
@@ -88,8 +85,8 @@ export default function App() {
       });
     }
 
-    const validSchedules = tempDaily.filter(item => item.content.trim() !== '');
-    saveDaySchedule(dailyModalDate, validSchedules);
+    // 24줄을 다시 카드 목록으로 바꿔 저장한다. (빈 줄은 빠지고, 원래 카드의 id는 이어받는다)
+    saveDayBlocks(dailyModalDate, slotsToBlocks(tempDaily, timeBlocks[dailyModalDate] || []));
 
     closeDailyModal();
   };
@@ -139,7 +136,7 @@ export default function App() {
 
   // 달력 날짜 칸(DayCell)까지 전달할 값 묶음
   const cellProps = {
-    events, dailySchedules,
+    events, timeBlocks,
     selectionStart, selectionEnd,
     onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
     onOpenDay: openDailyModal,
@@ -192,7 +189,7 @@ export default function App() {
       {showMoreDate && (
         <MoreEventsModal
           date={showMoreDate}
-          events={events} dailySchedules={dailySchedules}
+          events={events} timeBlocks={timeBlocks}
           onClose={() => setShowMoreDate(null)}
           onEditEvent={(evt) => openEditModal(null, evt)}
           onDeleteEvent={(evt) => openDeleteModal(null, evt)}
