@@ -215,6 +215,11 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(yearSelect()).toHaveClass('text-2xl', 'font-semibold', 'px-3');
     expect(yearSelect()).not.toHaveClass('border', 'pl-[34px]');
     expect(yearSelect()).toHaveAccessibleName('연도 선택 (지금 2026년)');
+    // 부제목은 연도 버튼과 같은 너비의 묶음 안에 있고, ⌄ 자리만큼 오른쪽 여백을 더 둬서 글자 가운데가 "2026년" 글자 가운데와 맞는다
+    const subtitleBox = screen.getByText('연간 플래너');
+    expect(subtitleBox.parentElement).toBe(yearSelect().parentElement);
+    expect(subtitleBox.parentElement).toHaveClass('inline-flex', 'flex-col');
+    expect(subtitleBox).toHaveClass('pl-3', 'pr-[34px]', 'text-center');
     const subtitle = screen.getByText('연간 플래너');
     expect(subtitle).toHaveClass('text-sm', 'text-muted-foreground');
     expect(yearSelect().compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // 연도가 먼저, 부제목이 뒤

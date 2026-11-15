@@ -74,23 +74,27 @@ export default function DayPanel({
   return (
     <aside
       aria-label="상세 일정 관리"
-      className="w-[380px] shrink-0 border-l border-border bg-card sticky top-0 h-screen overflow-y-auto flex flex-col"
+      // 왼쪽 연도 카드·달력 카드처럼 화면 가장자리에서 24px 떨어진 떠 있는 카드로 둔다 (위·아래·오른쪽 24px, 모서리 15px).
+      // 스크롤해도 그 자리에 머물고(sticky top-6), 높이는 화면 높이에서 위아래 여백 48px을 뺀 만큼이다.
+      className="w-[380px] shrink-0 self-start sticky top-6 my-6 mr-6 h-[calc(100vh-48px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
     >
-      <header className="flex items-center gap-1 px-4 py-3 border-b border-border sticky top-0 bg-card z-10">
-        <Button variant="ghost" size="icon-sm" aria-label="전날" onClick={() => onMoveDay(-1)}><ChevronLeft /></Button>
-        <h2 ref={headingRef} tabIndex={-1} className="flex-1 text-center text-base font-semibold text-foreground focus:outline-hidden">
-          {formatLongDate(date)}
-        </h2>
-        <Button variant="ghost" size="icon-sm" aria-label="다음 날" onClick={() => onMoveDay(1)}><ChevronRight /></Button>
-        <Button variant="ghost" size="icon-sm" aria-label="닫기" onClick={onClose} className="ml-1"><X /></Button>
-      </header>
+      {/* 머리말과 "이 날의 일정"은 패널을 스크롤해도 위에 붙어 있다 (그날 무슨 일이 있는지 늘 보이게).
+          목록이 길어지면 고정 영역이 화면을 다 덮지 않도록 목록 높이를 200px(일정 5개 반쯤)로 제한하고 그 안에서만 스크롤한다. */}
+      <div data-testid="day-panel-pinned" className="sticky top-0 z-10 bg-card border-b border-border">
+        <header className="flex items-center gap-1 px-4 py-3 border-b border-border">
+          <Button variant="ghost" size="icon-sm" aria-label="전날" onClick={() => onMoveDay(-1)}><ChevronLeft /></Button>
+          <h2 ref={headingRef} tabIndex={-1} className="flex-1 text-center text-base font-semibold text-foreground focus:outline-hidden">
+            {formatLongDate(date)}
+          </h2>
+          <Button variant="ghost" size="icon-sm" aria-label="다음 날" onClick={() => onMoveDay(1)}><ChevronRight /></Button>
+          <Button variant="ghost" size="icon-sm" aria-label="닫기" onClick={onClose} className="ml-1"><X /></Button>
+        </header>
 
-      <div className="flex flex-col gap-6 px-4 py-4">
-        <section aria-labelledby="day-panel-events">
+        <section aria-labelledby="day-panel-events" className="px-4 py-3">
           <h3 id="day-panel-events" className="text-sm font-semibold text-foreground mb-2">
             이 날의 일정 <span className="font-normal text-muted-foreground text-xs ml-1">{dayEvents.length}개</span>
           </h3>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
             {dayEvents.map((evt) => (
               <li
                 key={evt.id}
@@ -108,8 +112,10 @@ export default function DayPanel({
             <p className="text-xs text-muted-foreground">이 날에 걸친 기간·종일 일정이 없어요.</p>
           )}
         </section>
+      </div>
 
-        <section aria-labelledby="day-panel-add" className="border-t border-border pt-5">
+      <div className="flex flex-col gap-6 px-4 py-4">
+        <section aria-labelledby="day-panel-add">
           <h3 id="day-panel-add" className="text-sm font-semibold text-foreground mb-2">종일 일정 추가</h3>
           <form
             className="flex flex-col gap-2"

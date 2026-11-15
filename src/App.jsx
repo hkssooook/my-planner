@@ -123,7 +123,8 @@ export default function App() {
         </div>
 
         <div className={`border border-border rounded-lg shadow-inner bg-card relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
-          <div className={`flex flex-col ${isWrapMode ? '' : 'min-w-max'}`}>
+          {/* 칸 사이와 상자 안쪽에 4px 틈(gap-1 p-1)을 둬서, 둥근 칸들이 서로 붙지 않고 떠 보이게 한다 */}
+          <div className={`flex flex-col gap-1 p-1 ${isWrapMode ? '' : 'min-w-max'}`}>
             {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
             {displayYears.map(year => (
               <YearSection key={year} year={year} isWrapMode={isWrapMode} cellProps={cellProps} />

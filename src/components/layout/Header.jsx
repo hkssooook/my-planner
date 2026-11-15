@@ -24,30 +24,35 @@ export default function Header({ year, years, onYearChange }) {
     // 겹침 순서: 달력의 고정 칸(z-10·z-20)보다 위, 팝업(z-50)보다 아래인 z-30.
     // 카드 안쪽 여백은 shadcn 카드(Card) 기본값인 24px(p-6)을 쓴다.
     <div className="sticky top-0 z-30 -mx-6 -mt-6 px-6 pt-6 pb-6 bg-background">
-      <div className="flex flex-col items-center gap-1 bg-card p-6 rounded-lg shadow-xs">
-        <Popover open={open} onOpenChange={setOpen}>
-          {/* 입력칸 상자가 아니라 제목처럼 보이게: 테두리 없이 24px 반굵게. 마우스를 올리면 옅은 바탕이 생겨 누를 수 있음을 알린다.
-              좌우 여백은 똑같이 12px(px-3) */}
-          <PopoverTrigger
-            aria-label={`연도 선택 (지금 ${year}년)`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-2xl font-semibold text-foreground hover:bg-accent outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            {year}년
-            <ChevronDownIcon aria-hidden="true" className="size-4 text-muted-foreground" />
-          </PopoverTrigger>
-          <PopoverContent align="center" className="w-auto p-1" initialFocus={selectedTabRef}>
-            {/* 고르는 일은 각 탭의 클릭(키보드 Enter·Space도 클릭)으로 한다. 지금 연도를 다시 눌러도 상자가 닫히게 하려고
-                값이 바뀔 때만 오는 onValueChange 대신 onClick을 쓴다 */}
-            <Tabs orientation="vertical" value={year}>
-              <TabsList aria-label="연도">
-                {years.map((y) => (
-                  <TabsTrigger key={y} value={y} ref={y === year ? selectedTabRef : undefined} onClick={() => pickYear(y)} className="px-3">{y}년</TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </PopoverContent>
-        </Popover>
-        <h1 className="text-sm text-muted-foreground hidden sm:block">연간 플래너</h1>
+      <div className="flex flex-col items-center bg-card p-6 rounded-lg shadow-xs">
+        {/* 연도 버튼과 부제목을 한 묶음으로 세우고, 묶음 너비는 연도 버튼 너비를 따른다 (부제목은 그 너비로 늘어난다).
+            부제목은 연도 버튼과 같은 자리에 같은 여백을 둔다: 왼쪽 12px, 오른쪽 34px(= 버튼 오른쪽 여백 12px + 사이 간격 6px + ⌄ 16px).
+            그러면 "연간 플래너" 글자의 가운데가 ⌄를 뺀 "2026년" 글자의 가운데와 정확히 맞는다. */}
+        <div className="inline-flex flex-col gap-1">
+          <Popover open={open} onOpenChange={setOpen}>
+            {/* 입력칸 상자가 아니라 제목처럼 보이게: 테두리 없이 24px 반굵게. 마우스를 올리면 옅은 바탕이 생겨 누를 수 있음을 알린다.
+                좌우 여백은 똑같이 12px(px-3) */}
+            <PopoverTrigger
+              aria-label={`연도 선택 (지금 ${year}년)`}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-2xl font-semibold text-foreground hover:bg-accent outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {year}년
+              <ChevronDownIcon aria-hidden="true" className="size-4 text-muted-foreground" />
+            </PopoverTrigger>
+            <PopoverContent align="center" className="w-auto p-1" initialFocus={selectedTabRef}>
+              {/* 고르는 일은 각 탭의 클릭(키보드 Enter·Space도 클릭)으로 한다. 지금 연도를 다시 눌러도 상자가 닫히게 하려고
+                  값이 바뀔 때만 오는 onValueChange 대신 onClick을 쓴다 */}
+              <Tabs orientation="vertical" value={year}>
+                <TabsList aria-label="연도">
+                  {years.map((y) => (
+                    <TabsTrigger key={y} value={y} ref={y === year ? selectedTabRef : undefined} onClick={() => pickYear(y)} className="px-3">{y}년</TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </PopoverContent>
+          </Popover>
+          <h1 className="pl-3 pr-[34px] text-center whitespace-nowrap text-sm text-muted-foreground hidden sm:block">연간 플래너</h1>
+        </div>
       </div>
     </div>
   );

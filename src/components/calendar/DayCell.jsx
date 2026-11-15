@@ -22,7 +22,7 @@ export default function DayCell({
   
   if (day > maxDays) {
     if (isWrapMode) return null;
-    return <div className="bg-muted border-r border-b border-border w-[120px] shrink-0"></div>;
+    return <div className="bg-muted border border-border rounded-sm w-[120px] shrink-0"></div>;
   }
 
   const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -58,7 +58,8 @@ export default function DayCell({
       // 칸 아무 곳이나 누르면 오른쪽에 그날 일정 패널이 열린다. (두 칸 이상 끌면 드래그라서 여기까지 오지 않는다)
       onClick={(e) => onOpenDay(e, dateString)}
       aria-current={dateString === panelDate ? 'date' : undefined}
-      className={`group/cell p-1 border-r border-b border-border w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none cursor-pointer ${isSelected ? 'bg-selection' : 'hover:bg-muted'} ${dateString === panelDate ? 'ring-2 ring-inset ring-primary' : ''}`}
+      // 칸마다 자기 테두리와 9px 모서리(rounded-sm)를 갖는다. 칸 사이 4px 틈은 MonthRow가 둔다.
+      className={`group/cell p-1 border border-border rounded-sm bg-card w-[120px] shrink-0 h-28 flex flex-col gap-1 relative select-none cursor-pointer ${isSelected ? 'bg-selection' : 'hover:bg-muted'} ${dateString === panelDate ? 'ring-2 ring-inset ring-primary' : ''}`}
     >
       <div className="flex justify-between items-start text-xs min-w-0">
         {/* 키보드·화면 낭독기용 입구. 누르면 클릭이 칸까지 올라가 위의 onClick이 일정 패널을 연다. */}

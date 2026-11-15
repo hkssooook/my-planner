@@ -159,6 +159,23 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(within(box).queryByText('다른 날 일정')).toBeNull();
     });
 
+    it('머리말과 "이 날의 일정"은 패널을 스크롤해도 위에 고정되고, 목록이 길면 목록 안에서만 스크롤된다', async () => {
+      const user = setup();
+      const box = await openPanel(user, '2026-01-05');
+      const pinned = within(box).getByTestId('day-panel-pinned');
+      expect(pinned).toHaveClass('sticky', 'top-0');
+      expect(within(pinned).getByRole('heading', { name: '2026년 1월 5일 (월)' })).toBeInTheDocument();
+      expect(within(pinned).getByRole('region', { name: /이 날의 일정/ })).toBeInTheDocument();
+      expect(within(pinned).queryByRole('region', { name: '종일 일정 추가' })).toBeNull();
+      expect(within(pinned).getByRole('list')).toHaveClass('max-h-[200px]', 'overflow-y-auto');
+    });
+
+    it('패널은 왼쪽 카드들처럼 화면 가장자리에서 위·아래·오른쪽 24px 떨어진 둥근 카드다', async () => {
+      const user = setup();
+      const box = await openPanel(user, '2026-01-05');
+      expect(box).toHaveClass('sticky', 'top-6', 'my-6', 'mr-6', 'h-[calc(100vh-48px)]', 'rounded-lg', 'border');
+    });
+
     it('목록과 종일 일정 추가는 따로 나뉜 영역이고, 일정이 없으면 없다는 안내가 보인다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
