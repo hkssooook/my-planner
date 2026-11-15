@@ -3,11 +3,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 // 화면 맨 위 머리말: 연도 선택 + 보기 방식(가로 스크롤 / 화면 맞춤) 버튼.
 // 선택된 값은 부모(App)가 들고 있고, 이 부품은 보여 주고 "바뀌었다"고 알리기만 한다.
 export default function Header({ year, years, onYearChange, isWrapMode, onWrapModeChange }) {
-  const yearItems = years.map((y) => ({ value: y, label: `${y}년 기준` }));
+  const yearItems = years.map((y) => ({ value: y, label: `${y}년` }));
   return (
     <div className="mb-5 flex flex-col md:flex-row justify-between items-start md:items-center bg-card p-4 rounded-lg shadow-xs gap-4 md:gap-0">
       <div className="flex items-center gap-4">
-        {/* shadcn Select. items는 "값 → 화면에 보일 글자" 짝이라서, 닫혀 있을 때도 "2026년 기준"처럼 글자가 보인다 */}
+        {/* shadcn Select. items는 "값 → 화면에 보일 글자" 짝이라서, 닫혀 있을 때도 "2026년"처럼 글자가 보인다 */}
         <Select value={year} onValueChange={onYearChange} items={yearItems}>
           <SelectTrigger aria-label="연도 선택">
             <SelectValue />

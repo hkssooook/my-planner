@@ -41,7 +41,7 @@ describe('첫 화면', () => {
   it('제목, 올해로 시작하는 연도 선택, 올해와 다음 해의 달력이 보인다', () => {
     render(<App />);
     expect(screen.getByText('연간 플래너')).toBeInTheDocument();
-    expect(yearSelect()).toHaveTextContent('2026년 기준');
+    expect(yearSelect()).toHaveTextContent('2026년');
     expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
     expect(screen.getByText('2027년 연간 일정')).toBeInTheDocument();
     expect(screen.queryByText('2028년 연간 일정')).not.toBeInTheDocument();
@@ -50,29 +50,29 @@ describe('첫 화면', () => {
   it('연도 선택지는 올해 기준 -1년 ~ +3년이다', async () => {
     const user = setup();
     const options = await yearOptions(user);
-    expect(options).toEqual(['2025년 기준', '2026년 기준', '2027년 기준', '2028년 기준', '2029년 기준']);
+    expect(options).toEqual(['2025년', '2026년', '2027년', '2028년', '2029년']);
   });
 
   it('올해가 바뀌면 그 해로 시작하고, 연도 선택지도 그 해 기준으로 바뀐다', async () => {
     vi.setSystemTime(new Date(2029, 2, 1, 12, 0, 0)); // 시계를 2029년으로 옮긴다
     const user = setup();
 
-    expect(yearSelect()).toHaveTextContent('2029년 기준');
+    expect(yearSelect()).toHaveTextContent('2029년');
     expect(screen.getByText('2029년 연간 일정')).toBeInTheDocument();
     expect(screen.getByText('2030년 연간 일정')).toBeInTheDocument();
     const options = await yearOptions(user);
-    expect(options).toEqual(['2028년 기준', '2029년 기준', '2030년 기준', '2031년 기준', '2032년 기준']);
+    expect(options).toEqual(['2028년', '2029년', '2030년', '2031년', '2032년']);
   });
 
   it('해가 바뀌는 순간(12월 31일 밤 → 1월 1일 새벽)을 정확히 구분한다', () => {
     vi.setSystemTime(new Date(2026, 11, 31, 23, 59, 59));
     const { unmount } = render(<App />);
-    expect(yearSelect()).toHaveTextContent('2026년 기준');
+    expect(yearSelect()).toHaveTextContent('2026년');
     unmount();
 
     vi.setSystemTime(new Date(2027, 0, 1, 0, 0, 0));
     render(<App />);
-    expect(yearSelect()).toHaveTextContent('2027년 기준');
+    expect(yearSelect()).toHaveTextContent('2027년');
   });
 
   it('두 해 분량(730일)의 날짜 칸이 있다', () => {
@@ -172,7 +172,7 @@ describe('첫 화면', () => {
 describe('머리말: 연도와 보기 방식', () => {
   it('연도를 바꾸면 그 해와 다음 해의 달력이 보인다', async () => {
     const user = setup();
-    await pickYear(user, '2027년 기준');
+    await pickYear(user, '2027년');
 
     expect(screen.getByText('2027년 연간 일정')).toBeInTheDocument();
     expect(screen.getByText('2028년 연간 일정')).toBeInTheDocument();
@@ -182,7 +182,7 @@ describe('머리말: 연도와 보기 방식', () => {
   it('공휴일 데이터가 없는 해를 골라도 달력은 정상으로 보이고 공휴일 이름만 없다', async () => {
     const holidayNames = Object.values(KR_HOLIDAYS[2026]);
     const user = setup();
-    await pickYear(user, '2029년 기준');
+    await pickYear(user, '2029년');
 
     expect(screen.getByText('2029년 연간 일정')).toBeInTheDocument();
     expect(screen.getAllByTitle('상세 일정 관리').length).toBeGreaterThan(700);
@@ -215,10 +215,10 @@ describe('머리말: 연도와 보기 방식', () => {
   it('연도 드롭다운을 열면 지금 연도에 선택 표시가 있고, 고르면 닫힌다', async () => {
     const user = setup();
     await openYear(user);
-    expect(screen.getByRole('option', { name: '2026년 기준' })).toHaveAttribute('aria-selected', 'true');
-    await user.click(screen.getByRole('option', { name: '2028년 기준' }));
+    expect(screen.getByRole('option', { name: '2026년' })).toHaveAttribute('aria-selected', 'true');
+    await user.click(screen.getByRole('option', { name: '2028년' }));
     expect(screen.queryAllByRole('option')).toHaveLength(0);
-    expect(yearSelect()).toHaveTextContent('2028년 기준');
+    expect(yearSelect()).toHaveTextContent('2028년');
   });
 
   it('연도 목록은 트리거 아래로 펼쳐진다 (shadcn 기본 "선택값을 트리거 자리에 맞춤"은 맨 위 머리말에서 선택지가 잘려서 끈다)', async () => {
@@ -230,9 +230,9 @@ describe('머리말: 연도와 보기 방식', () => {
   it('화면 맞춤 상태에서 연도를 바꿔도 보기 방식이 유지된다', async () => {
     const user = setup();
     await user.click(screen.getByText('화면 맞춤'));
-    await pickYear(user, '2027년 기준');
+    await pickYear(user, '2027년');
 
-    expect(yearSelect()).toHaveTextContent('2027년 기준');
+    expect(yearSelect()).toHaveTextContent('2027년');
     expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
     expect(screen.queryByText('2027년 연간 일정')).not.toBeInTheDocument();
   });

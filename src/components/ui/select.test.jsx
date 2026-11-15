@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 const YEARS = [
-  { value: '2025', label: '2025년 기준' },
-  { value: '2026', label: '2026년 기준' },
-  { value: '2027', label: '2027년 기준' },
+  { value: '2025', label: '2025년' },
+  { value: '2026', label: '2026년' },
+  { value: '2027', label: '2027년' },
 ];
 
 const renderSelect = ({ value = '2026', onValueChange = () => {}, items, size } = {}) =>
@@ -39,14 +39,14 @@ describe('shadcn Select (Base UI)', () => {
   it('누르면 옵션 목록이 열리고 모든 선택지가 보인다', async () => {
     renderSelect();
     await openSelect(userEvent.setup());
-    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['2025년 기준', '2026년 기준', '2027년 기준']);
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['2025년', '2026년', '2027년']);
   });
 
   it('현재 선택된 옵션이 선택 표시(aria-selected)를 갖는다', async () => {
     renderSelect({ value: '2027' });
     await openSelect(userEvent.setup());
-    expect(screen.getByRole('option', { name: '2027년 기준' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('option', { name: '2025년 기준' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('option', { name: '2027년' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('option', { name: '2025년' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('옵션을 고르면 onValueChange가 그 값(글자가 아니라 값)으로 호출되고 목록이 닫힌다', async () => {
@@ -54,7 +54,7 @@ describe('shadcn Select (Base UI)', () => {
     renderSelect({ onValueChange });
     const user = userEvent.setup();
     await openSelect(user);
-    await user.click(screen.getByRole('option', { name: '2027년 기준' }));
+    await user.click(screen.getByRole('option', { name: '2027년' }));
 
     expect(onValueChange).toHaveBeenCalledTimes(1);
     expect(onValueChange.mock.calls[0][0]).toBe('2027');
@@ -85,12 +85,12 @@ describe('shadcn Select (Base UI)', () => {
   it('items(값→글자 목록)을 주지 않으면 트리거에 글자가 아니라 값("2026")이 보인다 (주의점)', () => {
     renderSelect();
     expect(screen.getByRole('combobox')).toHaveTextContent('2026');
-    expect(screen.getByRole('combobox')).not.toHaveTextContent('2026년 기준');
+    expect(screen.getByRole('combobox')).not.toHaveTextContent('2026년');
   });
 
-  it('items(값→글자 목록)을 주면 트리거에 글자("2026년 기준")가 보인다', () => {
+  it('items(값→글자 목록)을 주면 트리거에 글자("2026년")가 보인다', () => {
     renderSelect({ items: YEARS });
-    expect(screen.getByRole('combobox')).toHaveTextContent('2026년 기준');
+    expect(screen.getByRole('combobox')).toHaveTextContent('2026년');
   });
 
   it('기본 크기는 높이 h-8 (32px), size="sm"이면 h-7 이다 (nova 기본값)', () => {
