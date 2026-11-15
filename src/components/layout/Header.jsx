@@ -12,10 +12,11 @@ export default function Header({ year, years, onYearChange, isWrapMode, onWrapMo
       <div className="flex flex-col items-center gap-1 md:col-start-2">
         {/* shadcn Select. items는 "값 → 화면에 보일 글자" 짝이라서, 닫혀 있을 때도 "2026년"처럼 글자가 보인다 */}
         <Select value={year} onValueChange={onYearChange} items={yearItems}>
-          {/* 입력칸 상자가 아니라 제목처럼 보이게: 테두리 없이 24px 반굵게. 마우스를 올리면 옅은 바탕이 생겨 누를 수 있음을 알린다 */}
+          {/* 입력칸 상자가 아니라 제목처럼 보이게: 테두리 없이 24px 반굵게. 마우스를 올리면 옅은 바탕이 생겨 누를 수 있음을 알린다.
+              왼쪽 여백(34px) = 오른쪽 여백 12px + ⌄ 16px + 사이 간격 6px. 그래야 ⌄를 뺀 "2026년" 글자 자체가 정중앙에 온다 */}
           <SelectTrigger
             aria-label="연도 선택"
-            className="h-auto data-[size=default]:h-auto border-transparent px-3 py-1 text-2xl font-semibold text-foreground hover:bg-accent"
+            className="h-auto data-[size=default]:h-auto border-transparent pl-[34px] pr-3 py-1 text-2xl font-semibold text-foreground hover:bg-accent"
           >
             <SelectValue />
           </SelectTrigger>
