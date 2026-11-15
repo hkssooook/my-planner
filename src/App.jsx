@@ -6,6 +6,7 @@ import { getCurrentYear, getYearOptions } from './utils/date';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
+import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import MoreEventsModal from './components/modals/MoreEventsModal';
@@ -149,10 +150,12 @@ export default function App() {
   return (
     // 화면 바깥 여백은 머리말 안쪽 여백과 같은 24px(p-6)로 맞춘다
     <div className="p-6 bg-background min-h-screen">
-      <Header
-        year={currentYear} onYearChange={setCurrentYear} years={yearOptions}
-        isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode}
-      />
+      <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} />
+
+      {/* 보기 방식 버튼은 달력의 설정이라 달력 상자 바로 위 오른쪽에, 달력과 한 묶음으로 보이게 좁은 간격(12px)으로 둔다 */}
+      <div className="flex justify-end mb-3">
+        <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
+      </div>
 
       <div className={`border border-border rounded-lg shadow-inner bg-card relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
         <div className={`flex flex-col ${isWrapMode ? '' : 'min-w-max'}`}>
