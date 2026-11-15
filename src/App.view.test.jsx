@@ -221,8 +221,34 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(subtitleBox.parentElement).toHaveClass('inline-flex', 'flex-col');
     expect(subtitleBox).toHaveClass('pl-3', 'pr-[34px]', 'text-center');
     const subtitle = screen.getByText('연간 플래너');
-    expect(subtitle).toHaveClass('text-sm', 'text-muted-foreground');
+    expect(subtitle).toHaveClass('text-sm', 'text-muted-foreground'); // 헤더 카드(파랑 2단계) 위에서 흐린 글자는 대비 4.61로 읽힌다
     expect(yearSelect().compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // 연도가 먼저, 부제목이 뒤
+  });
+
+  it('색 단계: 헤더 카드 2단계, 캘린더 섹션·연도 구분선 4단계, 월 이름 칸 3단계, 날짜 칸 흰색', () => {
+    render(<App />);
+    expect(yearSelect().closest('.rounded-lg.p-6')).toHaveClass('bg-surface-blue-2');
+    const cell = cellOf('2026-01-05');
+    expect(cell).toHaveClass('bg-card');
+    const monthLabel = cell.parentElement.firstElementChild.firstElementChild;
+    expect(monthLabel).toHaveTextContent('1월');
+    expect(monthLabel).toHaveClass('bg-surface-blue-3');
+    // 연도 구분선은 캘린더 섹션과 같은 4단계라 섹션과 하나로 이어져 보이고, 섹션 안쪽 여백 없이 좌우 끝까지 붙는다.
+    // 맨 위 줄만 위쪽에도 붙어 위 모서리가 섹션과 같다(15px). 중간 해(2027)는 모서리 없는 띠다
+    const divider2026 = screen.getByText('2026').parentElement;
+    const divider2027 = screen.getByText('2027').parentElement;
+    expect(divider2026).toHaveClass('bg-surface-blue-4', '-mx-1', '-mt-1', 'rounded-t-lg');
+    expect(divider2027).toHaveClass('bg-surface-blue-4', '-mx-1');
+    expect(divider2027).not.toHaveClass('-mt-1', 'rounded-t-lg', 'rounded-sm');
+    expect(cell.closest('.overflow-x-auto')).toHaveClass('bg-surface-blue-4');
+  });
+
+  it('보기 방식 탭 묶음은 헤더 카드와 같은 2단계이고, 선택된 탭은 흰색(카드색)이라 더 밝다 — 화면 바탕(진한 파랑)을 쓰지 않는다', () => {
+    render(<App />);
+    expect(screen.getByRole('tablist', { name: '보기 방식' })).toHaveClass('bg-surface-blue-2');
+    const active = screen.getByRole('tab', { name: '가로 스크롤' });
+    expect(active.className).toContain('data-active:bg-card');
+    expect(active.className).not.toContain('data-active:bg-background');
   });
 
   it('연도 버튼을 누르면 연도가 세로 탭으로 나오고 지금 연도가 선택돼 있으며, 고르면 닫힌다', async () => {

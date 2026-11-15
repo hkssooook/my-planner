@@ -6,7 +6,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function ViewModeToggle({ isWrapMode, onWrapModeChange }) {
   return (
     <Tabs value={isWrapMode ? 'wrap' : 'scroll'} onValueChange={(value) => onWrapModeChange(value === 'wrap')}>
-      <TabsList aria-label="보기 방식">
+      {/* 탭 묶음 바탕은 헤더 카드와 같은 파랑 2단계, 선택한 탭은 흰색이다 */}
+      <TabsList aria-label="보기 방식" className="bg-surface-blue-2">
         <TabsTrigger value="scroll">가로 스크롤</TabsTrigger>
         <TabsTrigger value="wrap">화면 맞춤</TabsTrigger>
       </TabsList>

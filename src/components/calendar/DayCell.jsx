@@ -22,7 +22,8 @@ export default function DayCell({
   
   if (day > maxDays) {
     if (isWrapMode) return null;
-    return <div className="bg-muted border border-border rounded-sm w-[120px] shrink-0"></div>;
+    // 없는 날(예: 2월 30일) 자리: 날짜 칸보다 한 층 바깥 느낌이 나도록 월 이름 칸과 같은 파랑 3단계, 테두리 없음
+    return <div className="bg-surface-blue-3 rounded-sm w-[120px] shrink-0"></div>;
   }
 
   const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;

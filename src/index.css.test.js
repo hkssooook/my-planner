@@ -95,8 +95,8 @@ describe('src/index.css의 색 변수 (docs/design-tokens.md와 같아야 한다
     expect(rootValue('success-text')).toBe('#25805d');
     expect(rootValue('warning')).toBe('#fdb11a');
     expect(rootValue('info')).toBe('#3a8ced');
-    expect(rootValue('holiday')).toBe('#b94737');
-    expect(rootValue('selection')).toBe('#eff0fd');
+    expect(rootValue('holiday')).toBe('#a64031');
+    expect(rootValue('selection')).toBe('#dbdcff');
   });
 
   it('추가 이름은 Tailwind 색 이름(bg-success 등)으로도 쓸 수 있게 연결되어 있다', () => {

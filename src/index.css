@@ -73,6 +73,11 @@
   --color-info: var(--info);
   --color-holiday: var(--holiday);
   --color-selection: var(--selection);
+  --color-surface-blue-1: var(--surface-blue-1);
+  --color-surface-blue-2: var(--surface-blue-2);
+  --color-surface-blue-3: var(--surface-blue-3);
+  --color-surface-blue-4: var(--surface-blue-4);
+  --color-surface-blue-5: var(--surface-blue-5);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -109,7 +114,7 @@
 */
 :root {
   /* 색 값은 docs/design-tokens.md의 규정값 그대로다. 색을 바꿀 때는 문서의 표를 먼저 고친다. */
-  --background: #f5f8ff;
+  --background: #6d72fd; /* 파랑 5단계 */
   --foreground: #21242e;
   --card: #ffffff;
   --card-foreground: #21242e;
@@ -117,14 +122,14 @@
   --popover-foreground: #21242e;
   --primary: #5a68ec;
   --primary-foreground: #ffffff;
-  --secondary: #f4f7fd;
+  --secondary: #dbdcff; /* 파랑 2단계 */
   --secondary-foreground: #21242e;
-  --muted: #f5f8ff;
-  --muted-foreground: #6b7183;
-  --accent: #eff0fd;
+  --muted: #dbdcff; /* 파랑 2단계 */
+  --muted-foreground: #5c6171;
+  --accent: #dbdcff; /* 파랑 2단계 */
   --accent-foreground: #21242e;
   --destructive: #d6364d;
-  --border: #e4e9f5;
+  --border: #dbdcff; /* 파랑 2단계 */
   --input: #8e94a6;
   --ring: #5a68ec;
   /* 일정 색 5가지: 블루, 퍼플, 핑크, 앰버, 민트 (달력 막대에 아직 적용 전) */
@@ -140,16 +145,22 @@
   --warning: #fdb11a;
   --warning-foreground: #21242e;
   --info: #3a8ced;
-  --holiday: #b94737;
-  --selection: #eff0fd;
+  --holiday: #a64031;
+  --selection: #dbdcff; /* 파랑 2단계 */
   --radius: 15px;
+  /* 바탕 단계 색: 파랑 1~5단계 (#FFFFFF → #6D72FD). src/constants/colors.js의 BACKGROUND_SCALES.blue와 같다 */
+  --surface-blue-1: #ffffff;
+  --surface-blue-2: #dbdcff;
+  --surface-blue-3: #b6b9fe;
+  --surface-blue-4: #9295fe;
+  --surface-blue-5: #6d72fd;
   --sidebar: #ffffff;
   --sidebar-foreground: #21242e;
   --sidebar-primary: #5a68ec;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eff0fd;
+  --sidebar-accent: #dbdcff;
   --sidebar-accent-foreground: #21242e;
-  --sidebar-border: #e4e9f5;
+  --sidebar-border: #dbdcff;
   --sidebar-ring: #5a68ec;
 }
 /*

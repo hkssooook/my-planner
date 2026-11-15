@@ -1,12 +1,16 @@
 import MonthRow from './MonthRow';
 
 // 한 해 분량: 연도 구분선 + 1~12월 행
-export default function YearSection({ year, isWrapMode, cellProps }) {
+//   isFirst: 캘린더 섹션의 맨 위 해인가. 맨 위 구분선은 섹션 위쪽 끝에 붙고 위 모서리가 섹션과 같다(15px).
+export default function YearSection({ year, isFirst = false, isWrapMode, cellProps }) {
+  // 연도 구분선은 섹션 안쪽 여백(p-1, 4px)을 무시하고(-mx-1) 섹션 좌우 끝까지 붙는 띠다.
+  // 맨 위 해는 위쪽 여백도 무시하고(-mt-1) 위 모서리를 섹션과 같게(rounded-t-lg), 중간 해는 모서리 없는 띠다.
+  const edge = isFirst ? '-mt-1 rounded-t-lg' : '';
   return (
     <>
-      {/* 연도 구분선 (Year Divider) */}
-      <div className={`flex ${isWrapMode ? 'border-b-2 border-border bg-accent text-lg font-bold' : 'min-w-max border-b-2 border-border bg-accent'}`}>
-        <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 shrink-0 py-3 sticky left-0 z-20 bg-accent flex items-center justify-center font-bold text-foreground shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+      {/* 연도 구분선 (Year Divider). 바탕은 캘린더 섹션과 같은 파랑 4단계라 섹션과 하나로 이어져 보인다 */}
+      <div className={`flex -mx-1 bg-surface-blue-4 ${edge} ${isWrapMode ? 'text-lg font-bold' : 'min-w-max'}`}>
+        <div className={`${isWrapMode ? 'w-full px-4 py-3' : `w-16 shrink-0 py-3 sticky left-0 z-20 bg-surface-blue-4 ${isFirst ? 'rounded-tl-lg' : ''} flex items-center justify-center font-bold text-foreground`}`}>
           {year}
         </div>
         {/* 머리말의 연도 선택 칸이 이미 "○○년"을 보여 주므로, 여기에는 연도 숫자만 둔다 ("○○년 연간 일정" 글자는 중복이라 뺐다) */}

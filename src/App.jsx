@@ -122,12 +122,14 @@ export default function App() {
           <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
         </div>
 
-        <div className={`border border-border rounded-lg shadow-inner bg-card relative ${isWrapMode ? '' : 'overflow-x-auto'}`}>
+        {/* 캘린더 섹션: 헤더 카드와 같은 층이라 같은 파랑 4단계 바탕. 안쪽의 월 이름·연도 구분선은 3단계, 날짜 칸은 1단계(흰색)로 점점 옅어진다 */}
+      {/* 화면 맞춤에서도 모서리 밖으로 삐져나오는 것이 잘리도록 overflow-hidden (가로 스크롤에서는 overflow-x-auto가 같은 일을 한다) */}
+      <div className={`rounded-lg shadow-xs bg-surface-blue-4 relative ${isWrapMode ? 'overflow-hidden' : 'overflow-x-auto'}`}>
           {/* 칸 사이와 상자 안쪽에 4px 틈(gap-1 p-1)을 둬서, 둥근 칸들이 서로 붙지 않고 떠 보이게 한다 */}
           <div className={`flex flex-col gap-1 p-1 ${isWrapMode ? '' : 'min-w-max'}`}>
             {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
-            {displayYears.map(year => (
-              <YearSection key={year} year={year} isWrapMode={isWrapMode} cellProps={cellProps} />
+            {displayYears.map((year, i) => (
+              <YearSection key={year} year={year} isFirst={i === 0} isWrapMode={isWrapMode} cellProps={cellProps} />
             ))}
           </div>
         </div>
