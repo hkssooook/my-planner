@@ -29,7 +29,7 @@ export default function PeriodEventModal({ event, onChange, onClose, onSave }) {
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>취소</Button>
+        <Button variant="secondary" onClick={onClose}>취소</Button>
         <Button onClick={onSave}>저장</Button>
       </DialogFooter>
     </PopupDialog>

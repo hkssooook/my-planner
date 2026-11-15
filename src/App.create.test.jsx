@@ -335,12 +335,12 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
   });
 });
 
-describe('팝업 버튼의 종류(모양): 취소는 outline, 저장은 primary', () => {
+describe('팝업 버튼의 종류(모양): 취소는 secondary(파랑 2단계), 저장은 primary', () => {
   it('기간 등록 팝업', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
     const box = popup('기간 일정 등록');
-    expect(buttonIn(box, '취소')).toHaveClass('border-border', 'bg-background');
+    expect(buttonIn(box, '취소')).toHaveClass('bg-secondary', 'text-secondary-foreground');
     expect(buttonIn(box, '저장')).toHaveClass('bg-primary', 'text-primary-foreground');
   });
 

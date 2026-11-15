@@ -292,14 +292,14 @@ describe('일정 삭제', () => {
 });
 
 describe('팝업 버튼의 종류(모양)', () => {
-  it('수정 팝업: 삭제는 약한 빨강(destructive), 취소는 outline, 변경 저장은 primary', async () => {
+  it('수정 팝업: 삭제는 약한 빨강(destructive), 취소는 secondary(파랑 2단계), 변경 저장은 primary', async () => {
     seedEvents([makeEvent(1, '버튼 모양 확인', '2026-01-05')]);
     const user = setup();
     await user.click(editIconOf(barIn(cellOf('2026-01-05'), '버튼 모양 확인')));
     const box = popup('일정 수정');
 
     expect(buttonIn(box, '삭제')).toHaveClass('bg-destructive/10', 'text-destructive');
-    expect(buttonIn(box, '취소')).toHaveClass('border-border', 'bg-background');
+    expect(buttonIn(box, '취소')).toHaveClass('bg-secondary', 'text-secondary-foreground');
     expect(buttonIn(box, '변경 저장')).toHaveClass('bg-primary', 'text-primary-foreground');
   });
 
@@ -338,13 +338,13 @@ describe('팝업 버튼의 종류(모양)', () => {
     expect(buttonIn(box, '확인').parentElement).toHaveClass('sm:justify-end');
   });
 
-  it('삭제 확인 팝업: 취소는 outline, 확인도 약한 빨강(destructive)이고 둘 다 다른 팝업의 버튼과 같은 크기다', async () => {
+  it('삭제 확인 팝업: 취소는 secondary(파랑 2단계), 확인도 약한 빨강(destructive)이고 둘 다 다른 팝업의 버튼과 같은 크기다', async () => {
     seedEvents([makeEvent(1, '버튼 모양 확인', '2026-01-05')]);
     const user = setup();
     await user.click(deleteIconOf(barIn(cellOf('2026-01-05'), '버튼 모양 확인')));
     const box = popup('일정 삭제');
 
-    expect(buttonIn(box, '취소')).toHaveClass('border-border', 'bg-background', 'h-8', 'rounded-lg');
+    expect(buttonIn(box, '취소')).toHaveClass('bg-secondary', 'text-secondary-foreground', 'h-8', 'rounded-lg');
     expect(buttonIn(box, '확인')).toHaveClass('bg-destructive/10', 'text-destructive', 'h-8', 'rounded-lg');
   });
 });

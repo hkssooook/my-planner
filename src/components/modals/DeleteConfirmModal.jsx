@@ -11,7 +11,7 @@ export default function DeleteConfirmModal({ onCancel, onConfirm }) {
         <DialogDescription>이 일정을 완전히 삭제하시겠습니까?</DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel}>취소</Button>
+        <Button variant="secondary" onClick={onCancel}>취소</Button>
         <Button variant="destructive" onClick={onConfirm}>확인</Button>
       </DialogFooter>
     </PopupDialog>

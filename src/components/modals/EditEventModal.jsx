@@ -52,7 +52,7 @@ export default function EditEventModal({ event, onChange, onSave, onClose, onDel
       <DialogFooter className="sm:justify-between">
         <Button variant="destructive" onClick={onDelete}>삭제</Button>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>취소</Button>
+          <Button variant="secondary" onClick={onClose}>취소</Button>
           <Button onClick={onSave}>변경 저장</Button>
         </div>
       </DialogFooter>
