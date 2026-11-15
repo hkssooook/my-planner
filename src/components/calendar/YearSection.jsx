@@ -6,14 +6,10 @@ export default function YearSection({ year, isWrapMode, cellProps }) {
     <>
       {/* 연도 구분선 (Year Divider) */}
       <div className={`flex ${isWrapMode ? 'border-b-2 border-border bg-accent text-lg font-bold' : 'min-w-max border-b-2 border-border bg-accent'}`}>
-        <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 shrink-0 sticky left-0 z-20 bg-accent flex items-center justify-center font-bold text-foreground shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+        <div className={`${isWrapMode ? 'w-full px-4 py-3' : 'w-16 shrink-0 py-3 sticky left-0 z-20 bg-accent flex items-center justify-center font-bold text-foreground shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
           {year}
         </div>
-        {!isWrapMode && (
-          <div className="p-3 font-bold text-foreground sticky left-16 z-10">
-            {year}년 연간 일정
-          </div>
-        )}
+        {/* 머리말의 연도 선택 칸이 이미 "○○년"을 보여 주므로, 여기에는 연도 숫자만 둔다 ("○○년 연간 일정" 글자는 중복이라 뺐다) */}
       </div>
 
       {/* 해당 연도의 1~12월 렌더링 */}

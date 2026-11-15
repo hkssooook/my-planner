@@ -42,9 +42,9 @@ describe('첫 화면', () => {
     render(<App />);
     expect(screen.getByText('연간 플래너')).toBeInTheDocument();
     expect(yearSelect()).toHaveTextContent('2026년');
-    expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
-    expect(screen.getByText('2027년 연간 일정')).toBeInTheDocument();
-    expect(screen.queryByText('2028년 연간 일정')).not.toBeInTheDocument();
+    expect(screen.getByText('2026')).toBeInTheDocument();
+    expect(screen.getByText('2027')).toBeInTheDocument();
+    expect(screen.queryByText('2028')).not.toBeInTheDocument();
   });
 
   it('연도 선택지는 올해 기준 -1년 ~ +3년이다', async () => {
@@ -58,8 +58,8 @@ describe('첫 화면', () => {
     const user = setup();
 
     expect(yearSelect()).toHaveTextContent('2029년');
-    expect(screen.getByText('2029년 연간 일정')).toBeInTheDocument();
-    expect(screen.getByText('2030년 연간 일정')).toBeInTheDocument();
+    expect(screen.getByText('2029')).toBeInTheDocument();
+    expect(screen.getByText('2030')).toBeInTheDocument();
     const options = await yearOptions(user);
     expect(options).toEqual(['2028년', '2029년', '2030년', '2031년', '2032년']);
   });
@@ -158,14 +158,14 @@ describe('첫 화면', () => {
     localStorage.setItem('planner_events', '{"broken": [');
     localStorage.setItem('planner_daily', 'not json');
     render(<App />);
-    expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
+    expect(screen.getByText('2026')).toBeInTheDocument();
   });
 
   it('모양이 엉뚱한 저장 데이터(올바른 JSON이지만 목록이 아님)여도 앱이 멈추지 않는다', () => {
     localStorage.setItem('planner_events', '{"a":1}');
     localStorage.setItem('planner_daily', '[1,2]');
     render(<App />);
-    expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
+    expect(screen.getByText('2026')).toBeInTheDocument();
   });
 });
 
@@ -174,9 +174,9 @@ describe('머리말: 연도와 보기 방식', () => {
     const user = setup();
     await pickYear(user, '2027년');
 
-    expect(screen.getByText('2027년 연간 일정')).toBeInTheDocument();
-    expect(screen.getByText('2028년 연간 일정')).toBeInTheDocument();
-    expect(screen.queryByText('2026년 연간 일정')).not.toBeInTheDocument();
+    expect(screen.getByText('2027')).toBeInTheDocument();
+    expect(screen.getByText('2028')).toBeInTheDocument();
+    expect(screen.queryByText('2026')).not.toBeInTheDocument();
   });
 
   it('공휴일 데이터가 없는 해를 골라도 달력은 정상으로 보이고 공휴일 이름만 없다', async () => {
@@ -184,7 +184,7 @@ describe('머리말: 연도와 보기 방식', () => {
     const user = setup();
     await pickYear(user, '2029년');
 
-    expect(screen.getByText('2029년 연간 일정')).toBeInTheDocument();
+    expect(screen.getByText('2029')).toBeInTheDocument();
     expect(screen.getAllByTitle('상세 일정 관리').length).toBeGreaterThan(700);
     for (const name of holidayNames) {
       expect(screen.queryAllByText(name)).toHaveLength(0);
@@ -198,12 +198,12 @@ describe('머리말: 연도와 보기 방식', () => {
     await user.click(screen.getByText('화면 맞춤'));
     expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
     expect(screen.getByText('가로 스크롤')).not.toHaveClass('bg-card');
-    expect(screen.queryByText('2026년 연간 일정')).not.toBeInTheDocument(); // 화면 맞춤에서는 연도 구분선이 숫자만 보인다
+    expect(screen.getByText('2026')).toBeInTheDocument(); // 화면 맞춤에서도 연도 구분선에 연도 숫자가 보인다
     expect(screen.getAllByTitle('상세 일정 관리')).toHaveLength(730); // 날짜 칸은 그대로
 
     await user.click(screen.getByText('가로 스크롤'));
     expect(screen.getByText('가로 스크롤')).toHaveClass('bg-card');
-    expect(screen.getByText('2026년 연간 일정')).toBeInTheDocument();
+    expect(screen.getByText('2026')).toBeInTheDocument();
   });
 
   it('연도 드롭다운은 shadcn 기본 크기다 (높이 32px, 글자 14px 보통 굵기)', () => {
@@ -234,7 +234,8 @@ describe('머리말: 연도와 보기 방식', () => {
 
     expect(yearSelect()).toHaveTextContent('2027년');
     expect(screen.getByText('화면 맞춤')).toHaveClass('bg-card');
-    expect(screen.queryByText('2027년 연간 일정')).not.toBeInTheDocument();
+    expect(screen.getByText('2027')).toBeInTheDocument(); // 바꾼 해의 달력이 화면 맞춤으로 보인다
+    expect(screen.queryByText('2026')).not.toBeInTheDocument();
   });
 });
 
