@@ -1,7 +1,8 @@
 // 시간 일정(카드)을 다루는 도구 모음.
 //
 // 시간 일정은 날짜별로 "시작~끝 시각이 있는 카드" 목록으로 저장한다.
-//   timeBlocks: { '2026-01-05': [{ id, start: '09:00', end: '10:00', content, color, is_important }] }
+//   timeBlocks: { '2026-01-05': [{ id, start: '09:00', end: '10:00', content, color, is_important, todos? }] }
+//   todos(할 일 목록)는 utils/todos.js가 다룬다.
 // 시각은 'HH:MM' 글자로 저장한다. 글자 순서가 곧 시간 순서라서 그대로 정렬할 수 있다.
 // 하루의 끝은 '24:00'으로 쓴다. (23시 일정 = '23:00'~'24:00')
 //

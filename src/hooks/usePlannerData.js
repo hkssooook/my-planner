@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { STORAGE_KEYS, loadJSON, saveJSON } from '../utils/storage';
 import { migrateDailyToBlocks, sortBlocks } from '../utils/timeBlocks';
+import { todosOf } from '../utils/todos';
 
 const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
 
@@ -28,7 +29,8 @@ function loadSavedTimeBlocks() {
 // 화면(팝업 열고 닫기, 입력창 등)은 알지 못한다. 저장 방식이 바뀌면 이 파일만 고치면 된다.
 //
 //   events:     [{ id, title, start_date, end_date, color }]
-//   timeBlocks: { '2026-01-05': [{ id, start: '09:00', end: '10:00', content, color, is_important }] } (날짜마다 시작 시각 순서)
+//   timeBlocks: { '2026-01-05': [{ id, start: '09:00', end: '10:00', content, color, is_important, todos? }] } (날짜마다 시작 시각 순서)
+//               todos는 할 일 목록 [{ id, text, done }]. 예전에 만든 카드에는 없다. (utils/todos.js 참고)
 //               (카드 모양은 utils/timeBlocks.js 설명 참고)
 export default function usePlannerData() {
   // useState에 함수를 넘기면 맨 처음 한 번만 실행되어 그 결과가 초기값이 된다.
@@ -80,12 +82,20 @@ export default function usePlannerData() {
 
   const removeTimeBlock = (date, id) => updateDayBlocks(date, (list) => list.filter((block) => block.id !== id));
 
-  // 이름이 비어 있을 때만 지운다. (카드 상세 패널을 이름 없이 닫으면 실수로 만든 카드로 보고 치운다)
+  // 카드의 할 일 목록을 고친다. change는 "지금 할 일 목록 → 새 목록" 함수다. (utils/todos.js의 도구를 넘긴다)
+  // 예: changeTodos(date, id, (todos) => addTodo(todos, '자료 출력'))
+  // 카드를 고칠 때처럼 늘 가장 최신 목록을 받아서 고치므로, 빠르게 연달아 입력해도 앞의 입력이 사라지지 않는다.
+  const changeTodos = (date, id, change) =>
+    updateDayBlocks(date, (list) => list.map((block) => (block.id === id ? { ...block, todos: change(todosOf(block)) } : block)));
+
+  // 이름도 할 일도 비어 있을 때만 지운다. (카드 상세 패널을 이름 없이 닫으면 실수로 만든 카드로 보고 치운다)
+  // 할 일이 적혀 있으면 이름이 없어도 남긴다. (써 둔 할 일이 날아가지 않게)
+  const isEmptyBlock = (block) => block.content.trim() === '' && todosOf(block).length === 0;
   const removeTimeBlockIfEmpty = (date, id) =>
-    updateDayBlocks(date, (list) => list.filter((block) => block.id !== id || block.content.trim() !== ''));
+    updateDayBlocks(date, (list) => list.filter((block) => block.id !== id || !isEmptyBlock(block)));
 
   return {
     events, timeBlocks, addEvent, changeEvent, removeEvent,
-    saveDayBlocks, addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty,
+    saveDayBlocks, addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
   };
 }

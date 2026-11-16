@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import usePlannerData from './usePlannerData';
+import { addTodo, setTodoDone } from '../utils/todos';
 
 // id는 "일정을 만든 순간의 시각"으로 만들어지므로, 시계를 고정해서 시험 결과가 매번 같게 한다.
 const NOW = new Date(2026, 5, 15, 12, 0, 0).getTime();
@@ -329,6 +330,49 @@ describe('카드 하나씩 다루기 (addTimeBlock · changeTimeBlock · removeT
     act(() => result.current.removeTimeBlockIfEmpty('2026-01-05', 'n'));
     act(() => result.current.removeTimeBlockIfEmpty('2026-01-05', 'e'));
     expect(result.current.timeBlocks['2026-01-05']).toEqual([nine]);
+  });
+});
+
+describe('changeTodos (카드의 할 일 목록 고치기)', () => {
+  const nine = { id: 'n', start: '09:00', end: '10:00', content: '회의', is_important: false, color: '#22C55E' };
+
+  it('할 일이 없던 카드(예전 카드)에도 더할 수 있고, 저장소에도 반영된다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addTimeBlock('2026-01-05', nine));
+    act(() => result.current.changeTodos('2026-01-05', 'n', (todos) => addTodo(todos, '자료 출력')));
+    expect(result.current.timeBlocks['2026-01-05'][0].todos).toEqual([{ id: expect.any(String), text: '자료 출력', done: false }]);
+    expect(saved('planner_time_blocks')['2026-01-05'][0].todos.map((t) => t.text)).toEqual(['자료 출력']);
+  });
+
+  it('빠르게 연달아 고쳐도(추가 → 추가 → 완료) 앞의 변경이 사라지지 않는다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addTimeBlock('2026-01-05', nine));
+    act(() => {
+      result.current.changeTodos('2026-01-05', 'n', (todos) => addTodo(todos, '하나'));
+      result.current.changeTodos('2026-01-05', 'n', (todos) => addTodo(todos, '둘'));
+      result.current.changeTodos('2026-01-05', 'n', (todos) => setTodoDone(todos, todos[0].id, true));
+    });
+    expect(result.current.timeBlocks['2026-01-05'][0].todos.map((t) => [t.text, t.done])).toEqual([['하나', true], ['둘', false]]);
+  });
+
+  it('다른 카드의 할 일과 카드의 다른 값(이름·시각)은 건드리지 않는다', () => {
+    const ten = { ...nine, id: 't', start: '10:00', end: '11:00', todos: [{ id: 'x', text: '그대로', done: false }] };
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.saveDayBlocks('2026-01-05', [nine, ten]));
+    act(() => result.current.changeTodos('2026-01-05', 'n', (todos) => addTodo(todos, '새 할 일')));
+    const [first, second] = result.current.timeBlocks['2026-01-05'];
+    expect(first).toEqual({ ...nine, todos: [expect.objectContaining({ text: '새 할 일' })] });
+    expect(second).toEqual(ten);
+  });
+
+  it('removeTimeBlockIfEmpty: 이름이 비어도 할 일이 있으면 남기고, 이름도 할 일도 없으면 지운다', () => {
+    const noName = { ...nine, id: 'a', content: '' };
+    const noNameWithTodo = { ...nine, id: 'b', start: '11:00', end: '12:00', content: '', todos: [{ id: 'x', text: '전화', done: false }] };
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.saveDayBlocks('2026-01-05', [noName, noNameWithTodo]));
+    act(() => result.current.removeTimeBlockIfEmpty('2026-01-05', 'a'));
+    act(() => result.current.removeTimeBlockIfEmpty('2026-01-05', 'b'));
+    expect(result.current.timeBlocks['2026-01-05'].map((b) => b.id)).toEqual(['b']);
   });
 });
 
