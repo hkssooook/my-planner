@@ -403,17 +403,32 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(within(cellOf('2026-01-05')).getByText('10:30')).toBeInTheDocument(); // 달력 칸에도 바뀐 시각
     });
 
-    it('옮기다가 이웃 카드에 닿으면 그 앞에서 멈추고, 다른 카드를 뛰어넘지 않는다', async () => {
+    it('겹치지만 않으면 다른 카드를 넘어 옮길 수 있다 (앞선 일정을 나중 일정 뒤로)', async () => {
       seedDaily({ '2026-01-05': [
         { hour: 9, content: '회의', is_important: false, color: COLOR.blue },
         { hour: 12, content: '점심', is_important: false, color: COLOR.mint },
       ] });
       const user = setup();
       await openPanel(user, '2026-01-05');
-      dragCard('09:00', 18, 40); // 20:00 칸까지 끌어도 점심(12:00) 앞에서 멈춘다
+      dragCard('09:00', 18, 28); // 회의를 잡고 14:00 칸으로 → 점심을 넘어간다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
-        ['회의', '11:00', '12:00'],
         ['점심', '12:00', '13:00'],
+        ['회의', '14:00', '15:00'], // 저장 순서도 시작 시각 순서로 바뀐다
+      ]);
+      expect(within(blockPanel()).getByText(/14:00–15:00/)).toBeInTheDocument();
+    });
+
+    it('다른 카드 위에 놓으면 겹치지 않는 가장 가까운 빈자리로 간다', async () => {
+      seedDaily({ '2026-01-05': [
+        { hour: 9, content: '회의', is_important: false, color: COLOR.blue },
+        { hour: 12, content: '점심', is_important: false, color: COLOR.mint },
+      ] });
+      const user = setup();
+      await openPanel(user, '2026-01-05');
+      dragCard('09:00', 18, 25); // 회의를 12:30 칸(점심 한가운데)에 놓으면 → 점심 바로 뒤 13:00
+      expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
+        ['점심', '12:00', '13:00'],
+        ['회의', '13:00', '14:00'],
       ]);
     });
 
@@ -439,7 +454,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(blockPanel()).toBeInTheDocument();
     });
 
-    it('카드 상세 패널에서 시작·끝 시각을 고를 수 있고, 목록에는 이웃 카드와 겹치지 않는 시각만 나온다', async () => {
+    it('카드 상세 패널: 시작 시각을 고르면 길이 그대로 옮겨지고(다른 카드를 넘어가도 됨), 끝 시각을 고르면 길이가 바뀐다', async () => {
       seedDaily({ '2026-01-05': [
         { hour: 8, content: '아침', is_important: false, color: COLOR.blue },
         { hour: 10, content: '회의', is_important: false, color: COLOR.blue },
@@ -452,16 +467,24 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       const startBox = within(detail).getByRole('combobox', { name: '카드 시작 시각' });
       const endBox = within(detail).getByRole('combobox', { name: '카드 끝 시각' });
       const options = (box) => within(box).getAllByRole('option').map((o) => o.textContent);
-      expect(options(startBox)).toEqual(['09:00', '09:30', '10:00', '10:30']); // 아침(~09:00) 뒤부터, 끝(11:00) 전까지
-      expect(options(endBox)).toEqual(['10:30', '11:00', '11:30', '12:00']); // 점심(12:00) 앞까지
+      // 시작 시각: 1시간 카드가 다른 카드와 겹치지 않고 들어가는 자리만 (아침 08:00~09:00, 점심 12:00~13:00 피함)
+      expect(options(startBox)).toContain('07:00');
+      expect(options(startBox)).not.toContain('07:30');
+      expect(options(startBox)).toContain('11:00');
+      expect(options(startBox)).not.toContain('11:30');
+      expect(options(startBox)).toContain('13:00');
+      expect(options(startBox).at(-1)).toBe('23:00');
+      // 끝 시각: 점심(12:00) 앞까지만
+      expect(options(endBox)).toEqual(['10:30', '11:00', '11:30', '12:00']);
 
-      await user.selectOptions(startBox, '09:30');
-      await user.selectOptions(endBox, '12:00');
+      await user.selectOptions(startBox, '15:00'); // 점심을 넘어 옮긴다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
         ['아침', '08:00', '09:00'],
-        ['회의', '09:30', '12:00'],
         ['점심', '12:00', '13:00'],
+        ['회의', '15:00', '16:00'],
       ]);
+      await user.selectOptions(within(blockPanel()).getByRole('combobox', { name: '카드 끝 시각' }), '17:30');
+      expect(stored('planner_time_blocks')['2026-01-05'].at(-1)).toEqual(expect.objectContaining({ start: '15:00', end: '17:30' }));
     });
 
     it('달력 칸의 시간 일정을 누르면 일정 패널과 그 카드의 상세 패널이 함께 열린다', async () => {

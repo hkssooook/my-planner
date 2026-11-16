@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import ColorPicker from '../common/ColorPicker';
 import { Button } from '@/components/ui/button';
 import { formatShortDate } from '../../utils/date';
-import { blockSlotRange, slotToTime } from '../../utils/timeBlocks';
+import { blockSlotRange, freeGapAround, freeStartsFor, slotToTime } from '../../utils/timeBlocks';
 
 const range = (from, to) => Array.from({ length: to - from }, (_, i) => from + i); // [from, to)
 
@@ -13,12 +13,13 @@ const range = (from, to) => Array.from({ length: to - from }, (_, i) => from + i
 //   Esc 키로도 닫힌다.
 //
 //   date      카드가 있는 날짜,  block  고른 카드
-//   gap       이 카드가 움직일 수 있는 빈 구간 [lo, hi) 칸 (바로 위·아래 이웃 카드 사이). 시각 목록은 이 안에서만 고른다.
-//   onChange(changes)  예: onChange({ content: '팀 회의' }), onChange({ start: '09:30' })
-export default function BlockPanel({ date, block, gap, onChange, onDelete, onClose }) {
+//   blocks    그날의 카드 목록 (시각 목록에서 다른 카드와 겹치는 시각을 빼려고)
+//   onChange(changes)  예: onChange({ content: '팀 회의' }), onChange({ start: '09:30', end: '10:30' })
+export default function BlockPanel({ date, block, blocks, onChange, onDelete, onClose }) {
   const nameRef = useRef(null);
   const [start, end] = blockSlotRange(block);
-  const [lo, hi] = gap;
+  const length = end - start;
+  const [, hi] = freeGapAround(blocks, block.id);
 
   // 열리면(다른 카드를 고르면 부모가 key를 바꿔 새로 그린다) 이름 입력칸에 커서를 둔다. 끌어서 만들자마자 바로 이름을 쓸 수 있다.
   useEffect(() => {
@@ -51,16 +52,20 @@ export default function BlockPanel({ date, block, gap, onChange, onDelete, onClo
           />
         </div>
 
-        {/* 시각 바꾸기 (시간표에서 카드를 끄는 것과 같은 일을 키보드로). 이웃 카드와 겹치지 않는 시각만 목록에 나온다 */}
+        {/* 시각 바꾸기 (시간표에서 카드를 끄는 것과 같은 일을 키보드로). 다른 카드와 겹치지 않는 시각만 목록에 나온다.
+            시작 시각을 고르면 길이 그대로 카드가 옮겨지고(다른 카드를 넘어가도 됨), 끝 시각을 고르면 길이가 바뀐다 */}
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold text-foreground">시간</span>
           <div className="flex items-center gap-1.5 text-sm">
             <select
               aria-label="카드 시작 시각" value={start}
-              onChange={(e) => onChange({ start: slotToTime(Number(e.target.value)) })}
+              onChange={(e) => {
+                const newStart = Number(e.target.value);
+                onChange({ start: slotToTime(newStart), end: slotToTime(newStart + length) });
+              }}
               className="px-2 py-1 border border-input rounded-sm bg-card"
             >
-              {range(lo, end).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
+              {freeStartsFor(blocks, block.id).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
             </select>
             <span className="text-muted-foreground">~</span>
             <select

@@ -73,9 +73,10 @@ export default function usePlannerData() {
   // 카드 하나를 더하고 시작 시각 순서로 정렬한다.
   const addTimeBlock = (date, block) => updateDayBlocks(date, (list) => sortBlocks([...list, block]));
 
-  // id가 같은 카드에 바뀐 값(changes)만 덮어쓴다. 예: changeTimeBlock(date, id, { content: '회의' })
+  // id가 같은 카드에 바뀐 값(changes)만 덮어쓰고 시작 시각 순서로 다시 정렬한다. 예: changeTimeBlock(date, id, { content: '회의' })
+  // (카드를 다른 카드 뒤로 옮기면 순서가 바뀌므로 정렬한다)
   const changeTimeBlock = (date, id, changes) =>
-    updateDayBlocks(date, (list) => list.map((block) => (block.id === id ? { ...block, ...changes } : block)));
+    updateDayBlocks(date, (list) => sortBlocks(list.map((block) => (block.id === id ? { ...block, ...changes } : block))));
 
   const removeTimeBlock = (date, id) => updateDayBlocks(date, (list) => list.filter((block) => block.id !== id));
 

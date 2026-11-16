@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   hourToTime, timeToHour, slotToBlock, migrateDailyToBlocks,
   slotToTime, timeToSlot, blockSlotRange, isSlotTaken, isRangeFree, freeRangeFrom, makeTimeBlock, sortBlocks,
-  freeGapAround, movedRange, resizedRange,
+  freeGapAround, freeStartsFor, movedRange, resizedRange,
 } from './timeBlocks';
 
 const BLUE = '#3B82F6';
@@ -130,10 +130,32 @@ describe('카드 옮기기·늘이기', () => {
     expect(freeGapAround(blocks, 'c')).toEqual([22, 48]);
   });
 
-  it('movedRange: 길이는 그대로 옮기고, 빈 구간 끝에서 멈춘다', () => {
-    expect(movedRange([20, 22], 2, [18, 26])).toEqual([22, 24]);
-    expect(movedRange([20, 22], 10, [18, 26])).toEqual([24, 26]); // 아래 이웃 앞에서 멈춤
-    expect(movedRange([20, 22], -10, [18, 26])).toEqual([18, 20]); // 위 이웃 뒤에서 멈춤
+  it('movedRange: 길이는 그대로 옮기고, 겹치지 않으면 다른 카드를 넘어가도 된다', () => {
+    expect(movedRange(blocks, 'b', [20, 22], 2)).toEqual([22, 24]);
+    expect(movedRange(blocks, 'b', [20, 22], 10)).toEqual([30, 32]); // c(13:00)를 넘어 15:00으로
+    expect(movedRange(blocks, 'a', [16, 18], 20)).toEqual([36, 38]); // a가 b·c를 모두 넘어 18:00으로
+  });
+
+  it('movedRange: 놓는 자리가 다른 카드와 겹치면 가장 가까운 빈자리로 보낸다 (같은 거리면 끄는 방향 쪽)', () => {
+    expect(movedRange(blocks, 'a', [16, 18], 4)).toEqual([22, 24]); // b(20~22) 위에 놓으면 → 바로 아래 11:00
+    expect(movedRange(blocks, 'a', [16, 18], 3)).toEqual([18, 20]); // 19~21은 b와 겹침 → 바로 위 09:00이 더 가깝다
+    expect(movedRange(blocks, 'c', [26, 27], -6)).toEqual([19, 20]); // b(20~22) 위 → 위로 끄는 중이라 위쪽 빈자리
+  });
+
+  it('movedRange: 하루 밖으로는 나가지 않는다', () => {
+    expect(movedRange(blocks, 'c', [26, 27], 100)).toEqual([47, 48]);
+    expect(movedRange(blocks, 'a', [16, 18], -100)).toEqual([0, 2]);
+  });
+
+  it('freeStartsFor: 길이 그대로 놓을 수 있는 시작 칸 목록 (자기 자리 포함, 겹치는 자리 제외)', () => {
+    const starts = freeStartsFor(blocks, 'b'); // 길이 2칸
+    expect(starts).toContain(0);
+    expect(starts).toContain(18); // 09:00~10:00 (a 바로 뒤)
+    expect(starts).toContain(20); // 지금 자리
+    expect(starts).toContain(24); // 12:00~13:00 (c 바로 앞)
+    expect(starts).not.toContain(15); // a와 겹침
+    expect(starts).not.toContain(25); // c와 겹침
+    expect(starts.at(-1)).toBe(46); // 23:00~24:00
   });
 
   it('resizedRange: 위·아래 끝을 끌어 늘이거나 줄이고, 최소 한 칸이며 빈 구간을 넘지 않는다', () => {

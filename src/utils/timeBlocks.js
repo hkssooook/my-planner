@@ -94,8 +94,8 @@ export function freeRangeFrom(blocks, anchor, target) {
 
 // --- 카드 옮기기·늘이기 ----------------------------------------------------------------------
 
-// 카드(id)가 움직일 수 있는 빈 구간 [lo, hi): 바로 위 이웃 카드의 끝 ~ 바로 아래 이웃 카드의 시작 (이웃이 없으면 0 / 48).
-// 카드는 이 구간 안에서만 옮기거나 늘인다. 그래서 다른 카드를 뛰어넘거나 겹치지 않는다.
+// 카드(id)가 늘어날 수 있는 빈 구간 [lo, hi): 바로 위 이웃 카드의 끝 ~ 바로 아래 이웃 카드의 시작 (이웃이 없으면 0 / 48).
+// 길이를 바꿀 때는 이 구간 안에서만 늘인다. 그래서 늘이면서 다른 카드를 덮지 않는다. (옮기기는 movedRange 참고)
 export function freeGapAround(blocks, id) {
   const me = blocks.find((b) => b.id === id);
   const [start, end] = blockSlotRange(me);
@@ -112,11 +112,31 @@ export function freeGapAround(blocks, id) {
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-// 범위 [start, end)를 delta칸만큼 옮긴 결과. 길이는 그대로이고, 빈 구간 [lo, hi) 밖으로 나가지 않게 끝에서 멈춘다.
-export function movedRange([start, end], delta, [lo, hi]) {
+// 카드(id)를 길이 그대로 [s, s+length) 자리에 놓을 수 있는가? (하루 안이고 다른 카드와 겹치지 않으면)
+const fitsAt = (others, s, length) => s >= 0 && s + length <= SLOTS_PER_DAY && isRangeFree(others, s, s + length);
+
+// 카드(id)를 길이 그대로 놓을 수 있는 모든 시작 칸 (카드 상세 패널의 시작 시각 목록)
+export function freeStartsFor(blocks, id) {
+  const others = blocks.filter((b) => b.id !== id);
+  const [start, end] = blockSlotRange(blocks.find((b) => b.id === id));
   const length = end - start;
-  const newStart = clamp(start + delta, lo, hi - length);
-  return [newStart, newStart + length];
+  return Array.from({ length: SLOTS_PER_DAY - length + 1 }, (_, s) => s).filter((s) => fitsAt(others, s, length));
+}
+
+// 카드(id)의 범위 [start, end)를 delta칸만큼 옮긴 결과. 길이는 그대로이고, 다른 카드를 넘어가도 된다.
+// 옮긴 자리가 다른 카드와 겹치면, 겹치지 않는 가장 가까운 빈자리로 보낸다. (같은 거리면 끄는 방향 쪽 먼저)
+// 하루 밖으로는 나가지 않는다. 놓을 곳이 전혀 없으면 원래 자리.
+export function movedRange(blocks, id, [start, end], delta) {
+  const others = blocks.filter((b) => b.id !== id);
+  const length = end - start;
+  const wanted = clamp(start + delta, 0, SLOTS_PER_DAY - length);
+  if (fitsAt(others, wanted, length)) return [wanted, wanted + length];
+  for (let distance = 1; distance <= SLOTS_PER_DAY; distance += 1) {
+    const candidates = delta >= 0 ? [wanted + distance, wanted - distance] : [wanted - distance, wanted + distance];
+    const found = candidates.find((s) => fitsAt(others, s, length));
+    if (found !== undefined) return [found, found + length];
+  }
+  return [start, end];
 }
 
 // 범위의 한쪽 끝을 slot 칸까지 끌어 늘이거나 줄인 결과. 최소 30분(한 칸)이고 빈 구간 [lo, hi) 밖으로 나가지 않는다.

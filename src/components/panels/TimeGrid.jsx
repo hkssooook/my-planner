@@ -19,7 +19,8 @@ const boxStyle = ([start, end]) => ({ top: start * ROW + 1, height: (end - start
 //   - 빈 칸을 누르고 위아래로 끌었다 놓으면, 끈 만큼(30분 단위로 딱 맞춰) 새 카드가 생긴다. 누르기만 하면 30분 카드.
 //   - 끄는 중에 이미 있는 카드에 닿으면 그 앞에서 멈춘다. (카드끼리 겹치지 않는다)
 //   - 카드 가운데를 잡고 끌면 옮겨지고(길이 그대로), 맨 위·맨 아래 가장자리를 끌면 길이가 바뀐다. 모두 30분 단위.
-//     카드는 바로 위·아래 이웃 카드 사이의 빈 구간 안에서만 움직인다. (뛰어넘거나 겹치지 않는다)
+//     옮길 때는 다른 카드를 넘어가도 되고, 다른 카드 위에 놓으면 겹치지 않는 가장 가까운 빈자리로 간다.
+//     길이를 바꿀 때는 바로 위·아래 이웃 카드에 닿으면 멈춘다. (늘이면서 다른 카드를 덮지 않게)
 //   - 카드를 누르기만 하면(키보드: Tab → Enter) 카드 상세 패널을 연다. 옮기거나 늘인 뒤에도 그 카드의 상세 패널이 열린다.
 //
 //   blocks            그날의 카드 목록
@@ -107,7 +108,8 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
     const original = blockSlotRange(block);
     const gap = freeGapAround(blocks, block.id);
     const anchor = slotAt(e.clientY);
-    const rangeFor = (slot) => (edge ? resizedRange(original, edge, slot, gap) : movedRange(original, slot - anchor, gap));
+    const rangeFor = (slot) =>
+      (edge ? resizedRange(original, edge, slot, gap) : movedRange(blocks, block.id, original, slot - anchor));
 
     let range = original;
     trackMouse(
