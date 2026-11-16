@@ -516,6 +516,105 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
   });
 });
 
+describe('카드 상세 패널의 할 일', () => {
+  // 09:00 회의 카드 하나를 미리 넣고(화면을 그리기 전에), 그 카드의 상세 패널을 연다.
+  const openCard = async () => {
+    seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(timeCard('09:00'));
+    return [user, blockPanel()];
+  };
+  const savedTodos = () => stored('planner_time_blocks')['2026-01-05'][0].todos ?? [];
+
+  it('입력칸에 쓰고 Enter를 누르면 할 일이 더해지고, 커서가 남아 바로 다음 할 일을 쓸 수 있다', async () => {
+    const [user, detail] = await openCard();
+    const input = within(detail).getByRole('textbox', { name: '새 할 일' });
+    await user.type(input, '자료 출력{Enter}');
+    expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
+    await user.keyboard('회의실 예약{Enter}');
+    expect(savedTodos().map((t) => [t.text, t.done])).toEqual([['자료 출력', false], ['회의실 예약', false]]);
+    expect(within(detail).getByRole('button', { name: '자료 출력 고치기' })).toBeInTheDocument();
+  });
+
+  it('빈 글자는 더하지 않는다', async () => {
+    const [user, detail] = await openCard();
+    await user.type(within(detail).getByRole('textbox', { name: '새 할 일' }), '   {Enter}');
+    expect(savedTodos()).toEqual([]);
+  });
+
+  it('체크하면 완료로 저장되고 줄이 그어지며, 제목 옆에 "완료/전체"가 보인다', async () => {
+    const [user, detail] = await openCard();
+    await user.type(within(detail).getByRole('textbox', { name: '새 할 일' }), '하나{Enter}둘{Enter}');
+    expect(within(detail).getByLabelText('2개 중 0개 완료')).toHaveTextContent('0/2');
+
+    await user.click(within(detail).getByRole('checkbox', { name: '하나 완료' }));
+    expect(savedTodos().map((t) => t.done)).toEqual([true, false]);
+    expect(within(detail).getByRole('button', { name: '하나 고치기' })).toHaveClass('line-through');
+    expect(within(detail).getByLabelText('2개 중 1개 완료')).toHaveTextContent('1/2');
+    expect(savedTodos().map((t) => t.text)).toEqual(['하나', '둘']); // 완료해도 순서는 그대로
+  });
+
+  it('글자를 누르면 고칠 수 있고 Enter로 저장된다. Esc는 고치기만 취소하고 패널은 닫지 않는다', async () => {
+    const [user, detail] = await openCard();
+    await user.type(within(detail).getByRole('textbox', { name: '새 할 일' }), '자료 출력{Enter}');
+    await user.click(within(detail).getByRole('button', { name: '자료 출력 고치기' }));
+    const edit = within(detail).getByRole('textbox', { name: '할 일 고치기' });
+    await user.clear(edit);
+    await user.type(edit, '자료 20부 출력{Enter}');
+    expect(savedTodos().map((t) => t.text)).toEqual(['자료 20부 출력']);
+
+    await user.click(within(detail).getByRole('button', { name: '자료 20부 출력 고치기' }));
+    await user.type(within(detail).getByRole('textbox', { name: '할 일 고치기' }), ' 취소될 글자');
+    await user.keyboard('{Escape}');
+    expect(queryBlockPanel()).toBeInTheDocument();
+    expect(savedTodos().map((t) => t.text)).toEqual(['자료 20부 출력']);
+  });
+
+  it('고치다가 글자를 다 지우면 그 할 일이 사라지고, ✕로도 지울 수 있다', async () => {
+    const [user, detail] = await openCard();
+    await user.type(within(detail).getByRole('textbox', { name: '새 할 일' }), '하나{Enter}둘{Enter}');
+    await user.click(within(detail).getByRole('button', { name: '하나 고치기' }));
+    await user.clear(within(detail).getByRole('textbox', { name: '할 일 고치기' }));
+    await user.keyboard('{Enter}');
+    expect(savedTodos().map((t) => t.text)).toEqual(['둘']);
+
+    await user.click(within(detail).getByRole('button', { name: '둘 삭제' }));
+    expect(savedTodos()).toEqual([]);
+    expect(within(detail).queryByLabelText(/개 완료$/)).toBeNull(); // 할 일이 없으면 "0/0"도 안 보인다
+  });
+
+  it('할 일은 카드마다 따로 저장되고, 패널을 닫았다 다시 열어도 남아 있다', async () => {
+    seedDaily({ '2026-01-05': [
+      { hour: 9, content: '회의', is_important: false, color: COLOR.blue },
+      { hour: 14, content: '미팅', is_important: false, color: COLOR.mint },
+    ] });
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(timeCard('09:00'));
+    await user.type(within(blockPanel()).getByRole('textbox', { name: '새 할 일' }), '회의 자료{Enter}');
+    await user.click(timeCard('14:00'));
+    expect(within(blockPanel()).queryByRole('button', { name: '회의 자료 고치기' })).toBeNull();
+
+    await user.click(buttonIn(dayPanel(), '닫기'));
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(timeCard('09:00'));
+    expect(within(blockPanel()).getByRole('button', { name: '회의 자료 고치기' })).toBeInTheDocument();
+  });
+
+  it('이름 없이 만든 카드도 할 일을 적어 두면 닫아도 사라지지 않는다', async () => {
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    dragTime(30); // 15:00 칸
+    await user.type(within(blockPanel()).getByRole('textbox', { name: '새 할 일' }), '전화하기{Enter}');
+    await user.click(buttonIn(blockPanel(), '시간 일정 상세 닫기'));
+    expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
+      expect.objectContaining({ start: '15:00', content: '', todos: [expect.objectContaining({ text: '전화하기' })] }),
+    ]);
+  });
+});
+
 describe('팝업 버튼의 종류(모양): 취소는 secondary(파랑 2단계), 저장은 primary', () => {
   it('기간 등록 팝업', async () => {
     const user = setup();

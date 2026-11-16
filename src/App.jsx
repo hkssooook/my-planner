@@ -17,7 +17,7 @@ import BlockPanel from './components/panels/BlockPanel';
 export default function App() {
   const {
     events, timeBlocks, addEvent, changeEvent, removeEvent,
-    addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty,
+    addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
   } = usePlannerData();
 
   // 앱을 연 해(올해)를 한 번 읽어 고정하고, 그 해로 시작한다. 선택 칸의 연도 목록도 이 해를 기준으로 만든다.
@@ -44,7 +44,7 @@ export default function App() {
   // 카드 상세 패널에 열린 시간 일정 카드의 id (패널 날짜의 카드). null이면 카드 상세 패널이 닫혀 있다.
   const [selectedBlockId, setSelectedBlockId] = useState(null);
 
-  // 카드 상세 패널을 닫거나 다른 카드로 바꿀 때: 지금 고른 카드가 이름 없이 남아 있으면 지운다.
+  // 카드 상세 패널을 닫거나 다른 카드로 바꿀 때: 지금 고른 카드가 이름도 할 일도 없이 남아 있으면 지운다.
   // (시간표를 실수로 눌러 생긴 빈 카드가 쌓이지 않게)
   const releaseBlock = () => {
     if (panel && selectedBlockId) removeTimeBlockIfEmpty(panel.date, selectedBlockId);
@@ -197,6 +197,7 @@ export default function App() {
           block={selectedBlock}
           blocks={panelBlocks}
           onChange={(changes) => changeTimeBlock(panel.date, selectedBlock.id, changes)}
+          onChangeTodos={(change) => changeTodos(panel.date, selectedBlock.id, change)}
           onDelete={() => { removeTimeBlock(panel.date, selectedBlock.id); setSelectedBlockId(null); }}
           onClose={() => selectBlock(null)}
         />

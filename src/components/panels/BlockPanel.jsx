@@ -1,21 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import ColorPicker from '../common/ColorPicker';
+import TodoList from './TodoList';
 import { Button } from '@/components/ui/button';
 import { formatShortDate } from '../../utils/date';
 import { blockSlotRange, freeGapAround, freeStartsFor, slotToTime } from '../../utils/timeBlocks';
+import { todosOf } from '../../utils/todos';
 
 const range = (from, to) => Array.from({ length: to - from }, (_, i) => from + i); // [from, to)
 
-// 시간 일정 카드 하나의 상세 패널. 일정 패널 오른쪽에 열린다. (나중에 이 카드의 투두·예산도 여기에 붙는다)
-//   이름·색·주요(★)를 고치면 바로 저장된다. 삭제 버튼으로 카드를 지운다.
-//   이름 없이 닫으면 부모(App)가 그 카드를 지운다. (시간표를 실수로 눌러 생긴 카드를 남기지 않으려고)
+// 시간 일정 카드 하나의 상세 패널. 일정 패널 오른쪽에 열린다. (나중에 이 카드의 예산도 여기에 붙는다)
+//   이름·시간·색·주요(★)·할 일을 고치면 바로 저장된다. 삭제 버튼으로 카드를 지운다.
+//   이름도 할 일도 없이 닫으면 부모(App)가 그 카드를 지운다. (시간표를 실수로 눌러 생긴 카드를 남기지 않으려고)
 //   Esc 키로도 닫힌다.
 //
 //   date      카드가 있는 날짜,  block  고른 카드
 //   blocks    그날의 카드 목록 (시각 목록에서 다른 카드와 겹치는 시각을 빼려고)
 //   onChange(changes)  예: onChange({ content: '팀 회의' }), onChange({ start: '09:30', end: '10:30' })
-export default function BlockPanel({ date, block, blocks, onChange, onDelete, onClose }) {
+//   onChangeTodos(change)  할 일 목록 고치기 ("지금 목록 → 새 목록" 함수, TodoList 참고)
+export default function BlockPanel({ date, block, blocks, onChange, onChangeTodos, onDelete, onClose }) {
   const nameRef = useRef(null);
   const [start, end] = blockSlotRange(block);
   const length = end - start;
@@ -92,7 +95,11 @@ export default function BlockPanel({ date, block, blocks, onChange, onDelete, on
           주요 일정 (달력에 ★ 표시)
         </label>
 
-        <p className="text-[11px] text-muted-foreground">입력하면 바로 저장돼요. 이름 없이 닫으면 이 카드는 사라져요.</p>
+        <div className="border-t border-border pt-4">
+          <TodoList todos={todosOf(block)} onChange={onChangeTodos} />
+        </div>
+
+        <p className="text-[11px] text-muted-foreground">입력하면 바로 저장돼요. 이름도 할 일도 없이 닫으면 이 카드는 사라져요.</p>
 
         <Button variant="destructive" size="sm" className="self-start" onClick={onDelete}>이 시간 일정 삭제</Button>
       </div>
