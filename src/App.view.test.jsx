@@ -248,13 +248,17 @@ describe('머리말: 연도와 보기 방식', () => {
     // 맨 위 줄만 위쪽에도 붙어 위 모서리가 섹션과 같다(15px). 중간 해(2027)는 모서리 없는 띠다
     const divider2026 = screen.getByText('2026').parentElement;
     const divider2027 = screen.getByText('2027').parentElement;
-    expect(divider2026).toHaveClass('bg-surface-blue-4', '-mx-1', '-mt-1', 'rounded-t-lg');
-    expect(divider2027).toHaveClass('bg-surface-blue-4', '-mx-1');
+    expect(divider2026).toHaveClass('bg-surface-blue-4', '-mt-1', 'rounded-t-lg');
+    expect(divider2027).toHaveClass('bg-surface-blue-4');
+    expect(divider2026).not.toHaveClass('-mx-1'); // 섹션에 좌우 안쪽 여백이 없어서 늘릴 필요가 없다
     expect(divider2027).not.toHaveClass('-mt-1', 'rounded-t-lg', 'rounded-sm');
     expect(screen.getByText('2026')).toHaveClass('text-surface-blue-2'); // 연도 글자는 파랑 2단계
-    // 연도 글자 칸은 월 이름 칸과 같은 자리에 선다 (섹션 끝에서 4px 안쪽부터 64px, 가운데 맞춤)
-    expect(screen.getByText('2026')).toHaveClass('w-[calc(4rem+0.25rem)]', 'pl-1', 'justify-center');
+    // 연도 글자 칸은 월 이름 칸과 같은 자리에 선다 (섹션 왼쪽 끝부터 64px, 가운데 맞춤)
+    expect(screen.getByText('2026')).toHaveClass('w-[calc(4rem+0.25rem)]', 'pr-1', 'justify-center');
     expect(cell.closest('.overflow-x-auto')).toHaveClass('bg-surface-blue-4');
+    // 달력 상자 안쪽은 위아래만 4px, 좌우는 0 (칸이 상자 양 끝에 붙는다)
+    expect(cell.closest('.overflow-x-auto').firstElementChild).toHaveClass('py-1');
+    expect(cell.closest('.overflow-x-auto').firstElementChild).not.toHaveClass('p-1');
   });
 
   it('보기 방식 탭 묶음은 헤더 카드와 같은 2단계이고, 선택된 탭은 흰색(카드색)이라 더 밝다 — 화면 바탕(진한 파랑)을 쓰지 않는다', () => {
