@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, barIn, dayPanel, popup, drag, editIconOf, blockPanel, dragTime, timeCard } from './test/helpers';
+import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, dayPanel, popup, drag, blockPanel, eventPanel, dragTime, timeCard } from './test/helpers';
 import { COLOR_PALETTE } from './constants/colors';
 
 // 화면을 눈으로 못 보는 사람(스크린 리더)이 버튼을 알아들을 수 있는지 확인하는 시험.
@@ -9,37 +9,8 @@ import { COLOR_PALETTE } from './constants/colors';
 
 setupTestEnvironment();
 
-const sameDay = '2026-01-06';
-const fourEvents = () => [
-  makeEvent(1, '일정 하나', sameDay), makeEvent(2, '일정 둘', sameDay), makeEvent(3, '일정 셋', sameDay), makeEvent(4, '일정 넷', sameDay),
-];
 
 describe('접근성: 아이콘 버튼의 이름', () => {
-  it('일정 막대의 연필·X 버튼은 어떤 일정의 것인지 이름에 들어 있다', () => {
-    seedEvents([makeEvent(1, '여름 워크숍', '2026-01-05')]);
-    render(<App />);
-    const bar = barIn(cellOf('2026-01-05'), '여름 워크숍');
-    expect(within(bar).getByRole('button', { name: '여름 워크숍 수정' })).toBeInTheDocument();
-    expect(within(bar).getByRole('button', { name: '여름 워크숍 삭제' })).toBeInTheDocument();
-  });
-
-  it('같은 날 일정이 여러 개여도 버튼 이름이 서로 다르다 (이름으로 어느 일정인지 구분된다)', () => {
-    seedEvents([makeEvent(1, '가 일정', '2026-01-05'), makeEvent(2, '나 일정', '2026-01-05')]);
-    render(<App />);
-    const names = within(cellOf('2026-01-05')).getAllByRole('button').map((b) => b.getAttribute('aria-label')).filter(Boolean);
-    expect(names).toEqual(expect.arrayContaining(['가 일정 수정', '가 일정 삭제', '나 일정 수정', '나 일정 삭제']));
-    expect(new Set(names).size).toBe(names.length);
-  });
-
-  it('일정 패널의 연필·X 버튼도 일정 이름이 들어 있다', async () => {
-    seedEvents(fourEvents());
-    const user = setup();
-    await user.click(within(cellOf(sameDay)).getByText('+1 더보기'));
-    const box = dayPanel();
-    expect(within(box).getByRole('button', { name: '일정 넷 수정' })).toBeInTheDocument();
-    expect(within(box).getByRole('button', { name: '일정 넷 삭제' })).toBeInTheDocument();
-  });
-
   it('일정 패널의 ‹ › X 버튼에 이름이 있다', async () => {
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
@@ -57,13 +28,30 @@ describe('접근성: 아이콘 버튼의 이름', () => {
     expect(new Set(names).size).toBe(730);
   });
 
-  it('아이콘 그림(svg)은 스크린 리더가 읽지 않게 숨겨져 있다 (이름은 버튼에 있으므로)', () => {
-    seedEvents([makeEvent(1, '여름 워크숍', '2026-01-05')]);
-    render(<App />);
-    const bar = barIn(cellOf('2026-01-05'), '여름 워크숍');
-    const icons = bar.querySelectorAll('svg');
-    expect(icons.length).toBeGreaterThan(0);
-    icons.forEach((svg) => expect(svg).toHaveAttribute('aria-hidden', 'true'));
+});
+
+describe('접근성: 기간 일정', () => {
+  it('달력 막대와 패널 목록에는 연필·X 버튼이 없고, 패널 목록의 띠는 일정 이름으로 읽히는 버튼이다', async () => {
+    seedEvents([makeEvent(1, '가 일정', '2026-01-05'), makeEvent(2, '나 일정', '2026-01-05')]);
+    const user = setup();
+    expect(within(cellOf('2026-01-05')).queryByRole('button', { name: /수정$|삭제$/ })).toBeNull();
+    await user.click(dayButtonOf('2026-01-05'));
+    const box = dayPanel();
+    expect(within(box).queryByRole('button', { name: /수정$|삭제$/ })).toBeNull();
+    expect(within(box).getByRole('button', { name: /^가 일정/ })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(box).getByRole('button', { name: /^나 일정/ })).toBeInTheDocument();
+  });
+
+  it('기간 일정 상세 패널의 입력칸·색 묶음에 이름이 있고, 지금 색이 눌림 상태로 보인다', async () => {
+    seedEvents([makeEvent(1, '여름 워크숍', '2026-01-05', '2026-01-07', COLOR_PALETTE[2].value)]);
+    const user = setup();
+    await user.click(within(cellOf('2026-01-05')).getByText('여름 워크숍'));
+    const box = eventPanel();
+    expect(within(box).getByLabelText('이름')).toHaveValue('여름 워크숍');
+    expect(within(box).getByLabelText('시작일')).toHaveValue('2026-01-05');
+    expect(within(box).getByLabelText('종료일')).toHaveValue('2026-01-07');
+    const group = within(box).getByRole('group', { name: '기간 일정 색' });
+    expect(within(group).getByRole('button', { name: COLOR_PALETTE[2].name })).toHaveAttribute('aria-pressed', 'true');
   });
 });
 
@@ -101,37 +89,9 @@ describe('접근성: 색 선택 버튼', () => {
     expect(within(blockPanel()).getByRole('group', { name: '시간 일정 색' })).toBeInTheDocument();
   });
 
-  it('수정 팝업은 일정의 현재 색이 눌림 상태로 보인다', async () => {
-    seedEvents([makeEvent(1, '색 확인', '2026-01-05', '2026-01-05', COLOR_PALETTE[3].value)]);
-    const user = setup();
-    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '색 확인')));
-    const group = within(popup('일정 수정')).getByRole('group', { name: '일정 색' });
-    expect(within(group).getByRole('button', { name: '앰버' })).toHaveAttribute('aria-pressed', 'true');
-    expect(within(group).getByRole('button', { name: '블루' })).toHaveAttribute('aria-pressed', 'false');
-  });
 });
 
 describe('접근성: 입력칸의 이름', () => {
-  it('수정 팝업: 일정명·시작일·종료일 이름표가 입력칸과 이어져 있다 (이름표로 입력칸을 찾을 수 있다)', async () => {
-    seedEvents([makeEvent(1, '이름 확인', '2026-01-05', '2026-01-07')]);
-    const user = setup();
-    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '이름 확인')));
-    const box = popup('일정 수정');
-    expect(within(box).getByLabelText('일정명')).toHaveValue('이름 확인');
-    expect(within(box).getByLabelText('시작일')).toHaveValue('2026-01-05');
-    expect(within(box).getByLabelText('종료일')).toHaveValue('2026-01-07');
-  });
-
-  it('수정 팝업의 이름표를 눌러도 입력칸에 글자가 들어간다 (이름표와 입력칸이 실제로 연결됨)', async () => {
-    seedEvents([makeEvent(1, '이름 확인', '2026-01-05')]);
-    const user = setup();
-    await user.click(editIconOf(barIn(cellOf('2026-01-05'), '이름 확인')));
-    const box = popup('일정 수정');
-    await user.click(within(box).getByText('일정명'));
-    await user.keyboard('!');
-    expect(within(box).getByLabelText('일정명')).toHaveValue('이름 확인!');
-  });
-
   it('기간 등록 팝업의 일정명 입력칸에 이름이 있다 (안내 글자만 있으면 이름이 아니다)', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');

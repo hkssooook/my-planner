@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { within, waitFor } from '@testing-library/react';
-import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, colorButtonsIn, dayPanel, drag, dragCard, dragTime, queryBlockPanel, timeCard, timeGrid, editIconOf, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, colorButtonsIn, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 import { eventColors } from './utils/color';
 
 // 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸을 눌러 오른쪽 일정 패널 열기)을 확인하는 시험.
@@ -130,12 +130,13 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     expect(cellOf('2026-01-05')).not.toHaveAttribute('aria-current');
   });
 
-  it('칸 안의 일정 막대를 누르면 패널이 아니라 그 일정의 수정 팝업이 열린다', async () => {
+  it('칸 안의 일정 막대를 누르면 그날의 일정 패널과 그 일정의 기간 일정 상세 패널이 함께 열린다 (수정 팝업은 없다)', async () => {
     seedEvents([makeEvent(1, '여름 워크숍', '2026-01-05', '2026-01-06')]);
     const user = setup();
-    await user.click(within(cellOf('2026-01-05')).getByText('여름 워크숍'));
-    expect(popup('일정 수정')).toBeInTheDocument();
-    expect(queryDayPanel()).toBeNull();
+    await user.click(within(cellOf('2026-01-06')).getByText('여름 워크숍'));
+    expect(within(dayPanel()).getByRole('heading', { level: 2 })).toHaveTextContent('2026년 1월 6일');
+    expect(within(eventPanel()).getByLabelText('이름')).toHaveValue('여름 워크숍');
+    expect(popupCount()).toBe(0);
   });
 
   it('두 칸 이상 끌면 기간 일정 등록만 열리고 패널은 열리지 않는다', async () => {
@@ -221,12 +222,13 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(stored('planner_events').map((e) => e.title)).toEqual(['엔터 일정']);
     });
 
-    it('목록의 연필은 수정 팝업을, X는 삭제 확인을 패널 위에 연다', async () => {
+    it('목록의 띠를 누르면 오른쪽에 기간 일정 상세 패널이 열리고, 그 띠가 눌림 상태로 보인다', async () => {
       seedEvents([makeEvent(1, '고칠 일정', '2026-01-05')]);
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      await user.click(editIconOf(barIn(box, '고칠 일정')));
-      expect(within(popup('일정 수정')).getByDisplayValue('고칠 일정')).toBeInTheDocument();
+      await user.click(within(box).getByRole('button', { name: /^고칠 일정/ }));
+      expect(within(eventPanel()).getByLabelText('이름')).toHaveValue('고칠 일정');
+      expect(within(box).getByRole('button', { name: /^고칠 일정/ })).toHaveAttribute('aria-pressed', 'true');
       expect(dayPanel()).toBeInTheDocument();
     });
   });

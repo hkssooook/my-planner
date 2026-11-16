@@ -10,13 +10,13 @@ import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import PeriodEventModal from './components/modals/PeriodEventModal';
-import EditEventModal from './components/modals/EditEventModal';
 import DayPanel from './components/panels/DayPanel';
 import BlockPanel from './components/panels/BlockPanel';
+import EventPanel from './components/panels/EventPanel';
 
 export default function App() {
   const {
-    events, timeBlocks, addEvent, changeEvent, removeEvent,
+    events, timeBlocks, addEvent, patchEvent, changeEventTodos, removeEvent,
     addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
   } = usePlannerData();
 
@@ -50,37 +50,52 @@ export default function App() {
     if (panel && selectedBlockId) removeTimeBlockIfEmpty(panel.date, selectedBlockId);
   };
 
+  // 기간 일정 상세 패널에 열린 기간·종일 일정의 id. null이면 닫혀 있다.
+  // 오른쪽 두 번째 패널은 한 번에 하나만 연다: 시간 일정 카드(selectedBlockId)나 기간 일정(openEventId) 중 하나.
+  const [openEventId, setOpenEventId] = useState(null);
+
   // 카드를 고른다(카드 상세 패널을 연다). id가 null이면 닫는다.
   const selectBlock = (id) => {
     if (id !== selectedBlockId) releaseBlock();
     setSelectedBlockId(id);
+    if (id !== null) setOpenEventId(null);
   };
 
-  const [showEditModal, setShowEditModal] = useState(false);
+  // 기간 일정을 고른다(기간 일정 상세 패널을 연다). id가 null이면 닫는다. 열려 있던 시간 카드 상세 패널은 닫는다.
+  const selectEvent = (id) => {
+    releaseBlock();
+    setSelectedBlockId(null);
+    setOpenEventId(id);
+  };
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   // 그날의 일정 패널을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter, 또는 +N 더보기)
-  // blockId를 주면(칸의 시간 일정을 눌렀을 때) 그 카드를 골라 카드 상세 패널까지 함께 연다.
+  // blockId를 주면(칸의 시간 일정을 눌렀을 때) 그 카드를 골라 카드 상세 패널까지 함께 열고,
+  // eventId를 주면(칸의 기간 일정 막대를 눌렀을 때) 그 일정의 기간 일정 상세 패널까지 함께 연다.
   // e는 달력 칸에서 누른 경우에만 있다.
-  const openDayPanel = (e, dateString, blockId = null) => {
+  const openDayPanel = (e, dateString, blockId = null, eventId = null) => {
     if (e) e.stopPropagation();
     clearSelection();
     releaseBlock();
     setSelectedBlockId(blockId);
+    setOpenEventId(eventId);
     setPanel(prev => ({ date: dateString, openCount: (prev?.openCount ?? 0) + 1 }));
   };
 
-  // 패널의 ‹ › 버튼: 전날·다음 날로 넘긴다. 카드 상세 패널은 닫는다.
+  // 패널의 ‹ › 버튼: 전날·다음 날로 넘긴다. 카드·기간 일정 상세 패널은 닫는다.
   const moveDayPanel = (days) => {
     releaseBlock();
     setSelectedBlockId(null);
+    setOpenEventId(null);
     setPanel(prev => ({ date: addDays(prev.date, days), openCount: prev.openCount + 1 }));
   };
 
   const closeDayPanel = () => {
     releaseBlock();
     setSelectedBlockId(null);
+    setOpenEventId(null);
     setPanel(null);
   };
 
@@ -95,29 +110,16 @@ export default function App() {
     setNewEvent({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
   };
 
-  const openEditModal = (e, eventItem) => {
-    if (e) e.stopPropagation();
-    setSelectedEvent(eventItem);
-    setShowEditModal(true);
-  };
-
-  const updateEvent = () => {
-    if (!selectedEvent.title.trim()) return alert('일정명을 입력해주세요.');
-    changeEvent(selectedEvent);
-    setShowEditModal(false);
-    setSelectedEvent(null);
-  };
-
-  const openDeleteModal = (e, eventItem) => {
-    if (e) e.stopPropagation();
+  // 기간 일정 상세 패널의 "삭제"를 누르면 확인 팝업을 띄운다.
+  const openDeleteModal = (eventItem) => {
     setSelectedEvent(eventItem);
     setShowDeleteModal(true);
   };
 
   const deleteEvent = () => {
     removeEvent(selectedEvent.id);
+    if (selectedEvent.id === openEventId) setOpenEventId(null); // 지운 일정의 상세 패널도 닫는다
     setShowDeleteModal(false);
-    setShowEditModal(false);
     setSelectedEvent(null);
   };
 
@@ -131,13 +133,13 @@ export default function App() {
     onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
     panelDate: panel?.date ?? null,
     onOpenDay: openDayPanel,
-    onEditEvent: openEditModal, onDeleteEvent: openDeleteModal,
     onShowMore: (dateString) => openDayPanel(null, dateString),
   };
 
   const panelEvents = panel ? events.filter(e => e.start_date <= panel.date && e.end_date >= panel.date) : [];
   const panelBlocks = panel ? timeBlocks[panel.date] || [] : [];
   const selectedBlock = panelBlocks.find(b => b.id === selectedBlockId) ?? null;
+  const openEvent = panel ? events.find(e => e.id === openEventId) ?? null : null;
 
   return (
     // 왼쪽은 달력, 오른쪽은 (열려 있으면) 일정 패널. 달력은 패널이 열려도 계속 보인다.
@@ -181,11 +183,23 @@ export default function App() {
           onClose={closeDayPanel}
           onMoveDay={moveDayPanel}
           onAddAllDay={({ title, color }) => addEvent({ title, start_date: panel.date, end_date: panel.date, color })}
-          onEditEvent={(evt) => openEditModal(null, evt)}
-          onDeleteEvent={(evt) => openDeleteModal(null, evt)}
+          selectedEventId={openEventId}
+          onSelectEvent={selectEvent}
           onAddBlock={(block) => addTimeBlock(panel.date, block)}
           onChangeBlock={(id, changes) => changeTimeBlock(panel.date, id, changes)}
           onSelectBlock={selectBlock}
+        />
+      )}
+
+      {/* --- 그 오른쪽: 고른 기간 일정의 상세 패널 (이름·기간·색·할 일·삭제). 삭제는 확인 팝업을 거친다 --- */}
+      {panel && openEvent && (
+        <EventPanel
+          key={openEvent.id}
+          event={openEvent}
+          onChange={(changes) => patchEvent(openEvent.id, changes)}
+          onChangeTodos={(change) => changeEventTodos(openEvent.id, change)}
+          onDelete={() => openDeleteModal(openEvent)}
+          onClose={() => selectEvent(null)}
         />
       )}
 
@@ -210,17 +224,6 @@ export default function App() {
           onChange={(changes) => setNewEvent(prev => ({ ...prev, ...changes }))}
           onClose={closePeriodModal}
           onSave={savePeriodEvent}
-        />
-      )}
-
-      {/* --- 일정 수정 모달 --- */}
-      {showEditModal && selectedEvent && (
-        <EditEventModal
-          event={selectedEvent}
-          onChange={(changes) => setSelectedEvent(prev => ({ ...prev, ...changes }))}
-          onSave={updateEvent}
-          onClose={() => { setShowEditModal(false); setSelectedEvent(null); }}
-          onDelete={() => setShowDeleteModal(true)}
         />
       )}
 

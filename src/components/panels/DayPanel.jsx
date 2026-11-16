@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ColorPicker from '../common/ColorPicker';
-import EditIcon from '../icons/EditIcon';
-import DeleteIcon from '../icons/DeleteIcon';
 import { Button } from '@/components/ui/button';
 import { COLOR_PALETTE } from '../../constants/colors';
 import { eventColors } from '../../utils/color';
@@ -23,7 +21,7 @@ function rangeLabel(evt, date) {
 
 // 날짜를 누르면 화면 오른쪽에 열리는 그날의 일정 패널. 왼쪽 달력은 계속 보인다.
 //   ① 머리말: 날짜, 전날/다음 날, 닫기
-//   ② 이 날의 일정: 그날에 걸친 기간·종일 일정 목록
+//   ② 이 날의 일정: 그날에 걸친 기간·종일 일정 목록 (누르면 오른쪽에 기간 일정 상세 패널)
 //   ③ 종일 일정 추가: 이름 + 색
 //   ④ 시간 일정: 0~24시 30분 칸 시간표. 빈 칸을 끌면 카드가 생기고, 카드를 누르면 오른쪽에 카드 상세 패널이 열린다.
 // 날짜가 바뀌면 부모가 key를 바꿔 이 부품을 새로 그린다. (입력 중이던 상태가 다른 날짜로 넘어가지 않게)
@@ -35,7 +33,7 @@ function rangeLabel(evt, date) {
 export default function DayPanel({
   date, dayEvents, blocks, selectedBlockId = null,
   onClose, onMoveDay,
-  onAddAllDay, onEditEvent, onDeleteEvent,
+  onAddAllDay, selectedEventId = null, onSelectEvent,
   onAddBlock, onChangeBlock, onSelectBlock,
 }) {
   const [allDayTitle, setAllDayTitle] = useState('');
@@ -108,15 +106,18 @@ export default function DayPanel({
             {dayEvents.map((evt) => {
               const colors = eventColors(evt.color);
               return (
-              <li
-                key={evt.id}
-                style={{ backgroundColor: colors.background, color: colors.text }}
-                className="text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0"
-              >
-                <span className="truncate flex-1">{evt.title}</span>
-                <span className="shrink-0 font-normal opacity-90">{rangeLabel(evt, date)}</span>
-                <button onClick={() => onEditEvent(evt)} aria-label={`${evt.title} 수정`} className="opacity-80 hover:opacity-100 shrink-0"><EditIcon /></button>
-                <button onClick={() => onDeleteEvent(evt)} aria-label={`${evt.title} 삭제`} className="opacity-60 hover:opacity-100 shrink-0"><DeleteIcon /></button>
+              <li key={evt.id}>
+                {/* 띠 전체가 버튼: 누르면 오른쪽에 기간 일정 상세 패널이 열린다. 열린 일정은 테두리로 표시 */}
+                <button
+                  type="button"
+                  aria-pressed={evt.id === selectedEventId}
+                  onClick={() => onSelectEvent(evt.id)}
+                  style={{ backgroundColor: colors.background, color: colors.text }}
+                  className={`w-full text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${evt.id === selectedEventId ? 'ring-2 ring-inset ring-primary' : ''}`}
+                >
+                  <span className="truncate flex-1">{evt.title}</span>
+                  <span className="shrink-0 font-normal opacity-90">{rangeLabel(evt, date)}</span>
+                </button>
               </li>
               );
             })}

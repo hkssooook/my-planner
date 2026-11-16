@@ -345,7 +345,7 @@ describe('일정 막대·카드의 색 (연한 바탕 + 같은 계열 짙은 글
     await user.click(dayButtonOf('2026-01-05'));
     const box = dayPanel();
     const amber = eventColors(COLOR.amber);
-    const listItem = within(box).getByText('워크숍').closest('li');
+    const listItem = within(box).getByText('워크숍').closest('button');
     expect(listItem).toHaveStyle({ backgroundColor: hexToRgb(amber.background), color: hexToRgb(amber.text) });
     const card = within(box).getByRole('button', { name: /^09:00–10:00 회의/ });
     expect(card).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.mint).background) });

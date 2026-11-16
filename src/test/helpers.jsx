@@ -47,6 +47,10 @@ export const queryDayPanel = () => screen.queryByRole('complementary', { name: '
 export const blockPanel = () => screen.getByRole('complementary', { name: '시간 일정 상세', hidden: true });
 export const queryBlockPanel = () => screen.queryByRole('complementary', { name: '시간 일정 상세', hidden: true });
 
+// 일정 패널 오른쪽의 기간 일정 상세 패널
+export const eventPanel = () => screen.getByRole('complementary', { name: '기간 일정 상세', hidden: true });
+export const queryEventPanel = () => screen.queryByRole('complementary', { name: '기간 일정 상세', hidden: true });
+
 // 일정 패널의 30분 시간표. 시험 환경(jsdom)은 화면 배치를 계산하지 않아 시간표의 위쪽 끝이 0이므로,
 // 칸 번호 × 24px(한 칸 높이)이 곧 그 칸의 세로 위치다. (+5는 칸 안쪽을 누르려고)
 export const timeGrid = () => within(dayPanel()).getByTestId('time-grid');
@@ -72,10 +76,8 @@ export const dragCard = (startTime, fromSlot, toSlot, edge) => {
 export const buttonIn = (box, name) => within(box).getByRole('button', { name });
 export const colorButtonsIn = (box) => within(box).getAllByRole('button').filter((b) => b.classList.contains('rounded-full'));
 
-// 일정 막대(색 상자)와 그 안의 아이콘 버튼. 아이콘 버튼은 접근성 이름("<일정명> 수정", "<일정명> 삭제")으로 찾는다.
+// 일정 막대(색 상자): 일정 이름 글자의 바로 바깥 상자
 export const barIn = (container, title) => within(container).getByText(title).parentElement;
-export const editIconOf = (bar) => within(bar).getByRole('button', { name: /수정$/ });
-export const deleteIconOf = (bar) => within(bar).getByRole('button', { name: /삭제$/ });
 
 export const hexToRgb = (hex) => {
   const n = parseInt(hex.slice(1), 16);

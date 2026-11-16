@@ -2,8 +2,6 @@ import { KR_HOLIDAYS } from '../../data/holidays';
 import { DAY_NAMES } from '../../constants/calendar';
 import { getDaysInMonth, getDayOfWeek } from '../../utils/date';
 import { eventColors } from '../../utils/color';
-import EditIcon from '../icons/EditIcon';
-import DeleteIcon from '../icons/DeleteIcon';
 import StarIcon from '../icons/StarIcon';
 
 // 달력의 날짜 한 칸. 화면 맞춤 모드에서 없는 날(예: 2월 30일)은 아무것도 그리지 않는다.
@@ -15,7 +13,7 @@ export default function DayCell({
   selectionStart, selectionEnd,
   panelDate,
   onMouseDown, onMouseEnter,
-  onOpenDay, onEditEvent, onDeleteEvent, onShowMore,
+  onOpenDay, onShowMore,
 }) {
   const maxDays = getDaysInMonth(year, month);
   
@@ -86,17 +84,14 @@ export default function DayCell({
         {visibleEvents.map((evt) => {
           const colors = eventColors(evt.color);
           return (
+          // 막대를 누르면 그날의 일정 패널과 오른쪽 기간 일정 상세 패널이 함께 열린다 (예전의 수정 팝업·연필·X 버튼 대신)
           <div
             key={evt.id}
-            onClick={(e) => onEditEvent(e, evt)}
+            onClick={(e) => onOpenDay(e, dateString, null, evt.id)}
             style={{ backgroundColor: colors.background, color: colors.text }}
-            className="group/evt text-xs/4 px-1.5 py-px rounded-[5px] flex justify-between items-center relative font-semibold w-full min-w-0"
+            className="group/evt text-xs/4 px-1.5 py-px rounded-[5px] flex items-center relative font-semibold w-full min-w-0 cursor-pointer hover:brightness-95"
           >
-            <span className="truncate flex-1 pr-1">{evt.title}</span>
-            <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
-              <button onClick={(e) => onEditEvent(e, evt)} aria-label={`${evt.title} 수정`} className="opacity-80 hover:opacity-100"><EditIcon /></button>
-              <button onClick={(e) => onDeleteEvent(e, evt)} aria-label={`${evt.title} 삭제`} className="opacity-60 hover:opacity-100"><DeleteIcon /></button>
-            </div>
+            <span className="truncate flex-1">{evt.title}</span>
           </div>
           );
         })}
