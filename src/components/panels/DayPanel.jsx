@@ -9,6 +9,7 @@ import { eventColors } from '../../utils/color';
 import { daysBetween, formatLongDate, formatShortDate } from '../../utils/date';
 import { SLOTS_PER_DAY, isRangeFree, makeTimeBlock, slotToTime } from '../../utils/timeBlocks';
 import TimeGrid from './TimeGrid';
+import SelectBox from '../common/SelectBox';
 
 const SLOT_OPTIONS = Array.from({ length: SLOTS_PER_DAY + 1 }, (_, slot) => slot); // 0(00:00) ~ 48(24:00)
 
@@ -161,21 +162,19 @@ export default function DayPanel({
             className="flex items-center gap-1.5 mb-1 text-xs"
             onSubmit={(e) => { e.preventDefault(); addByKeyboard(); }}
           >
-            <select
+            <SelectBox
               aria-label="시작 시각" value={addStart}
               onChange={(e) => changeAddStart(Number(e.target.value))}
-              className="px-1.5 py-1 border border-input rounded-sm bg-card"
             >
               {SLOT_OPTIONS.slice(0, SLOTS_PER_DAY).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
-            </select>
+            </SelectBox>
             <span className="text-muted-foreground">~</span>
-            <select
+            <SelectBox
               aria-label="끝 시각" value={addEnd}
               onChange={(e) => { setAddEnd(Number(e.target.value)); setAddError(''); }}
-              className="px-1.5 py-1 border border-input rounded-sm bg-card"
             >
               {SLOT_OPTIONS.slice(addStart + 1).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
-            </select>
+            </SelectBox>
             <Button type="submit" variant="secondary" size="sm" className="ml-auto">추가</Button>
           </form>
           {addError && <p role="alert" className="text-xs text-destructive mb-1">{addError}</p>}

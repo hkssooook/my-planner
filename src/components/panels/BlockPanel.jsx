@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import ColorPicker from '../common/ColorPicker';
 import TodoList from './TodoList';
+import SelectBox from '../common/SelectBox';
 import { Button } from '@/components/ui/button';
 import { formatShortDate } from '../../utils/date';
 import { blockSlotRange, freeGapAround, freeStartsFor, slotToTime } from '../../utils/timeBlocks';
@@ -60,24 +61,22 @@ export default function BlockPanel({ date, block, blocks, onChange, onChangeTodo
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold text-foreground">시간</span>
           <div className="flex items-center gap-1.5 text-sm">
-            <select
+            <SelectBox
               aria-label="카드 시작 시각" value={start}
               onChange={(e) => {
                 const newStart = Number(e.target.value);
                 onChange({ start: slotToTime(newStart), end: slotToTime(newStart + length) });
               }}
-              className="px-2 py-1 border border-input rounded-sm bg-card"
             >
               {freeStartsFor(blocks, block.id).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
-            </select>
+            </SelectBox>
             <span className="text-muted-foreground">~</span>
-            <select
+            <SelectBox
               aria-label="카드 끝 시각" value={end}
               onChange={(e) => onChange({ end: slotToTime(Number(e.target.value)) })}
-              className="px-2 py-1 border border-input rounded-sm bg-card"
             >
               {range(start + 1, hi + 1).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
-            </select>
+            </SelectBox>
           </div>
         </div>
 
