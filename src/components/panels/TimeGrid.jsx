@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import StarIcon from '../icons/StarIcon';
 import { readableTextOn } from '../../utils/color';
-import { SLOTS_PER_DAY, blockSlotRange, freeRangeFrom, isSlotTaken, slotToTime, timeToSlot } from '../../utils/timeBlocks';
+import {
+  SLOTS_PER_DAY, blockSlotRange, freeGapAround, freeRangeFrom, isSlotTaken, movedRange, resizedRange, slotToTime, timeToSlot,
+} from '../../utils/timeBlocks';
 
 // 30분 칸 한 줄의 높이(px). 30분 카드는 이 높이, 1시간 카드는 두 배다.
 export const ROW = 24;
@@ -12,21 +14,26 @@ const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, slot) => slot);
 // 일정 패널의 하루 시간표: 0~24시를 30분 칸 48개로 나눠 위에서 아래로 그린다.
 //   - 빈 칸을 누르고 위아래로 끌었다 놓으면, 끈 만큼(30분 단위로 딱 맞춰) 새 카드가 생긴다. 누르기만 하면 30분 카드.
 //   - 끄는 중에 이미 있는 카드에 닿으면 그 앞에서 멈춘다. (카드끼리 겹치지 않는다)
-//   - 카드는 버튼이라서 누르거나(키보드: Tab → Enter) 카드 상세 패널을 연다.
+//   - 카드 가운데를 잡고 끌면 옮겨지고(길이 그대로), 맨 위·맨 아래 가장자리를 끌면 길이가 바뀐다. 모두 30분 단위.
+//     카드는 바로 위·아래 이웃 카드 사이의 빈 구간 안에서만 움직인다. (뛰어넘거나 겹치지 않는다)
+//   - 카드를 누르기만 하면(키보드: Tab → Enter) 카드 상세 패널을 연다. 옮기거나 늘인 뒤에도 그 카드의 상세 패널이 열린다.
 //
 //   blocks            그날의 카드 목록
 //   selectedBlockId   카드 상세 패널에 열린 카드 (테두리로 강조)
 //   onCreate(start, end)  끌어서 고른 칸 범위 [시작 칸, 끝 칸)
+//   onChangeTime(id, start, end)  카드를 옮기거나 늘인 결과 칸 범위
 //   onSelect(id)      카드를 눌렀을 때
-export default function TimeGrid({ blocks, selectedBlockId, onCreate, onSelect }) {
+export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTime, onSelect }) {
   const scrollRef = useRef(null);
   const gridRef = useRef(null);
-  // 끄는 중인 범위 { anchor: 처음 누른 칸, target: 지금 마우스가 있는 칸 }. 끄는 중이 아니면 null. (미리보기 그리기용)
+  // 새 카드를 끄는 중인 범위 { anchor: 처음 누른 칸, target: 지금 마우스가 있는 칸 }. 끄는 중이 아니면 null. (미리보기 그리기용)
   const [drag, setDrag] = useState(null);
+  // 옮기거나 늘이는 중인 카드의 임시 범위 { id, range: [시작 칸, 끝 칸) }. 놓기 전까지는 화면에만 보이고 저장하지 않는다.
+  const [moving, setMoving] = useState(null);
   // 마우스를 놓을 때 쓰는 최신 값. 창 전체에 붙인 이벤트 함수는 붙인 때의 값을 기억하므로 ref로 넘긴다.
-  const latest = useRef({ blocks, onCreate });
+  const latest = useRef({ blocks, onCreate, onChangeTime, onSelect });
   useEffect(() => {
-    latest.current = { blocks, onCreate };
+    latest.current = { blocks, onCreate, onChangeTime, onSelect };
   });
   // 끄는 중에 붙여 둔 창 이벤트를 떼는 함수. 끄는 도중 패널이 닫혀도 떼어지도록 기억해 둔다.
   const detachRef = useRef(null);
@@ -47,26 +54,14 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onSelect }
     return Math.min(SLOTS_PER_DAY - 1, Math.max(0, Math.floor((clientY - top) / ROW)));
   };
 
-  // 빈 칸을 누르면 끌기를 시작한다. 끄는 동안에는 창 전체에서 마우스를 지켜본다. (시간표 밖으로 나가서 놓아도 끝나게)
+  // 마우스를 누른 뒤 놓을 때까지 창 전체에서 마우스를 지켜본다. (시간표 밖으로 나가서 놓아도 끝나게)
   // 창 이벤트는 누르는 순간 바로 붙인다. 화면을 다시 그린 뒤에 붙이면, 아주 빨리 끌었다 놓을 때 "놓기"를 놓친다.
-  const startDrag = (e) => {
-    if (e.button !== 0) return;
-    const anchor = slotAt(e.clientY);
-    if (isSlotTaken(blocks, anchor)) return; // 카드가 있는 칸에서는 시작하지 않는다
-    e.preventDefault(); // 끄는 동안 글자가 선택되지 않게
-
-    let target = anchor;
-    setDrag({ anchor, target });
-    const move = (ev) => {
-      target = slotAt(ev.clientY);
-      setDrag({ anchor, target });
-    };
+  //   onMove(slot)  마우스가 움직일 때 지금 칸 번호,  onUp(slot)  놓을 때 칸 번호
+  const trackMouse = (onMove, onUp) => {
+    const move = (ev) => onMove(slotAt(ev.clientY));
     const up = (ev) => {
       detach();
-      if (typeof ev.clientY === 'number') target = slotAt(ev.clientY);
-      setDrag(null);
-      const [start, end] = freeRangeFrom(latest.current.blocks, anchor, target);
-      latest.current.onCreate(start, end);
+      onUp(typeof ev.clientY === 'number' ? slotAt(ev.clientY) : null);
     };
     const detach = () => {
       window.removeEventListener('mousemove', move);
@@ -76,6 +71,51 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onSelect }
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
     detachRef.current = detach;
+  };
+
+  // 빈 칸을 누르면 새 카드 끌기를 시작한다.
+  const startDrag = (e) => {
+    if (e.button !== 0) return;
+    const anchor = slotAt(e.clientY);
+    if (isSlotTaken(blocks, anchor)) return; // 카드가 있는 칸에서는 시작하지 않는다
+    e.preventDefault(); // 끄는 동안 글자가 선택되지 않게
+
+    let target = anchor;
+    setDrag({ anchor, target });
+    trackMouse(
+      (slot) => { target = slot; setDrag({ anchor, target }); },
+      (slot) => {
+        if (slot !== null) target = slot;
+        setDrag(null);
+        const [start, end] = freeRangeFrom(latest.current.blocks, anchor, target);
+        latest.current.onCreate(start, end);
+      },
+    );
+  };
+
+  // 카드를 누르면 옮기기(가운데) 또는 길이 바꾸기(data-edge가 붙은 위·아래 가장자리)를 시작한다.
+  // 칸이 하나도 바뀌지 않고 놓으면 그냥 누른 것으로 보고, 카드 상세 패널만 연다.
+  const startCardDrag = (e, block) => {
+    e.stopPropagation(); // 시간표 바탕의 "새 카드 끌기"가 시작되지 않게
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const edge = e.target.closest('[data-edge]')?.dataset.edge ?? null; // 'start' | 'end' | null(옮기기)
+    const original = blockSlotRange(block);
+    const gap = freeGapAround(blocks, block.id);
+    const anchor = slotAt(e.clientY);
+    const rangeFor = (slot) => (edge ? resizedRange(original, edge, slot, gap) : movedRange(original, slot - anchor, gap));
+
+    let range = original;
+    trackMouse(
+      (slot) => { range = rangeFor(slot); setMoving({ id: block.id, range }); },
+      (slot) => {
+        if (slot !== null) range = rangeFor(slot);
+        setMoving(null);
+        const { onChangeTime: change, onSelect: select } = latest.current;
+        if (range[0] !== original[0] || range[1] !== original[1]) change(block.id, range[0], range[1]);
+        select(block.id);
+      },
+    );
   };
 
   const preview = drag ? freeRangeFrom(blocks, drag.anchor, drag.target) : null;
@@ -127,7 +167,8 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onSelect }
           )}
 
           {blocks.map((block) => {
-            const [start, end] = blockSlotRange(block);
+            const isMoving = moving?.id === block.id;
+            const [start, end] = isMoving ? moving.range : blockSlotRange(block);
             const selected = block.id === selectedBlockId;
             const name = block.content.trim() || '제목 없음';
             return (
@@ -136,9 +177,9 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onSelect }
                 type="button"
                 aria-label={`${block.start}–${block.end} ${name}${block.is_important ? ' (주요)' : ''}`}
                 aria-pressed={selected}
-                onMouseDown={(e) => e.stopPropagation()} // 카드 위에서는 새 카드를 끌지 않는다
-                onClick={() => onSelect(block.id)}
-                className={`absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-xs overflow-hidden flex items-start gap-1.5 shadow-xs cursor-pointer focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''}`}
+                onMouseDown={(e) => startCardDrag(e, block)}
+                onClick={() => onSelect(block.id)} // 키보드(Enter·Space)로 누를 때
+                className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-xs overflow-hidden flex items-start gap-1.5 shadow-xs cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
                 style={{
                   top: start * ROW + 1,
                   height: (end - start) * ROW - 2,
@@ -146,9 +187,13 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onSelect }
                   color: readableTextOn(block.color),
                 }}
               >
+                {/* 위·아래 가장자리 5px: 잡고 끌면 길이가 바뀐다 (마우스를 올리면 ↕ 모양) */}
+                <span aria-hidden="true" data-edge="start" className="absolute inset-x-0 top-0 h-[5px] cursor-ns-resize" />
+                <span aria-hidden="true" data-edge="end" className="absolute inset-x-0 bottom-0 h-[5px] cursor-ns-resize" />
                 {block.is_important && <span className="shrink-0 mt-0.5"><StarIcon /></span>}
                 <span className={`font-semibold truncate ${block.content.trim() ? '' : 'opacity-70'}`}>{name}</span>
-                <span className="shrink-0 opacity-80 ml-auto">{block.start}–{block.end}</span>
+                {/* 끄는 중에는 바뀔 시각을 미리 보여 준다 */}
+                <span className="shrink-0 opacity-80 ml-auto">{slotToTime(start)}–{slotToTime(end)}</span>
               </button>
             );
           })}

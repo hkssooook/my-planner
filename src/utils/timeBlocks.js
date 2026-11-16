@@ -92,6 +92,40 @@ export function freeRangeFrom(blocks, anchor, target) {
   return step > 0 ? [anchor, last + 1] : [last, anchor + 1];
 }
 
+// --- 카드 옮기기·늘이기 ----------------------------------------------------------------------
+
+// 카드(id)가 움직일 수 있는 빈 구간 [lo, hi): 바로 위 이웃 카드의 끝 ~ 바로 아래 이웃 카드의 시작 (이웃이 없으면 0 / 48).
+// 카드는 이 구간 안에서만 옮기거나 늘인다. 그래서 다른 카드를 뛰어넘거나 겹치지 않는다.
+export function freeGapAround(blocks, id) {
+  const me = blocks.find((b) => b.id === id);
+  const [start, end] = blockSlotRange(me);
+  let lo = 0;
+  let hi = SLOTS_PER_DAY;
+  for (const block of blocks) {
+    if (block.id === id) continue;
+    const [s, e] = blockSlotRange(block);
+    if (e <= start) lo = Math.max(lo, e);
+    if (s >= end) hi = Math.min(hi, s);
+  }
+  return [lo, hi];
+}
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+// 범위 [start, end)를 delta칸만큼 옮긴 결과. 길이는 그대로이고, 빈 구간 [lo, hi) 밖으로 나가지 않게 끝에서 멈춘다.
+export function movedRange([start, end], delta, [lo, hi]) {
+  const length = end - start;
+  const newStart = clamp(start + delta, lo, hi - length);
+  return [newStart, newStart + length];
+}
+
+// 범위의 한쪽 끝을 slot 칸까지 끌어 늘이거나 줄인 결과. 최소 30분(한 칸)이고 빈 구간 [lo, hi) 밖으로 나가지 않는다.
+//   edge='start': 위쪽 끝을 slot 칸의 위로,  edge='end': 아래쪽 끝을 slot 칸의 아래로
+export function resizedRange([start, end], edge, slot, [lo, hi]) {
+  if (edge === 'start') return [clamp(slot, lo, end - 1), end];
+  return [start, clamp(slot + 1, start + 1, hi)];
+}
+
 // [start, end) 칸을 차지하는 새 카드. 이름은 비워 두고, 카드 상세 패널에서 채운다.
 export const makeTimeBlock = (start, end, color) => ({
   id: makeBlockId(), start: slotToTime(start), end: slotToTime(end), content: '', color, is_important: false,

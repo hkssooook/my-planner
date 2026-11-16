@@ -3,6 +3,9 @@ import { X } from 'lucide-react';
 import ColorPicker from '../common/ColorPicker';
 import { Button } from '@/components/ui/button';
 import { formatShortDate } from '../../utils/date';
+import { blockSlotRange, slotToTime } from '../../utils/timeBlocks';
+
+const range = (from, to) => Array.from({ length: to - from }, (_, i) => from + i); // [from, to)
 
 // 시간 일정 카드 하나의 상세 패널. 일정 패널 오른쪽에 열린다. (나중에 이 카드의 투두·예산도 여기에 붙는다)
 //   이름·색·주요(★)를 고치면 바로 저장된다. 삭제 버튼으로 카드를 지운다.
@@ -10,9 +13,12 @@ import { formatShortDate } from '../../utils/date';
 //   Esc 키로도 닫힌다.
 //
 //   date      카드가 있는 날짜,  block  고른 카드
-//   onChange(changes)  예: onChange({ content: '팀 회의' })
-export default function BlockPanel({ date, block, onChange, onDelete, onClose }) {
+//   gap       이 카드가 움직일 수 있는 빈 구간 [lo, hi) 칸 (바로 위·아래 이웃 카드 사이). 시각 목록은 이 안에서만 고른다.
+//   onChange(changes)  예: onChange({ content: '팀 회의' }), onChange({ start: '09:30' })
+export default function BlockPanel({ date, block, gap, onChange, onDelete, onClose }) {
   const nameRef = useRef(null);
+  const [start, end] = blockSlotRange(block);
+  const [lo, hi] = gap;
 
   // 열리면(다른 카드를 고르면 부모가 key를 바꿔 새로 그린다) 이름 입력칸에 커서를 둔다. 끌어서 만들자마자 바로 이름을 쓸 수 있다.
   useEffect(() => {
@@ -43,6 +49,28 @@ export default function BlockPanel({ date, block, onChange, onDelete, onClose })
             onChange={(e) => onChange({ content: e.target.value })}
             className="px-3 py-1.5 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
           />
+        </div>
+
+        {/* 시각 바꾸기 (시간표에서 카드를 끄는 것과 같은 일을 키보드로). 이웃 카드와 겹치지 않는 시각만 목록에 나온다 */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold text-foreground">시간</span>
+          <div className="flex items-center gap-1.5 text-sm">
+            <select
+              aria-label="카드 시작 시각" value={start}
+              onChange={(e) => onChange({ start: slotToTime(Number(e.target.value)) })}
+              className="px-2 py-1 border border-input rounded-sm bg-card"
+            >
+              {range(lo, end).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
+            </select>
+            <span className="text-muted-foreground">~</span>
+            <select
+              aria-label="카드 끝 시각" value={end}
+              onChange={(e) => onChange({ end: slotToTime(Number(e.target.value)) })}
+              className="px-2 py-1 border border-input rounded-sm bg-card"
+            >
+              {range(start + 1, hi + 1).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
+            </select>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">

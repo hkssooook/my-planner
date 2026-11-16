@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { within, waitFor } from '@testing-library/react';
-import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, colorButtonsIn, dayPanel, drag, dragTime, queryBlockPanel, timeCard, timeGrid, editIconOf, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, colorButtonsIn, dayPanel, drag, dragCard, dragTime, queryBlockPanel, timeCard, timeGrid, editIconOf, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 
 // 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸을 눌러 오른쪽 일정 패널 열기)을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
@@ -382,6 +382,78 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       await user.click(buttonIn(dayPanel(), '닫기'));
       expect(queryDayPanel()).toBeNull();
       expect(queryBlockPanel()).toBeNull();
+    });
+
+    it('카드 가운데를 잡고 끌면 길이는 그대로 옮겨지고, 그 카드의 상세 패널이 열린다 (id 유지)', async () => {
+      seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
+      const user = setup();
+      await openPanel(user, '2026-01-05');
+      const id = stored('planner_time_blocks')['2026-01-05'][0].id;
+      dragCard('09:00', 18, 21); // 09:00 칸을 잡고 10:30 칸으로 → 3칸 아래
+      expect(stored('planner_time_blocks')['2026-01-05']).toEqual([expect.objectContaining({ id, start: '10:30', end: '11:30', content: '회의' })]);
+      expect(within(blockPanel()).getByText(/10:30–11:30/)).toBeInTheDocument();
+      expect(within(cellOf('2026-01-05')).getByText('10:30')).toBeInTheDocument(); // 달력 칸에도 바뀐 시각
+    });
+
+    it('옮기다가 이웃 카드에 닿으면 그 앞에서 멈추고, 다른 카드를 뛰어넘지 않는다', async () => {
+      seedDaily({ '2026-01-05': [
+        { hour: 9, content: '회의', is_important: false, color: COLOR.blue },
+        { hour: 12, content: '점심', is_important: false, color: COLOR.mint },
+      ] });
+      const user = setup();
+      await openPanel(user, '2026-01-05');
+      dragCard('09:00', 18, 40); // 20:00 칸까지 끌어도 점심(12:00) 앞에서 멈춘다
+      expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
+        ['회의', '11:00', '12:00'],
+        ['점심', '12:00', '13:00'],
+      ]);
+    });
+
+    it('아래 가장자리를 끌면 끝 시각이, 위 가장자리를 끌면 시작 시각이 30분 단위로 바뀐다 (최소 30분)', async () => {
+      seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
+      const user = setup();
+      await openPanel(user, '2026-01-05');
+      dragCard('09:00', 19, 22, 'end'); // 끝을 11:00 칸까지 → 11:30 끝
+      dragCard('09:00', 18, 16, 'start'); // 시작을 08:00 칸으로
+      const [block] = stored('planner_time_blocks')['2026-01-05'];
+      expect([block.start, block.end]).toEqual(['08:00', '11:30']);
+      dragCard('08:00', 22, 2, 'end'); // 끝을 시작보다 위로 끌어도 최소 30분은 남는다
+      expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.start, b.end])).toEqual([['08:00', '08:30']]);
+    });
+
+    it('카드를 누르기만 하면(칸이 안 바뀌면) 시각은 그대로이고 상세 패널만 열린다', async () => {
+      seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
+      const user = setup();
+      await openPanel(user, '2026-01-05');
+      const before = stored('planner_time_blocks')['2026-01-05'];
+      dragCard('09:00', 18, 18);
+      expect(stored('planner_time_blocks')['2026-01-05']).toEqual(before);
+      expect(blockPanel()).toBeInTheDocument();
+    });
+
+    it('카드 상세 패널에서 시작·끝 시각을 고를 수 있고, 목록에는 이웃 카드와 겹치지 않는 시각만 나온다', async () => {
+      seedDaily({ '2026-01-05': [
+        { hour: 8, content: '아침', is_important: false, color: COLOR.blue },
+        { hour: 10, content: '회의', is_important: false, color: COLOR.blue },
+        { hour: 12, content: '점심', is_important: false, color: COLOR.mint },
+      ] });
+      const user = setup();
+      await openPanel(user, '2026-01-05');
+      await user.click(timeCard('10:00'));
+      const detail = blockPanel();
+      const startBox = within(detail).getByRole('combobox', { name: '카드 시작 시각' });
+      const endBox = within(detail).getByRole('combobox', { name: '카드 끝 시각' });
+      const options = (box) => within(box).getAllByRole('option').map((o) => o.textContent);
+      expect(options(startBox)).toEqual(['09:00', '09:30', '10:00', '10:30']); // 아침(~09:00) 뒤부터, 끝(11:00) 전까지
+      expect(options(endBox)).toEqual(['10:30', '11:00', '11:30', '12:00']); // 점심(12:00) 앞까지
+
+      await user.selectOptions(startBox, '09:30');
+      await user.selectOptions(endBox, '12:00');
+      expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
+        ['아침', '08:00', '09:00'],
+        ['회의', '09:30', '12:00'],
+        ['점심', '12:00', '13:00'],
+      ]);
     });
 
     it('달력 칸의 시간 일정을 누르면 일정 패널과 그 카드의 상세 패널이 함께 열린다', async () => {

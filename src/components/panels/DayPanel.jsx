@@ -30,12 +30,12 @@ function rangeLabel(evt, date) {
 //   dayEvents         그날에 걸친 기간·종일 일정 목록
 //   blocks            그날의 시간 일정 카드 목록
 //   selectedBlockId   카드 상세 패널에 열린 카드
-//   onAddBlock(block) 새 카드 저장,  onSelectBlock(id) 카드 고르기(상세 패널 열기)
+//   onAddBlock(block) 새 카드 저장,  onChangeBlock(id, changes) 카드 시각 등 고치기,  onSelectBlock(id) 카드 고르기(상세 패널 열기)
 export default function DayPanel({
   date, dayEvents, blocks, selectedBlockId = null,
   onClose, onMoveDay,
   onAddAllDay, onEditEvent, onDeleteEvent,
-  onAddBlock, onSelectBlock,
+  onAddBlock, onChangeBlock, onSelectBlock,
 }) {
   const [allDayTitle, setAllDayTitle] = useState('');
   const [allDayColor, setAllDayColor] = useState(COLOR_PALETTE[0].value);
@@ -149,7 +149,7 @@ export default function DayPanel({
         <section aria-labelledby="day-panel-times" className="border-t border-border pt-5 flex-1 min-h-[320px] flex flex-col">
           <div className="flex justify-between items-end mb-2">
             <h3 id="day-panel-times" className="text-sm font-semibold text-foreground">시간 일정</h3>
-            <span className="text-[10px] text-muted-foreground">빈 칸을 끌어서 만들기 · 카드를 눌러 이름·색 고치기</span>
+            <span className="text-[10px] text-muted-foreground">빈 칸을 끌어 만들기 · 카드를 끌어 옮기기 · 위아래 끝을 끌어 길이 바꾸기</span>
           </div>
 
           {/* 마우스 없이 만들기: 시작·끝 시각을 고르고 추가 */}
@@ -177,7 +177,13 @@ export default function DayPanel({
           </form>
           {addError && <p role="alert" className="text-xs text-destructive mb-1">{addError}</p>}
 
-          <TimeGrid blocks={blocks} selectedBlockId={selectedBlockId} onCreate={createBlock} onSelect={onSelectBlock} />
+          <TimeGrid
+            blocks={blocks}
+            selectedBlockId={selectedBlockId}
+            onCreate={createBlock}
+            onChangeTime={(id, start, end) => onChangeBlock(id, { start: slotToTime(start), end: slotToTime(end) })}
+            onSelect={onSelectBlock}
+          />
         </section>
       </div>
     </aside>

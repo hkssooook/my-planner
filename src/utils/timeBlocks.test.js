@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   hourToTime, timeToHour, slotToBlock, migrateDailyToBlocks,
   slotToTime, timeToSlot, blockSlotRange, isSlotTaken, isRangeFree, freeRangeFrom, makeTimeBlock, sortBlocks,
+  freeGapAround, movedRange, resizedRange,
 } from './timeBlocks';
 
 const BLUE = '#3B82F6';
@@ -113,6 +114,35 @@ describe('freeRangeFrom (드래그 범위)', () => {
     expect(freeRangeFrom(blocks, 30, 30)).toEqual([30, 31]);
     expect(freeRangeFrom([], 46, 60)).toEqual([46, 48]);
     expect(freeRangeFrom([], 1, -5)).toEqual([0, 2]);
+  });
+});
+
+describe('카드 옮기기·늘이기', () => {
+  const blocks = [
+    { id: 'a', start: '08:00', end: '09:00' }, // 16~18
+    { id: 'b', start: '10:00', end: '11:00' }, // 20~22
+    { id: 'c', start: '13:00', end: '13:30' }, // 26~27
+  ];
+
+  it('freeGapAround: 바로 위 이웃의 끝 ~ 바로 아래 이웃의 시작 (이웃이 없으면 하루 끝까지)', () => {
+    expect(freeGapAround(blocks, 'b')).toEqual([18, 26]);
+    expect(freeGapAround(blocks, 'a')).toEqual([0, 20]);
+    expect(freeGapAround(blocks, 'c')).toEqual([22, 48]);
+  });
+
+  it('movedRange: 길이는 그대로 옮기고, 빈 구간 끝에서 멈춘다', () => {
+    expect(movedRange([20, 22], 2, [18, 26])).toEqual([22, 24]);
+    expect(movedRange([20, 22], 10, [18, 26])).toEqual([24, 26]); // 아래 이웃 앞에서 멈춤
+    expect(movedRange([20, 22], -10, [18, 26])).toEqual([18, 20]); // 위 이웃 뒤에서 멈춤
+  });
+
+  it('resizedRange: 위·아래 끝을 끌어 늘이거나 줄이고, 최소 한 칸이며 빈 구간을 넘지 않는다', () => {
+    expect(resizedRange([20, 22], 'end', 23, [18, 26])).toEqual([20, 24]); // 11:30 칸까지 → 12:00 끝
+    expect(resizedRange([20, 22], 'end', 40, [18, 26])).toEqual([20, 26]);
+    expect(resizedRange([20, 22], 'end', 5, [18, 26])).toEqual([20, 21]); // 최소 30분
+    expect(resizedRange([20, 22], 'start', 19, [18, 26])).toEqual([19, 22]);
+    expect(resizedRange([20, 22], 'start', 0, [18, 26])).toEqual([18, 22]);
+    expect(resizedRange([20, 22], 'start', 30, [18, 26])).toEqual([21, 22]);
   });
 });
 

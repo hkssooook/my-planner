@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { COLOR_PALETTE } from './constants/colors';
 import { YEAR_RANGE } from './constants/calendar';
 import { addDays, getCurrentYear, getYearOptions } from './utils/date';
+import { freeGapAround } from './utils/timeBlocks';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
@@ -184,6 +185,7 @@ export default function App() {
           onEditEvent={(evt) => openEditModal(null, evt)}
           onDeleteEvent={(evt) => openDeleteModal(null, evt)}
           onAddBlock={(block) => addTimeBlock(panel.date, block)}
+          onChangeBlock={(id, changes) => changeTimeBlock(panel.date, id, changes)}
           onSelectBlock={selectBlock}
         />
       )}
@@ -194,6 +196,7 @@ export default function App() {
           key={selectedBlock.id}
           date={panel.date}
           block={selectedBlock}
+          gap={freeGapAround(panelBlocks, selectedBlock.id)}
           onChange={(changes) => changeTimeBlock(panel.date, selectedBlock.id, changes)}
           onDelete={() => { removeTimeBlock(panel.date, selectedBlock.id); setSelectedBlockId(null); }}
           onClose={() => selectBlock(null)}

@@ -59,6 +59,15 @@ export const dragTime = (fromSlot, toSlot = fromSlot) => {
 };
 // 시간표 안의 카드 버튼 (접근성 이름 "09:00–10:00 회의" 처럼 시각으로 시작)
 export const timeCard = (startTime) => within(dayPanel()).getByRole('button', { name: new RegExp(`^${startTime}–`) });
+// startTime에 시작하는 카드를 fromSlot 칸에서 잡아 toSlot 칸까지 끌었다 놓는다.
+//   edge 없음: 가운데를 잡고 옮기기,  edge='start' | 'end': 위·아래 가장자리를 잡고 길이 바꾸기
+export const dragCard = (startTime, fromSlot, toSlot, edge) => {
+  const card = timeCard(startTime);
+  const grip = edge ? card.querySelector(`[data-edge="${edge}"]`) : card;
+  fireEvent.mouseDown(grip, { button: 0, clientY: slotY(fromSlot) });
+  fireEvent.mouseMove(window, { clientY: slotY(toSlot) });
+  fireEvent.mouseUp(window, { clientY: slotY(toSlot) });
+};
 
 export const buttonIn = (box, name) => within(box).getByRole('button', { name });
 export const colorButtonsIn = (box) => within(box).getAllByRole('button').filter((b) => b.classList.contains('rounded-full'));
