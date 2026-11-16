@@ -19,11 +19,10 @@ export default function Header({ year, years, onYearChange }) {
   };
 
   return (
-    // 스크롤해도 화면 맨 위에 고정(sticky top-0). 카드만 고정하면 카드 위 빈틈·둥근 모서리 사이로 달력이 비쳐 보이므로,
-    // 화면 배경색 띠로 감싸 그 자리를 가린다. 띠는 바깥 여백(좌우 12px, 위 24px)만큼 넓혀(-mx-3 -mt-6) 화면 끝까지 덮는다.
-    // 겹침 순서: 달력의 고정 칸(z-10·z-20)보다 위, 팝업(z-50)보다 아래인 z-30.
+    // 화면은 스크롤되지 않고 달력 상자만 안에서 스크롤하므로, 머리말은 따로 고정하지 않아도 늘 맨 위에 있다. 아래 달력과는 24px(pb-6) 띄운다.
+    // 겹침 순서: 연도 선택 목록이 달력의 고정 칸(z-10·z-20)보다 위에 보이도록 z-30, 팝업(z-50)보다는 아래.
     // 카드 안쪽 여백은 shadcn 카드(Card) 기본값인 24px(p-6)을 쓴다.
-    <div className="sticky top-0 z-30 -mx-3 -mt-6 px-3 pt-6 pb-6 bg-background">
+    <div className="relative z-30 shrink-0 pb-6">
       {/* 카드 바탕은 파랑 2단계. 보기 방식 탭 묶음과 같은 색이다 */}
       <div className="flex flex-col items-center bg-surface-blue-2 p-6 rounded-lg shadow-xs">
         {/* 연도 버튼과 부제목을 한 묶음으로 세우고, 묶음 너비는 연도 버튼 너비를 따른다 (부제목은 그 너비로 늘어난다).

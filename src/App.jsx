@@ -112,19 +112,25 @@ export default function App() {
 
   return (
     // 왼쪽은 달력, 오른쪽은 (열려 있으면) 일정 패널. 달력은 패널이 열려도 계속 보인다.
-    <div className="flex bg-background min-h-screen">
-      {/* 화면 바깥 여백: 위·아래는 머리말 안쪽 여백과 같은 24px(py-6), 좌우는 달력과 패널을 넓게 쓰도록 12px(px-3) */}
-      <main className="flex-1 min-w-0 px-3 py-6">
+    // 화면 전체는 화면 높이에 딱 맞고 스크롤되지 않는다(h-screen overflow-hidden). 스크롤은 달력 상자와 일정 패널이 각자 안에서 한다.
+    <div className="flex bg-background h-screen overflow-hidden">
+      {/* 화면 바깥 여백: 위는 머리말 안쪽 여백과 같은 24px(pt-6), 좌우와 아래는 일정 패널과 같은 12px(px-3 pb-3).
+          세로로 머리말 → 보기 방식 버튼 → 달력 상자를 쌓고, 달력 상자가 남은 높이를 모두 채운다 */}
+      <main className="flex-1 min-w-0 px-3 pt-6 pb-3 flex flex-col">
         <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} />
 
         {/* 보기 방식 버튼은 달력의 설정이라 달력 상자 바로 위 오른쪽에, 달력과 한 묶음으로 보이게 좁은 간격(12px)으로 둔다 */}
-        <div className="flex justify-end mb-3">
+        <div className="flex justify-end mb-3 shrink-0">
           <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
         </div>
 
-        {/* 캘린더 섹션: 헤더 카드와 같은 층이라 같은 파랑 4단계 바탕. 안쪽의 월 이름·연도 구분선은 3단계, 날짜 칸은 1단계(흰색)로 점점 옅어진다 */}
-      {/* 화면 맞춤에서도 모서리 밖으로 삐져나오는 것이 잘리도록 overflow-hidden (가로 스크롤에서는 overflow-x-auto가 같은 일을 한다) */}
-      <div className={`rounded-lg shadow-xs bg-surface-blue-4 relative ${isWrapMode ? 'overflow-hidden' : 'overflow-x-auto'}`}>
+        {/* 캘린더 섹션: 헤더 카드와 같은 층이라 같은 파랑 4단계 바탕. 안쪽의 월 이름·연도 구분선은 3단계, 날짜 칸은 1단계(흰색)로 점점 옅어진다.
+            남은 높이를 채우고(flex-1 min-h-0) 상자 안에서 스크롤한다. 그래서 스크롤해도 상자의 네 모서리(15px)가 늘 둥글게 보이고, 가로 스크롤 막대도 늘 상자 아래에 있다.
+            가로 스크롤은 위아래·좌우 모두(overflow-auto), 화면 맞춤은 위아래만(overflow-y-auto overflow-x-hidden) */}
+        <div
+          data-testid="calendar-scroll"
+          className={`flex-1 min-h-0 rounded-lg shadow-xs bg-surface-blue-4 relative ${isWrapMode ? 'overflow-y-auto overflow-x-hidden' : 'overflow-auto'}`}
+        >
           {/* 칸 사이와 상자 위아래 안쪽에 4px 틈(gap-1 py-1)을 둬서 둥근 칸들이 떠 보이게 한다. 좌우에는 틈을 두지 않아 칸이 상자 양 끝에 붙는다 */}
           <div className={`flex flex-col gap-1 py-1 ${isWrapMode ? '' : 'min-w-max'}`}>
             {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
