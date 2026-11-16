@@ -256,6 +256,9 @@ describe('머리말: 연도와 보기 방식', () => {
     // 연도 글자 칸은 월 이름 칸과 같은 자리에 선다 (섹션 왼쪽 끝부터 64px, 가운데 맞춤)
     expect(screen.getByText('2026')).toHaveClass('w-[calc(4rem+0.25rem)]', 'pr-1', 'justify-center');
     expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('bg-surface-blue-4');
+    // 날짜 칸 테두리는 섹션 바탕과 같은 파랑 4단계 (옅은 2단계 띠가 생기지 않게)
+    expect(cell).toHaveClass('border', 'border-surface-blue-4');
+    expect(cell).not.toHaveClass('border-border');
     // 달력 상자는 남은 높이를 채우고 안에서 스크롤한다 (페이지는 스크롤되지 않아 상자의 둥근 모서리가 늘 보인다)
     expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('flex-1', 'min-h-0', 'rounded-lg', 'overflow-auto');
     expect(cell.closest('main').parentElement).toHaveClass('h-screen', 'overflow-hidden');
