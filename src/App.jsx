@@ -131,8 +131,8 @@ export default function App() {
           data-testid="calendar-scroll"
           className={`flex-1 min-h-0 rounded-lg shadow-xs bg-surface-blue-4 relative ${isWrapMode ? 'overflow-y-auto overflow-x-hidden' : 'overflow-auto'}`}
         >
-          {/* 칸 사이와 상자 위아래 안쪽에 4px 틈(gap-1 py-1)을 둬서 둥근 칸들이 떠 보이게 한다. 좌우에는 틈을 두지 않아 칸이 상자 양 끝에 붙는다 */}
-          <div className={`flex flex-col gap-1 py-1 ${isWrapMode ? '' : 'min-w-max'}`}>
+          {/* 칸 사이에 4px 틈(gap-1)을 둬서 둥근 칸들이 떠 보이게 한다. 상자 안쪽 여백은 위 4px(pt-1, 첫 연도 띠가 -mt-1로 덮음)뿐이라 좌우·아래는 칸이 상자 끝에 붙는다 */}
+          <div className={`flex flex-col gap-1 pt-1 ${isWrapMode ? '' : 'min-w-max'}`}>
             {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
             {displayYears.map((year, i) => (
               <YearSection key={year} year={year} isFirst={i === 0} isWrapMode={isWrapMode} cellProps={cellProps} />

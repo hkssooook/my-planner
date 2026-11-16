@@ -259,9 +259,9 @@ describe('머리말: 연도와 보기 방식', () => {
     // 달력 상자는 남은 높이를 채우고 안에서 스크롤한다 (페이지는 스크롤되지 않아 상자의 둥근 모서리가 늘 보인다)
     expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('flex-1', 'min-h-0', 'rounded-lg', 'overflow-auto');
     expect(cell.closest('main').parentElement).toHaveClass('h-screen', 'overflow-hidden');
-    // 달력 상자 안쪽은 위아래만 4px, 좌우는 0 (칸이 상자 양 끝에 붙는다)
-    expect(cell.closest('[data-testid="calendar-scroll"]').firstElementChild).toHaveClass('py-1');
-    expect(cell.closest('[data-testid="calendar-scroll"]').firstElementChild).not.toHaveClass('p-1');
+    // 달력 상자 안쪽은 위만 4px, 좌우·아래는 0 (칸이 상자 양 끝과 바닥에 붙는다)
+    expect(cell.closest('[data-testid="calendar-scroll"]').firstElementChild).toHaveClass('pt-1');
+    expect(cell.closest('[data-testid="calendar-scroll"]').firstElementChild).not.toHaveClass('p-1', 'py-1', 'pb-1');
   });
 
   it('보기 방식 탭 묶음은 헤더 카드와 같은 2단계이고, 선택된 탭은 흰색(카드색)이라 더 밝다 — 화면 바탕(진한 파랑)을 쓰지 않는다', () => {
