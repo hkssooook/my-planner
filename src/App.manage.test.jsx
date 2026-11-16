@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, within, fireEvent } from '@testing-library/react';
 import App from './App';
 import { setupTestEnvironment, COLOR, barIn, buttonIn, cellOf, colorButtonsIn, dayPanel, deleteIconOf, editIconOf, hexToRgb, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { eventColors } from './utils/color';
 
 // 만들어 둔 일정을 보고(+N 더보기), 고치고, 지우는 동작을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
@@ -140,7 +141,7 @@ describe('일정 수정', () => {
     expect(queryPopup('일정 수정')).toBeNull();
     expect(within(cellOf('2026-01-05')).queryByText('원래 이름')).not.toBeInTheDocument();
     expect(within(cellOf('2026-01-05')).queryByText('바뀐 이름')).not.toBeInTheDocument();
-    expect(barIn(cellOf('2026-02-03'), '바뀐 이름')).toHaveStyle({ backgroundColor: hexToRgb(COLOR.amber) });
+    expect(barIn(cellOf('2026-02-03'), '바뀐 이름')).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.amber).background) });
     expect(within(cellOf('2026-02-04')).getByText('바뀐 이름')).toBeInTheDocument();
     expect(stored('planner_events')).toEqual([
       { id: 1, title: '바뀐 이름', start_date: '2026-02-03', end_date: '2026-02-04', color: COLOR.amber },

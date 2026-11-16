@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { COLOR_PALETTE, BACKGROUND_SCALES, makeBackgroundScale } from './colors';
-import { readableTextOn, contrastRatio } from '../utils/color';
+import { eventColors, contrastRatio } from '../utils/color';
 
 // 색의 "정답"은 docs/design-tokens.md의 "4. 일정 색 5가지" 표다.
 const docs = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../docs/design-tokens.md'), 'utf-8');
@@ -33,9 +33,10 @@ describe('COLOR_PALETTE (일정 색 5가지)', () => {
     }
   });
 
-  it('모든 일정 색 위의 글자가 대비 4.5:1 이상으로 읽힌다', () => {
+  it('모든 일정 색의 막대 글자가 연한 바탕 위에서 대비 7:1 이상으로 읽힌다', () => {
     for (const { value } of COLOR_PALETTE) {
-      expect(contrastRatio(value, readableTextOn(value))).toBeGreaterThanOrEqual(4.5);
+      const { background, text } = eventColors(value);
+      expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(7);
     }
   });
 });

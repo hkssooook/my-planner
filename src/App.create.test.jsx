@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { within, waitFor } from '@testing-library/react';
 import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, colorButtonsIn, dayPanel, drag, dragCard, dragTime, queryBlockPanel, timeCard, timeGrid, editIconOf, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { eventColors } from './utils/color';
 
 // 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸을 눌러 오른쪽 일정 패널 열기)을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
@@ -48,7 +49,7 @@ describe('기간 일정 만들기 (날짜 끌기)', () => {
 
     expect(queryPopup('기간 일정 등록')).toBeNull();
     for (const date of ['2026-01-05', '2026-01-06', '2026-01-07']) {
-      expect(barIn(cellOf(date), '여름 워크숍')).toHaveStyle({ backgroundColor: hexToRgb(COLOR.pink) });
+      expect(barIn(cellOf(date), '여름 워크숍')).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.pink).background) });
     }
     expect(within(cellOf('2026-01-08')).queryByText('여름 워크숍')).not.toBeInTheDocument();
     expect(stored('planner_events')).toEqual([

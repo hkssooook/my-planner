@@ -5,7 +5,7 @@ import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
 import { Button } from '@/components/ui/button';
 import { COLOR_PALETTE } from '../../constants/colors';
-import { readableTextOn } from '../../utils/color';
+import { eventColors } from '../../utils/color';
 import { daysBetween, formatLongDate, formatShortDate } from '../../utils/date';
 import { SLOTS_PER_DAY, isRangeFree, makeTimeBlock, slotToTime } from '../../utils/timeBlocks';
 import TimeGrid from './TimeGrid';
@@ -104,10 +104,12 @@ export default function DayPanel({
             이 날의 일정 <span className="font-normal text-muted-foreground text-xs ml-1">{dayEvents.length}개</span>
           </h3>
           <ul className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
-            {dayEvents.map((evt) => (
+            {dayEvents.map((evt) => {
+              const colors = eventColors(evt.color);
+              return (
               <li
                 key={evt.id}
-                style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }}
+                style={{ backgroundColor: colors.background, color: colors.text }}
                 className="text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0"
               >
                 <span className="truncate flex-1">{evt.title}</span>
@@ -115,7 +117,8 @@ export default function DayPanel({
                 <button onClick={() => onEditEvent(evt)} aria-label={`${evt.title} 수정`} className="opacity-80 hover:opacity-100 shrink-0"><EditIcon /></button>
                 <button onClick={() => onDeleteEvent(evt)} aria-label={`${evt.title} 삭제`} className="opacity-60 hover:opacity-100 shrink-0"><DeleteIcon /></button>
               </li>
-            ))}
+              );
+            })}
           </ul>
           {dayEvents.length === 0 && (
             <p className="text-xs text-muted-foreground">이 날에 걸친 기간·종일 일정이 없어요.</p>

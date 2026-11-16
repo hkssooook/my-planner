@@ -1,7 +1,7 @@
 import { KR_HOLIDAYS } from '../../data/holidays';
 import { DAY_NAMES } from '../../constants/calendar';
 import { getDaysInMonth, getDayOfWeek } from '../../utils/date';
-import { readableTextOn } from '../../utils/color';
+import { eventColors } from '../../utils/color';
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
 import StarIcon from '../icons/StarIcon';
@@ -82,12 +82,15 @@ export default function DayCell({
       </div>
 
       <div className="flex-1 flex flex-col gap-0.5 overflow-hidden min-w-0">
-        {visibleEvents.map((evt) => (
+        {/* 일정 막대: 일정 색을 연하게 한 바탕 + 같은 계열 짙은 글자 (utils/color.js의 eventColors). 모서리 5px */}
+        {visibleEvents.map((evt) => {
+          const colors = eventColors(evt.color);
+          return (
           <div
             key={evt.id}
             onClick={(e) => onEditEvent(e, evt)}
-            style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }}
-            className="group/evt text-xs/4 px-1.5 py-px rounded-sm flex justify-between items-center shadow-xs relative font-semibold w-full min-w-0"
+            style={{ backgroundColor: colors.background, color: colors.text }}
+            className="group/evt text-xs/4 px-1.5 py-px rounded-[5px] flex justify-between items-center relative font-semibold w-full min-w-0"
           >
             <span className="truncate flex-1 pr-1">{evt.title}</span>
             <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
@@ -95,7 +98,8 @@ export default function DayCell({
               <button onClick={(e) => onDeleteEvent(e, evt)} aria-label={`${evt.title} 삭제`} className="opacity-60 hover:opacity-100"><DeleteIcon /></button>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {visibleSchedules.map((sch) => (
           <div

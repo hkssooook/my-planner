@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import App from './App';
 import { KR_HOLIDAYS } from './data/holidays';
-import { setupTestEnvironment, COLOR, cellOf, dayButtonOf, makeEvent, seedDaily, seedEvents, setup } from './test/helpers';
+import { setupTestEnvironment, COLOR, cellOf, dayButtonOf, dayPanel, hexToRgb, makeEvent, seedDaily, seedEvents, setup } from './test/helpers';
+import { eventColors } from './utils/color';
 
 // 앱의 첫 화면과 머리말(연도 선택, 보기 방식)을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
@@ -320,16 +321,35 @@ describe('머리말: 연도와 보기 방식', () => {
   });
 });
 
-describe('일정 막대의 글자색', () => {
-  it('파스텔 일정 색에는 진한 글자, 아주 어두운(예전에 만든) 색에는 흰 글자가 올라간다', () => {
+describe('일정 막대·카드의 색 (연한 바탕 + 같은 계열 짙은 글자)', () => {
+  it('달력 막대는 일정 색을 연하게 한 바탕에 같은 계열 짙은 글자다 (예전의 어두운 색도 같은 방식)', () => {
     seedEvents([
-      makeEvent(1, '파스텔 일정', '2026-01-05', '2026-01-05', COLOR.pink),
+      makeEvent(1, '파스텔 일정', '2026-01-05', '2026-01-05', COLOR.blue),
       makeEvent(2, '어두운 일정', '2026-01-06', '2026-01-06', '#1D4ED8'),
     ]);
     render(<App />);
     const bar = (date, title) => within(cellOf(date)).getByText(title).parentElement;
-    expect(bar('2026-01-05', '파스텔 일정')).toHaveStyle({ color: 'rgb(33, 36, 46)' }); // #21242E
-    expect(bar('2026-01-06', '어두운 일정')).toHaveStyle({ color: 'rgb(255, 255, 255)' });
+    for (const [date, title, color] of [['2026-01-05', '파스텔 일정', COLOR.blue], ['2026-01-06', '어두운 일정', '#1D4ED8']]) {
+      const { background, text } = eventColors(color);
+      expect(bar(date, title)).toHaveStyle({ backgroundColor: hexToRgb(background), color: hexToRgb(text) });
+      expect(bar(date, title)).toHaveClass('rounded-[5px]');
+      expect(bar(date, title).querySelector('[data-stripe]')).toBeNull(); // 왼쪽 진한 띠는 없다
+    }
+    expect(bar('2026-01-05', '파스텔 일정')).toHaveStyle({ backgroundColor: 'rgb(223, 230, 254)' }); // #DFE6FE
+  });
+
+  it('패널의 "이 날의 일정"과 시간표 카드도 같은 색 규칙이다', async () => {
+    seedEvents([makeEvent(1, '워크숍', '2026-01-05', '2026-01-05', COLOR.amber)]);
+    seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.mint }] });
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    const box = dayPanel();
+    const amber = eventColors(COLOR.amber);
+    const listItem = within(box).getByText('워크숍').closest('li');
+    expect(listItem).toHaveStyle({ backgroundColor: hexToRgb(amber.background), color: hexToRgb(amber.text) });
+    const card = within(box).getByRole('button', { name: /^09:00–10:00 회의/ });
+    expect(card).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.mint).background) });
   });
 });
+
 

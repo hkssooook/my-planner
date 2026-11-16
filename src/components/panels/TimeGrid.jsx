@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import StarIcon from '../icons/StarIcon';
-import { readableTextOn } from '../../utils/color';
+import { eventColors } from '../../utils/color';
 import {
   SLOTS_PER_DAY, blockSlotRange, freeGapAround, freeRangeFrom, isSlotTaken, movedRange, resizedRange, slotToTime, timeToSlot,
 } from '../../utils/timeBlocks';
@@ -177,6 +177,7 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
             const [start, end] = isMoving ? moving.range : blockSlotRange(block);
             const selected = block.id === selectedBlockId;
             const name = block.content.trim() || '제목 없음';
+            const colors = eventColors(block.color); // 연한 바탕 + 같은 계열 짙은 글자
             return (
               <button
                 key={block.id}
@@ -185,11 +186,11 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
                 aria-pressed={selected}
                 onMouseDown={(e) => startCardDrag(e, block)}
                 onClick={() => onSelect(block.id)} // 키보드(Enter·Space)로 누를 때
-                className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-[13px]/[18px] overflow-hidden flex items-start gap-1.5 shadow-xs cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
+                className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-[13px]/[18px] overflow-hidden flex items-start gap-1.5 cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
                 style={{
                   ...boxStyle([start, end]),
-                  backgroundColor: block.color,
-                  color: readableTextOn(block.color),
+                  backgroundColor: colors.background,
+                  color: colors.text,
                 }}
               >
                 {/* 위·아래 가장자리 5px: 잡고 끌면 길이가 바뀐다 (마우스를 올리면 ↕ 모양) */}
