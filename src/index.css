@@ -116,19 +116,19 @@
 :root {
   /* 색 값은 docs/design-tokens.md의 규정값 그대로다. 색을 바꿀 때는 문서의 표를 먼저 고친다. */
   --background: #9295fe; /* 파랑 5단계 */
-  --foreground: #21242e;
+  --foreground: #2f3137;
   --card: #ffffff;
-  --card-foreground: #21242e;
+  --card-foreground: #2f3137;
   --popover: #ffffff;
-  --popover-foreground: #21242e;
+  --popover-foreground: #2f3137;
   --primary: #5a68ec;
   --primary-foreground: #ffffff;
   --secondary: #e4e5ff; /* 파랑 2단계 */
-  --secondary-foreground: #21242e;
+  --secondary-foreground: #2f3137;
   --muted: #e4e5ff; /* 파랑 2단계 */
   --muted-foreground: #5c6171;
   --accent: #e4e5ff; /* 파랑 2단계 */
-  --accent-foreground: #21242e;
+  --accent-foreground: #2f3137;
   --destructive: #d6364d;
   --border: #e4e5ff; /* 파랑 2단계 */
   --input: #8e94a6;
@@ -141,13 +141,13 @@
   --chart-5: #7ac4a4;
   /* 이 앱에서 추가로 쓰는 이름 (shadcn 기본에는 없음) */
   --success: #7ac4a4;
-  --success-foreground: #21242e;
+  --success-foreground: #2f3137;
   --success-text: #25805d;
   --warning: #fdb11a;
-  --warning-foreground: #21242e;
+  --warning-foreground: #2f3137;
   --info: #3a8ced;
   --holiday: #a64031;
-  --holiday-surface: #fdf0ee; /* 쉬는 날(공휴일·토·일) 칸 바탕 */
+  --holiday-surface: #fef5f4; /* 쉬는 날(공휴일·토·일) 칸 바탕 */
   --selection: #e4e5ff; /* 파랑 2단계 */
   --radius: 15px;
   /* 바탕 단계 색: 파랑 1~5단계 (#FFFFFF → #9295FE). src/constants/colors.js의 BACKGROUND_SCALES.blue와 같다 */
@@ -157,11 +157,11 @@
   --surface-blue-4: #adb0fe;
   --surface-blue-5: #9295fe;
   --sidebar: #ffffff;
-  --sidebar-foreground: #21242e;
+  --sidebar-foreground: #2f3137;
   --sidebar-primary: #5a68ec;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e4e5ff;
-  --sidebar-accent-foreground: #21242e;
+  --sidebar-accent-foreground: #2f3137;
   --sidebar-border: #e4e5ff;
   --sidebar-ring: #5a68ec;
 }

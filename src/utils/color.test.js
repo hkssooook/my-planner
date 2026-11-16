@@ -14,8 +14,8 @@ describe('contrastRatio (글자 대비 계산)', () => {
     expect(contrastRatio('#21242E', '#FDCA59')).toBeCloseTo(contrastRatio('#FDCA59', '#21242E'), 10);
   });
 
-  it('디자인 토큰 문서의 계산값과 맞다 (기본 글자 #21242E 대 흰색 = 15.48)', () => {
-    expect(contrastRatio('#21242E', '#FFFFFF')).toBeCloseTo(15.48, 1);
+  it('디자인 토큰 문서의 계산값과 맞다 (기본 글자 #2F3137 대 흰색 = 13.00)', () => {
+    expect(contrastRatio('#2F3137', '#FFFFFF')).toBeCloseTo(13.00, 1);
   });
 });
 

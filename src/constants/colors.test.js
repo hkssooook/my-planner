@@ -80,7 +80,7 @@ describe('BACKGROUND_SCALES (바탕 단계 색)', () => {
 
   it('2단계 바탕 위의 글자(기본·흐린·휴일)는 모두 대비 4.5:1 이상이다', () => {
     const s2 = BACKGROUND_SCALES.blue[1];
-    for (const fg of ['#21242E', '#5C6171', '#A64031']) {
+    for (const fg of ['#2F3137', '#5C6171', '#A64031']) {
       expect(contrastRatio(fg, s2), fg).toBeGreaterThanOrEqual(4.5);
     }
   });

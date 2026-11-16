@@ -96,7 +96,7 @@ describe('src/index.css의 색 변수 (docs/design-tokens.md와 같아야 한다
     expect(rootValue('warning')).toBe('#fdb11a');
     expect(rootValue('info')).toBe('#3a8ced');
     expect(rootValue('holiday')).toBe('#a64031');
-    expect(rootValue('holiday-surface')).toBe('#fdf0ee');
+    expect(rootValue('holiday-surface')).toBe('#fef5f4');
     expect(rootValue('selection')).toBe('#e4e5ff');
   });
 
