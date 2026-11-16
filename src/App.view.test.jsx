@@ -253,7 +253,7 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(divider2027).toHaveClass('bg-surface-blue-4');
     expect(divider2026).not.toHaveClass('-mx-1'); // 섹션에 좌우 안쪽 여백이 없어서 늘릴 필요가 없다
     expect(divider2027).not.toHaveClass('-mt-1', 'rounded-t-lg', 'rounded-sm');
-    expect(screen.getByText('2026')).toHaveClass('text-surface-blue-2'); // 연도 글자는 파랑 2단계
+    expect(screen.getByText('2026')).toHaveClass('text-foreground'); // 연도 글자는 기본 글자색 (밝은 바탕 위에서도 잘 보이게)
     // 연도 글자 칸은 월 이름 칸과 같은 자리에 선다 (섹션 왼쪽 끝부터 64px, 가운데 맞춤)
     expect(screen.getByText('2026')).toHaveClass('w-[calc(4rem+0.25rem)]', 'pr-1', 'justify-center');
     expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('bg-surface-blue-4');

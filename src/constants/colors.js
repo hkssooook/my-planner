@@ -28,6 +28,6 @@ export function makeBackgroundScale(from, to, steps = 5) {
 }
 
 export const BACKGROUND_SCALES = {
-  // 파랑: 1단계 #FFFFFF(날짜 칸·카드) → 5단계 #6D72FD(화면 기본 바탕)
-  blue: makeBackgroundScale('#FFFFFF', '#6D72FD'),
+  // 파랑: 1단계 #FFFFFF(날짜 칸·카드) → 5단계 #9295FE(화면 기본 바탕). 2026-11-16에 #6D72FD에서 한 단계 밝게 바꿈
+  blue: makeBackgroundScale('#FFFFFF', '#9295FE'),
 };

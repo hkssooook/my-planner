@@ -49,9 +49,9 @@ describe('BACKGROUND_SCALES (바탕 단계 색)', () => {
     expect(makeBackgroundScale('#FFFFFF', '#000000')).toEqual(['#FFFFFF', '#BFBFBF', '#808080', '#404040', '#000000']);
   });
 
-  it('파랑은 1단계 #FFFFFF, 5단계 #6D72FD이고 단계마다 점점 진해진다', () => {
+  it('파랑은 1단계 #FFFFFF, 5단계 #9295FE이고 단계마다 점점 진해진다', () => {
     const blue = BACKGROUND_SCALES.blue;
-    expect(blue).toEqual(['#FFFFFF', '#DBDCFF', '#B6B9FE', '#9295FE', '#6D72FD']);
+    expect(blue).toEqual(['#FFFFFF', '#E4E5FF', '#C9CAFF', '#ADB0FE', '#9295FE']);
   });
 
   // 문서의 "6. 바탕 단계 색" 아래 "### 파랑" 표가 정답이다

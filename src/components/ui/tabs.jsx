@@ -52,7 +52,7 @@ function TabsList({
   )
 }
 
-// 선택 안 된 탭 글자: shadcn 원본은 text-foreground/60인데, 파랑 2단계 탭 바탕(#DBDCFF) 위에서 대비 3.76으로 읽기 기준(4.5)에 못 미쳐
+// 선택 안 된 탭 글자: shadcn 원본은 text-foreground/60인데, 파랑 2단계 탭 바탕(옛 값 #DBDCFF) 위에서 대비 3.76으로 읽기 기준(4.5)에 못 미쳐
 // 흐린 글자 토큰(text-muted-foreground, 4.61)으로 바꿨다
 // 선택된 탭 바탕: shadcn 원본은 화면 바탕색(bg-background)인데, 화면 바탕이 진한 파랑(5단계)이라 선택한 탭이 오히려 어두워져서
 // 카드색(bg-card, 흰색 1단계)으로 바꿨다. 탭 묶음 바탕(2단계)보다 밝아서 고른 것이 눈에 띈다

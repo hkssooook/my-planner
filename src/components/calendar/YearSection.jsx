@@ -8,11 +8,11 @@ export default function YearSection({ year, isFirst = false, isWrapMode, cellPro
   const edge = isFirst ? '-mt-1 rounded-t-lg' : '';
   return (
     <>
-      {/* 연도 구분선 (Year Divider). 바탕은 캘린더 섹션과 같은 파랑 4단계라 섹션과 하나로 이어져 보이고, 연도 글자는 파랑 2단계다 */}
+      {/* 연도 구분선 (Year Divider). 바탕은 캘린더 섹션과 같은 파랑 4단계라 섹션과 하나로 이어져 보이고, 연도 글자는 기본 글자색(진한 남색)이다. 바탕을 밝게 바꾸면서 파랑 2단계 글자는 대비 1.6으로 묻혀서 바꿨다 */}
       <div className={`flex bg-surface-blue-4 ${edge} ${isWrapMode ? 'text-lg font-bold' : 'min-w-max'}`}>
         {/* 연도 글자는 아래 월 이름("1월")과 같은 줄에 선다. 월 이름 칸은 섹션 왼쪽 끝(0px)부터 64px이고 오른쪽에 4px 가림 띠가 붙어 있으므로,
             가로 스크롤은 너비 64+4px에 pr-1(앞 64px 안에서 가운데 맞춤), 화면 맞춤은 월 이름과 같은 왼쪽 여백 16px(pl-4, 왼쪽 맞춤) */}
-        <div className={`${isWrapMode ? 'w-full pl-4 pr-4 py-3' : `w-[calc(4rem+0.25rem)] pr-1 shrink-0 py-3 sticky left-0 z-20 bg-surface-blue-4 ${isFirst ? 'rounded-tl-lg' : ''} flex items-center justify-center font-bold`} text-surface-blue-2`}>
+        <div className={`${isWrapMode ? 'w-full pl-4 pr-4 py-3' : `w-[calc(4rem+0.25rem)] pr-1 shrink-0 py-3 sticky left-0 z-20 bg-surface-blue-4 ${isFirst ? 'rounded-tl-lg' : ''} flex items-center justify-center font-bold`} text-foreground`}>
           {year}
         </div>
         {/* 머리말의 연도 선택 칸이 이미 "○○년"을 보여 주므로, 여기에는 연도 숫자만 둔다 ("○○년 연간 일정" 글자는 중복이라 뺐다) */}

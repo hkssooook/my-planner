@@ -141,7 +141,7 @@ export default function DayPanel({
                 onChange={(e) => setAllDayTitle(e.target.value)}
                 className="flex-1 min-w-0 px-3 py-1.5 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
               />
-              {/* 바탕은 파랑 2단계 (secondary 토큰 = #DBDCFF) */}
+              {/* 바탕은 파랑 2단계 (secondary 토큰 = #E4E5FF) */}
               <Button type="submit" variant="secondary" size="sm">추가</Button>
             </div>
             <ColorPicker size="md" label="종일 일정 색" value={allDayColor} onChange={setAllDayColor} />
