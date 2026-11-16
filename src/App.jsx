@@ -12,9 +12,13 @@ import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import PeriodEventModal from './components/modals/PeriodEventModal';
 import EditEventModal from './components/modals/EditEventModal';
 import DayPanel from './components/panels/DayPanel';
+import BlockPanel from './components/panels/BlockPanel';
 
 export default function App() {
-  const { events, timeBlocks, addEvent, changeEvent, removeEvent, saveDayBlocks } = usePlannerData();
+  const {
+    events, timeBlocks, addEvent, changeEvent, removeEvent,
+    addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty,
+  } = usePlannerData();
 
   // 앱을 연 해(올해)를 한 번 읽어 고정하고, 그 해로 시작한다. 선택 칸의 연도 목록도 이 해를 기준으로 만든다.
   const [thisYear] = useState(getCurrentYear);
@@ -35,26 +39,49 @@ export default function App() {
 
   // 오른쪽 일정 패널. null이면 닫힘.
   //   date       열린 날짜
-  //   focusHour  시간 일정을 눌러 열었으면 그 시간, 아니면 null
-  //   openCount  열 때마다 1씩 늘린다. 같은 날짜를 다시 눌러도 패널을 새로 그려 커서·강조를 다시 잡게 한다.
+  //   openCount  열 때마다 1씩 늘린다. 같은 날짜를 다시 눌러도 패널을 새로 그려 커서·스크롤을 다시 잡게 한다.
   const [panel, setPanel] = useState(null);
+  // 카드 상세 패널에 열린 시간 일정 카드의 id (패널 날짜의 카드). null이면 카드 상세 패널이 닫혀 있다.
+  const [selectedBlockId, setSelectedBlockId] = useState(null);
+
+  // 카드 상세 패널을 닫거나 다른 카드로 바꿀 때: 지금 고른 카드가 이름 없이 남아 있으면 지운다.
+  // (시간표를 실수로 눌러 생긴 빈 카드가 쌓이지 않게)
+  const releaseBlock = () => {
+    if (panel && selectedBlockId) removeTimeBlockIfEmpty(panel.date, selectedBlockId);
+  };
+
+  // 카드를 고른다(카드 상세 패널을 연다). id가 null이면 닫는다.
+  const selectBlock = (id) => {
+    if (id !== selectedBlockId) releaseBlock();
+    setSelectedBlockId(id);
+  };
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   // 그날의 일정 패널을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter, 또는 +N 더보기)
-  // hour를 주면(칸의 시간 일정을 눌렀을 때) 그 시간 줄을 보여 주며 연다.
+  // blockId를 주면(칸의 시간 일정을 눌렀을 때) 그 카드를 골라 카드 상세 패널까지 함께 연다.
   // e는 달력 칸에서 누른 경우에만 있다.
-  const openDayPanel = (e, dateString, hour = null) => {
+  const openDayPanel = (e, dateString, blockId = null) => {
     if (e) e.stopPropagation();
     clearSelection();
-    setPanel(prev => ({ date: dateString, focusHour: hour, openCount: (prev?.openCount ?? 0) + 1 }));
+    releaseBlock();
+    setSelectedBlockId(blockId);
+    setPanel(prev => ({ date: dateString, openCount: (prev?.openCount ?? 0) + 1 }));
   };
 
-  // 패널의 ‹ › 버튼: 전날·다음 날로 넘긴다.
+  // 패널의 ‹ › 버튼: 전날·다음 날로 넘긴다. 카드 상세 패널은 닫는다.
   const moveDayPanel = (days) => {
-    setPanel(prev => ({ date: addDays(prev.date, days), focusHour: null, openCount: prev.openCount + 1 }));
+    releaseBlock();
+    setSelectedBlockId(null);
+    setPanel(prev => ({ date: addDays(prev.date, days), openCount: prev.openCount + 1 }));
+  };
+
+  const closeDayPanel = () => {
+    releaseBlock();
+    setSelectedBlockId(null);
+    setPanel(null);
   };
 
   const savePeriodEvent = () => {
@@ -109,6 +136,8 @@ export default function App() {
   };
 
   const panelEvents = panel ? events.filter(e => e.start_date <= panel.date && e.end_date >= panel.date) : [];
+  const panelBlocks = panel ? timeBlocks[panel.date] || [] : [];
+  const selectedBlock = panelBlocks.find(b => b.id === selectedBlockId) ?? null;
 
   return (
     // 왼쪽은 달력, 오른쪽은 (열려 있으면) 일정 패널. 달력은 패널이 열려도 계속 보인다.
@@ -147,14 +176,27 @@ export default function App() {
           key={`${panel.date}-${panel.openCount}`}
           date={panel.date}
           dayEvents={panelEvents}
-          blocks={timeBlocks[panel.date] || []}
-          focusHour={panel.focusHour}
-          onClose={() => setPanel(null)}
+          blocks={panelBlocks}
+          selectedBlockId={selectedBlockId}
+          onClose={closeDayPanel}
           onMoveDay={moveDayPanel}
           onAddAllDay={({ title, color }) => addEvent({ title, start_date: panel.date, end_date: panel.date, color })}
           onEditEvent={(evt) => openEditModal(null, evt)}
           onDeleteEvent={(evt) => openDeleteModal(null, evt)}
-          onSaveBlocks={(blocks) => saveDayBlocks(panel.date, blocks)}
+          onAddBlock={(block) => addTimeBlock(panel.date, block)}
+          onSelectBlock={selectBlock}
+        />
+      )}
+
+      {/* --- 그 오른쪽: 고른 시간 일정 카드의 상세 패널 (이름·색·주요·삭제) --- */}
+      {panel && selectedBlock && (
+        <BlockPanel
+          key={selectedBlock.id}
+          date={panel.date}
+          block={selectedBlock}
+          onChange={(changes) => changeTimeBlock(panel.date, selectedBlock.id, changes)}
+          onDelete={() => { removeTimeBlock(panel.date, selectedBlock.id); setSelectedBlockId(null); }}
+          onClose={() => selectBlock(null)}
         />
       )}
 

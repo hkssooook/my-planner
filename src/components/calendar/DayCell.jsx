@@ -5,7 +5,6 @@ import { readableTextOn } from '../../utils/color';
 import EditIcon from '../icons/EditIcon';
 import DeleteIcon from '../icons/DeleteIcon';
 import StarIcon from '../icons/StarIcon';
-import { timeToHour } from '../../utils/timeBlocks';
 
 // 달력의 날짜 한 칸. 화면 맞춤 모드에서 없는 날(예: 2월 30일)은 아무것도 그리지 않는다.
 // panelDate: 오른쪽 일정 패널에 열린 날짜. 그 칸에는 테두리를 둘러 지금 보고 있는 날임을 알린다.
@@ -101,7 +100,7 @@ export default function DayCell({
         {visibleSchedules.map((sch) => (
           <div
             key={sch.id}
-            onClick={(e) => onOpenDay(e, dateString, timeToHour(sch.start))}
+            onClick={(e) => onOpenDay(e, dateString, sch.id)}
             className="text-[9.5px] text-foreground flex gap-1.5 items-center px-1 w-full min-w-0 rounded-sm hover:bg-accent"
           >
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>

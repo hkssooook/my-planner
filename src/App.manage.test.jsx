@@ -57,7 +57,7 @@ describe('+N 더보기', () => {
     for (const title of ['일정 하나', '일정 둘', '일정 셋', '일정 넷']) {
       expect(barIn(box, title)).toBeInTheDocument();
     }
-    expect(within(box).getByRole('textbox', { name: '09:00 일정 내용' })).toHaveValue('주요 회의');
+    expect(within(box).getByRole('button', { name: '09:00–10:00 주요 회의 (주요)' })).toBeInTheDocument(); // 시간표에 카드로 보인다
     expect(popupCount()).toBe(0); // 더보기 팝업은 없어졌다
 
     await user.click(buttonIn(box, '닫기'));

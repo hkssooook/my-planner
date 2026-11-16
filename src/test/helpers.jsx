@@ -1,5 +1,5 @@
 import { vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import { COLOR_PALETTE } from '../constants/colors';
@@ -42,6 +42,23 @@ export const popupCount = () => document.querySelectorAll('[role="dialog"]').len
 // 오른쪽 일정 패널(<aside aria-label="상세 일정 관리">). 팝업이 아니라서 role이 complementary(보조 영역)다.
 export const dayPanel = () => screen.getByRole('complementary', { name: '상세 일정 관리', hidden: true });
 export const queryDayPanel = () => screen.queryByRole('complementary', { name: '상세 일정 관리', hidden: true });
+
+// 일정 패널 오른쪽의 시간 일정 카드 상세 패널
+export const blockPanel = () => screen.getByRole('complementary', { name: '시간 일정 상세', hidden: true });
+export const queryBlockPanel = () => screen.queryByRole('complementary', { name: '시간 일정 상세', hidden: true });
+
+// 일정 패널의 30분 시간표. 시험 환경(jsdom)은 화면 배치를 계산하지 않아 시간표의 위쪽 끝이 0이므로,
+// 칸 번호 × 24px(한 칸 높이)이 곧 그 칸의 세로 위치다. (+5는 칸 안쪽을 누르려고)
+export const timeGrid = () => within(dayPanel()).getByTestId('time-grid');
+const slotY = (slot) => slot * 24 + 5;
+// 시간표의 fromSlot 칸을 눌러 toSlot 칸까지 끌었다 놓는다. 예: dragTime(18, 20) = 09:00~10:30
+export const dragTime = (fromSlot, toSlot = fromSlot) => {
+  fireEvent.mouseDown(timeGrid(), { button: 0, clientY: slotY(fromSlot) });
+  fireEvent.mouseMove(window, { clientY: slotY(toSlot) });
+  fireEvent.mouseUp(window, { clientY: slotY(toSlot) });
+};
+// 시간표 안의 카드 버튼 (접근성 이름 "09:00–10:00 회의" 처럼 시각으로 시작)
+export const timeCard = (startTime) => within(dayPanel()).getByRole('button', { name: new RegExp(`^${startTime}–`) });
 
 export const buttonIn = (box, name) => within(box).getByRole('button', { name });
 export const colorButtonsIn = (box) => within(box).getAllByRole('button').filter((b) => b.classList.contains('rounded-full'));

@@ -1,11 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
-  hourToTime, timeToHour, isHourBlock, slotToBlock,
-  migrateDailyToBlocks, blocksToSlots, slotsToBlocks,
+  hourToTime, timeToHour, slotToBlock, migrateDailyToBlocks,
+  slotToTime, timeToSlot, blockSlotRange, isSlotTaken, isRangeFree, freeRangeFrom, makeTimeBlock, sortBlocks,
 } from './timeBlocks';
 
 const BLUE = '#3B82F6';
-const block = (id, start, end, content = '내용', extra = {}) => ({ id, start, end, content, is_important: false, color: BLUE, ...extra });
 
 describe('시각 바꾸기', () => {
   it('hourToTime: 숫자 시 → "HH:00"', () => {
@@ -17,17 +16,6 @@ describe('시각 바꾸기', () => {
     expect(timeToHour('09:00')).toBe(9);
     expect(timeToHour('09:30')).toBe(9);
     expect(timeToHour('23:00')).toBe(23);
-  });
-});
-
-describe('isHourBlock (24줄 창에 한 줄로 보여 줄 수 있는 카드인가)', () => {
-  it('정각에 시작해 한 시간이면 맞다', () => {
-    expect(isHourBlock(block('a', '09:00', '10:00'))).toBe(true);
-    expect(isHourBlock(block('a', '23:00', '24:00'))).toBe(true);
-  });
-  it('30분에 시작하거나 길이가 한 시간이 아니면 아니다', () => {
-    expect(isHourBlock(block('a', '09:30', '10:30'))).toBe(false);
-    expect(isHourBlock(block('a', '09:00', '11:00'))).toBe(false);
   });
 });
 
@@ -66,56 +54,77 @@ describe('migrateDailyToBlocks (옛 저장 데이터 전체 변환)', () => {
   });
 });
 
-describe('blocksToSlots (카드 → 상세 일정 창 24줄)', () => {
-  it('24줄을 만들고 카드가 있는 시간만 채운다 (id도 함께)', () => {
-    const slots = blocksToSlots([block('a', '09:00', '10:00', '회의', { is_important: true })], BLUE);
-    expect(slots).toHaveLength(24);
-    expect(slots[9]).toEqual({ hour: 9, id: 'a', content: '회의', is_important: true, color: BLUE });
-    expect(slots[10]).toEqual({ hour: 10, content: '', is_important: false, color: BLUE });
+describe('30분 칸 바꾸기', () => {
+  it('slotToTime: 칸 번호 → "HH:MM" (48은 하루의 끝 24:00)', () => {
+    expect(slotToTime(0)).toBe('00:00');
+    expect(slotToTime(19)).toBe('09:30');
+    expect(slotToTime(47)).toBe('23:30');
+    expect(slotToTime(48)).toBe('24:00');
   });
-  it('색이 없는 카드는 기본 색으로 채운다', () => {
-    const slots = blocksToSlots([{ id: 'a', start: '09:00', end: '10:00', content: '회의' }], BLUE);
-    expect(slots[9].color).toBe(BLUE);
+
+  it('timeToSlot: "HH:MM" → 칸 번호 (30분에 안 맞으면 그 칸으로 내림)', () => {
+    expect(timeToSlot('00:00')).toBe(0);
+    expect(timeToSlot('09:30')).toBe(19);
+    expect(timeToSlot('09:45')).toBe(19);
+    expect(timeToSlot('24:00')).toBe(48);
   });
-  it('24줄로 보여 줄 수 없는 카드(9:30 시작)는 줄에 넣지 않는다', () => {
-    const slots = blocksToSlots([block('a', '09:30', '10:30')], BLUE);
-    expect(slots.every((s) => s.content === '')).toBe(true);
+
+  it('blockSlotRange: 카드가 차지하는 [시작 칸, 끝 칸)', () => {
+    expect(blockSlotRange({ start: '09:00', end: '10:30' })).toEqual([18, 21]);
+    expect(blockSlotRange({ start: '09:00', end: '09:40' })).toEqual([18, 20]); // 끝이 칸 중간이면 그 칸까지
+    expect(blockSlotRange({ start: '09:00', end: '09:00' })).toEqual([18, 19]); // 최소 한 칸
   });
 });
 
-describe('slotsToBlocks (상세 일정 창 24줄 → 카드)', () => {
-  it('내용이 빈 줄은 빼고, 원래 카드의 id와 다른 속성을 이어받는다', () => {
-    const existing = [block('a', '09:00', '10:00', '회의', { todos: ['나중에 붙을 속성'] })];
-    const slots = blocksToSlots(existing, BLUE);
-    slots[9].content = '회의 (수정)';
-    slots[14].content = '새 일정';
+describe('겹침 검사', () => {
+  const blocks = [{ start: '09:00', end: '10:00' }, { start: '12:00', end: '12:30' }];
 
-    const result = slotsToBlocks(slots, existing);
-    expect(result).toHaveLength(2);
-    expect(result[0]).toEqual({ ...existing[0], content: '회의 (수정)' });
-    expect(result[1]).toMatchObject({ start: '14:00', end: '15:00', content: '새 일정' });
-    expect(result[1].id).not.toBe('a');
+  it('isSlotTaken: 카드가 있는 칸만 찼다고 본다 (끝 칸은 비어 있음)', () => {
+    expect(isSlotTaken(blocks, 18)).toBe(true);
+    expect(isSlotTaken(blocks, 19)).toBe(true);
+    expect(isSlotTaken(blocks, 20)).toBe(false); // 10:00 칸
+    expect(isSlotTaken(blocks, 24)).toBe(true); // 12:00 칸
   });
-  it('줄에 id가 미리 붙어 있으면 새 카드가 그 id를 쓴다 (여러 번 저장해도 같은 카드)', () => {
-    const slots = blocksToSlots([], BLUE);
-    slots[9] = { ...slots[9], id: 'pre', content: '회' };
-    const first = slotsToBlocks(slots, []);
-    slots[9] = { ...slots[9], content: '회의' };
-    const second = slotsToBlocks(slots, first);
-    expect(first[0].id).toBe('pre');
-    expect(second).toEqual([{ ...first[0], content: '회의' }]);
+
+  it('isRangeFree: 범위 안에 찬 칸이 하나라도 있으면 false', () => {
+    expect(isRangeFree(blocks, 20, 24)).toBe(true); // 10:00~12:00
+    expect(isRangeFree(blocks, 20, 25)).toBe(false); // 12:00 칸과 겹침
+    expect(isRangeFree(blocks, 16, 19)).toBe(false);
   });
-  it('줄의 내용을 지우면 그 카드는 사라진다', () => {
-    const existing = [block('a', '09:00', '10:00', '회의')];
-    const slots = blocksToSlots(existing, BLUE);
-    slots[9].content = '   ';
-    expect(slotsToBlocks(slots, existing)).toEqual([]);
+});
+
+describe('freeRangeFrom (드래그 범위)', () => {
+  const blocks = [{ start: '09:00', end: '10:00' }]; // 18, 19 칸
+
+  it('아래로 끌면 [누른 칸, 지금 칸+1)', () => {
+    expect(freeRangeFrom(blocks, 20, 23)).toEqual([20, 24]);
   });
-  it('24줄로 보여 줄 수 없던 카드는 손대지 않고 남겨 두고, 시간순으로 섞는다', () => {
-    const odd = block('o', '09:30', '11:00', '긴 회의');
-    const slots = blocksToSlots([odd], BLUE);
-    slots[8].content = '아침';
-    slots[13].content = '점심 뒤';
-    expect(slotsToBlocks(slots, [odd]).map((b) => b.content)).toEqual(['아침', '긴 회의', '점심 뒤']);
+
+  it('위로 끌어도 된다', () => {
+    expect(freeRangeFrom(blocks, 25, 22)).toEqual([22, 26]);
+  });
+
+  it('기존 카드를 만나면 그 바로 앞에서 멈춘다 (위·아래 모두)', () => {
+    expect(freeRangeFrom(blocks, 14, 30)).toEqual([14, 18]);
+    expect(freeRangeFrom(blocks, 24, 10)).toEqual([20, 25]);
+  });
+
+  it('제자리 클릭이면 30분 한 칸, 하루 범위 밖으로는 늘어나지 않는다', () => {
+    expect(freeRangeFrom(blocks, 30, 30)).toEqual([30, 31]);
+    expect(freeRangeFrom([], 46, 60)).toEqual([46, 48]);
+    expect(freeRangeFrom([], 1, -5)).toEqual([0, 2]);
+  });
+});
+
+describe('makeTimeBlock / sortBlocks', () => {
+  it('칸 범위로 이름 없는 새 카드를 만든다', () => {
+    const block = makeTimeBlock(18, 21, '#123456');
+    expect(block).toEqual({ id: expect.any(String), start: '09:00', end: '10:30', content: '', color: '#123456', is_important: false });
+  });
+
+  it('시작 시각 순서로 정렬한 새 목록을 돌려준다 (원래 목록은 그대로)', () => {
+    const list = [{ start: '14:00' }, { start: '09:30' }];
+    expect(sortBlocks(list).map((b) => b.start)).toEqual(['09:30', '14:00']);
+    expect(list[0].start).toBe('14:00');
   });
 });

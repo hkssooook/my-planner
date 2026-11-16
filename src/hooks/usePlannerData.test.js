@@ -287,6 +287,51 @@ describe('saveDayBlocks (날짜별 시간 일정 카드 저장)', () => {
   });
 });
 
+describe('카드 하나씩 다루기 (addTimeBlock · changeTimeBlock · removeTimeBlock · removeTimeBlockIfEmpty)', () => {
+  const nine = { id: 'n', start: '09:00', end: '10:00', content: '회의', is_important: false, color: '#22C55E' };
+  const eight = { id: 'e', start: '08:00', end: '08:30', content: '', is_important: false, color: '#3B82F6' };
+
+  it('addTimeBlock: 카드를 더하고 시작 시각 순서로 정렬해 저장한다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addTimeBlock('2026-01-05', nine));
+    act(() => result.current.addTimeBlock('2026-01-05', eight));
+    expect(result.current.timeBlocks['2026-01-05'].map((b) => b.id)).toEqual(['e', 'n']);
+    expect(saved('planner_time_blocks')['2026-01-05'].map((b) => b.id)).toEqual(['e', 'n']);
+  });
+
+  it('changeTimeBlock: 바꾼 값만 덮어쓰고 id와 나머지는 그대로 둔다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addTimeBlock('2026-01-05', nine));
+    act(() => result.current.changeTimeBlock('2026-01-05', 'n', { content: '팀 회의', is_important: true }));
+    expect(result.current.timeBlocks['2026-01-05']).toEqual([{ ...nine, content: '팀 회의', is_important: true }]);
+  });
+
+  it('한 번에 연달아 고쳐도(추가 → 수정) 앞의 저장이 사라지지 않는다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => {
+      result.current.addTimeBlock('2026-01-05', eight);
+      result.current.changeTimeBlock('2026-01-05', 'e', { content: '아침 운동' });
+    });
+    expect(result.current.timeBlocks['2026-01-05']).toEqual([{ ...eight, content: '아침 운동' }]);
+    expect(saved('planner_time_blocks')['2026-01-05'][0].content).toBe('아침 운동');
+  });
+
+  it('removeTimeBlock: id가 같은 카드만 지운다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.saveDayBlocks('2026-01-05', [eight, nine]));
+    act(() => result.current.removeTimeBlock('2026-01-05', 'e'));
+    expect(result.current.timeBlocks['2026-01-05']).toEqual([nine]);
+  });
+
+  it('removeTimeBlockIfEmpty: 이름이 빈(공백뿐인) 카드만 지우고, 이름이 있으면 남긴다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.saveDayBlocks('2026-01-05', [{ ...eight, content: '  ' }, nine]));
+    act(() => result.current.removeTimeBlockIfEmpty('2026-01-05', 'n'));
+    act(() => result.current.removeTimeBlockIfEmpty('2026-01-05', 'e'));
+    expect(result.current.timeBlocks['2026-01-05']).toEqual([nine]);
+  });
+});
+
 describe('일정과 시간 일정을 한 번에 저장하는 경우', () => {
   it('서로 다른 데이터라서 둘 다 정상적으로 저장된다', () => {
     const { result } = renderHook(() => usePlannerData());

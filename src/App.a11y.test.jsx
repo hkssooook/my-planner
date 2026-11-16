@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, barIn, dayPanel, popup, drag, editIconOf } from './test/helpers';
+import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, barIn, dayPanel, popup, drag, editIconOf, blockPanel, dragTime, timeCard } from './test/helpers';
 import { COLOR_PALETTE } from './constants/colors';
 
 // 화면을 눈으로 못 보는 사람(스크린 리더)이 버튼을 알아들을 수 있는지 확인하는 시험.
@@ -93,15 +93,12 @@ describe('접근성: 색 선택 버튼', () => {
     expect(within(group).getByRole('button', { name: '블루' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('일정 패널에는 선택기가 여러 개라서, 묶음 이름이 서로 다르다 (종일 1개 + 시간대마다 1개)', async () => {
+  it('일정 패널의 종일 색 선택기와 카드 상세 패널의 색 선택기는 이름이 서로 다르다', async () => {
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
-    const box = dayPanel();
-    expect(within(box).getByRole('group', { name: '종일 일정 색' })).toBeInTheDocument();
-    expect(within(box).getByRole('group', { name: '00:00 일정 색' })).toBeInTheDocument();
-    expect(within(box).getByRole('group', { name: '09:00 일정 색' })).toBeInTheDocument();
-    const names = within(box).getAllByRole('group').map((g) => g.getAttribute('aria-label'));
-    expect(new Set(names).size).toBe(names.length);
+    expect(within(dayPanel()).getByRole('group', { name: '종일 일정 색' })).toBeInTheDocument();
+    dragTime(18);
+    expect(within(blockPanel()).getByRole('group', { name: '시간 일정 색' })).toBeInTheDocument();
   });
 
   it('수정 팝업은 일정의 현재 색이 눌림 상태로 보인다', async () => {
@@ -141,31 +138,30 @@ describe('접근성: 입력칸의 이름', () => {
     expect(within(popup('기간 일정 등록')).getByRole('textbox', { name: '일정명' })).toBeInTheDocument();
   });
 
-  it('일정 패널: 종일 입력칸과 24개 시간대 입력칸·체크박스가 모두 서로 다른 이름이다', async () => {
+  it('일정 패널: 종일 입력칸, 시간 일정 추가 칸(시작·끝 시각)에 이름이 있고, 시간표 카드는 시각과 이름으로 읽힌다', async () => {
+    localStorage.setItem('planner_time_blocks', JSON.stringify({ '2026-01-05': [
+      { id: 'a', start: '09:30', end: '11:00', content: '회의', color: COLOR_PALETTE[0].value, is_important: true },
+    ] }));
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
     const box = dayPanel();
     expect(within(box).getByRole('textbox', { name: '종일 일정명' })).toBeInTheDocument();
-    expect(within(box).getByRole('textbox', { name: '09:00 일정 내용' })).toBeInTheDocument();
-    expect(within(box).getByRole('checkbox', { name: '09:00 주요 일정 (★ 표시)' })).not.toBeChecked();
-
-    const textboxes = within(box).getAllByRole('textbox').map((t) => t.getAttribute('aria-label'));
-    const checkboxes = within(box).getAllByRole('checkbox').map((t) => t.getAttribute('aria-label'));
-    expect(textboxes).toHaveLength(25); // 종일 1 + 시간대 24
-    expect(checkboxes).toHaveLength(24);
-    expect(new Set(textboxes).size).toBe(25);
-    expect(new Set(checkboxes).size).toBe(24);
+    expect(within(box).getByRole('combobox', { name: '시작 시각' })).toBeInTheDocument();
+    expect(within(box).getByRole('combobox', { name: '끝 시각' })).toBeInTheDocument();
+    expect(within(box).getByRole('button', { name: '09:30–11:00 회의 (주요)' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('이름으로 찾은 시간대 입력칸에 쓰면 그 시간대에 저장된다', async () => {
+  it('카드 상세 패널: 이름 입력칸과 주요 체크박스가 이름으로 찾아지고, 쓰면 그 카드에 저장된다', async () => {
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
-    const box = dayPanel();
-    await user.type(within(box).getByRole('textbox', { name: '10:00 일정 내용' }), '열 시 회의');
-    await user.click(within(box).getByRole('checkbox', { name: '10:00 주요 일정 (★ 표시)' }));
+    dragTime(20); // 10:00 칸
+    const detail = blockPanel();
+    await user.type(within(detail).getByRole('textbox', { name: '이름' }), '열 시 회의');
+    await user.click(within(detail).getByRole('checkbox', { name: '주요 일정 (달력에 ★ 표시)' }));
     expect(JSON.parse(localStorage.getItem('planner_time_blocks'))['2026-01-05']).toEqual([
-      expect.objectContaining({ start: '10:00', end: '11:00', content: '열 시 회의', is_important: true }),
+      expect.objectContaining({ start: '10:00', end: '10:30', content: '열 시 회의', is_important: true }),
     ]);
+    expect(timeCard('10:00')).toHaveAccessibleName('10:00–10:30 열 시 회의 (주요)');
   });
 });
 
