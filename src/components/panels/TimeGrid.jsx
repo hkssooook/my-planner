@@ -185,7 +185,7 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
                 aria-pressed={selected}
                 onMouseDown={(e) => startCardDrag(e, block)}
                 onClick={() => onSelect(block.id)} // 키보드(Enter·Space)로 누를 때
-                className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-xs overflow-hidden flex items-start gap-1.5 shadow-xs cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
+                className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-[13px]/[18px] overflow-hidden flex items-start gap-1.5 shadow-xs cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
                 style={{
                   ...boxStyle([start, end]),
                   backgroundColor: block.color,
@@ -198,7 +198,7 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
                 {block.is_important && <span className="shrink-0 mt-0.5"><StarIcon /></span>}
                 <span className={`font-semibold truncate ${block.content.trim() ? '' : 'opacity-70'}`}>{name}</span>
                 {/* 끄는 중에는 바뀔 시각을 미리 보여 준다 */}
-                <span className="shrink-0 opacity-80 ml-auto">{slotToTime(start)}–{slotToTime(end)}</span>
+                <span className="shrink-0 opacity-80 ml-auto text-[11px]/[18px] font-medium">{slotToTime(start)}–{slotToTime(end)}</span>
               </button>
             );
           })}

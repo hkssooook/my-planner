@@ -87,7 +87,7 @@ export default function DayCell({
             key={evt.id}
             onClick={(e) => onEditEvent(e, evt)}
             style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }}
-            className="group/evt text-[10px] px-1.5 py-0.5 mb-0.5 rounded-sm flex justify-between items-center shadow-xs relative font-medium w-full min-w-0"
+            className="group/evt text-xs/4 px-1.5 py-px rounded-sm flex justify-between items-center shadow-xs relative font-semibold w-full min-w-0"
           >
             <span className="truncate flex-1 pr-1">{evt.title}</span>
             <div className="hidden group-hover/evt:flex gap-1.5 bg-inherit pl-1 absolute right-1 inset-y-0 items-center">
@@ -101,7 +101,7 @@ export default function DayCell({
           <div
             key={sch.id}
             onClick={(e) => onOpenDay(e, dateString, sch.id)}
-            className="text-[9.5px] text-foreground flex gap-1.5 items-center px-1 w-full min-w-0 rounded-sm hover:bg-accent"
+            className="text-[11px]/4 text-foreground flex gap-1.5 items-center px-1 w-full min-w-0 rounded-sm hover:bg-accent"
           >
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sch.color }}></span>
             <span className="font-semibold text-muted-foreground shrink-0">{sch.start}</span>

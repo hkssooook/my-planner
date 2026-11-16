@@ -108,7 +108,7 @@ export default function DayPanel({
               <li
                 key={evt.id}
                 style={{ backgroundColor: evt.color, color: readableTextOn(evt.color) }}
-                className="text-xs px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-medium min-w-0"
+                className="text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0"
               >
                 <span className="truncate flex-1">{evt.title}</span>
                 <span className="shrink-0 font-normal opacity-90">{rangeLabel(evt, date)}</span>
