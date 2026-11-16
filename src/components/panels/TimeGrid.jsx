@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { SquareCheck } from 'lucide-react';
 import StarIcon from '../icons/StarIcon';
+import { todoProgress, todosOf } from '../../utils/todos';
 import { eventColors } from '../../utils/color';
 import {
   SLOTS_PER_DAY, blockSlotRange, freeGapAround, freeRangeFrom, isSlotTaken, movedRange, resizedRange, slotToTime, timeToSlot,
@@ -178,15 +180,16 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
             const selected = block.id === selectedBlockId;
             const name = block.content.trim() || '제목 없음';
             const colors = eventColors(block.color); // 연한 바탕 + 같은 계열 짙은 글자
+            const todos = todoProgress(todosOf(block)); // 할 일 진행 상황 { done, total }
             return (
               <button
                 key={block.id}
                 type="button"
-                aria-label={`${block.start}–${block.end} ${name}${block.is_important ? ' (주요)' : ''}`}
+                aria-label={`${block.start}–${block.end} ${name}${block.is_important ? ' (주요)' : ''}${todos.total ? `, 할 일 ${todos.total}개 중 ${todos.done}개 완료` : ''}`}
                 aria-pressed={selected}
                 onMouseDown={(e) => startCardDrag(e, block)}
                 onClick={() => onSelect(block.id)} // 키보드(Enter·Space)로 누를 때
-                className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-[13px]/[18px] overflow-hidden flex items-start gap-1.5 cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
+                className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-sm/[18px] overflow-hidden flex items-start gap-1.5 cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
                 style={{
                   ...boxStyle([start, end]),
                   backgroundColor: colors.background,
@@ -198,8 +201,22 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
                 <span aria-hidden="true" data-edge="end" className="absolute inset-x-0 bottom-0 h-[5px] cursor-ns-resize" />
                 {block.is_important && <span className="shrink-0 mt-0.5"><StarIcon /></span>}
                 <span className={`font-semibold truncate ${block.content.trim() ? '' : 'opacity-70'}`}>{name}</span>
-                {/* 끄는 중에는 바뀔 시각을 미리 보여 준다 */}
-                <span className="shrink-0 opacity-80 ml-auto text-[11px]/[18px] font-medium">{slotToTime(start)}–{slotToTime(end)}</span>
+                {/* 오른쪽 끝 묶음: [할 일 진행 표시] [시각] */}
+                <span className="shrink-0 ml-auto flex items-start gap-1.5 text-xs/[18px] font-medium">
+                  {/* 할 일 진행 표시 (할 일이 있을 때만): 체크박스 모양 + 완료/전체. 다 끝내면 조금 더 진하게.
+                      달력 칸에는 일부러 넣지 않는다 (칸이 작아 복잡해 보여서) */}
+                  {todos.total > 0 && (
+                    <span
+                      aria-hidden="true" data-testid="todo-progress"
+                      className={`inline-flex items-center gap-0.5 ${todos.done === todos.total ? '' : 'opacity-70'}`}
+                    >
+                      <SquareCheck className="size-3.5" />
+                      {todos.done}/{todos.total}
+                    </span>
+                  )}
+                  {/* 끄는 중에는 바뀔 시각을 미리 보여 준다 */}
+                  <span className="opacity-80">{slotToTime(start)}–{slotToTime(end)}</span>
+                </span>
               </button>
             );
           })}
