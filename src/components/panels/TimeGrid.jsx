@@ -11,6 +11,10 @@ const FIRST_VISIBLE_SLOT = 16; // 처음 열면 08:00이 맨 위에 오게 스�
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, slot) => slot);
 
+// [시작 칸, 끝 칸)을 차지하는 상자의 위치. 칸 줄(1px)은 칸 위쪽 끝(slot × ROW)에 그어진다.
+// 상자는 시작 줄 바로 아래(+1)에서 시작해 끝 줄 바로 위까지 채운다(높이 − 1). 그래서 위·아래가 모두 시각 줄에 딱 붙는다.
+const boxStyle = ([start, end]) => ({ top: start * ROW + 1, height: (end - start) * ROW - 1 });
+
 // 일정 패널의 하루 시간표: 0~24시를 30분 칸 48개로 나눠 위에서 아래로 그린다.
 //   - 빈 칸을 누르고 위아래로 끌었다 놓으면, 끈 만큼(30분 단위로 딱 맞춰) 새 카드가 생긴다. 누르기만 하면 30분 카드.
 //   - 끄는 중에 이미 있는 카드에 닿으면 그 앞에서 멈춘다. (카드끼리 겹치지 않는다)
@@ -160,7 +164,7 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
             <div
               data-testid="time-grid-preview"
               className="absolute inset-x-1 rounded-sm border border-primary bg-primary/15 px-2 text-[11px] font-medium text-primary pointer-events-none"
-              style={{ top: preview[0] * ROW + 1, height: (preview[1] - preview[0]) * ROW - 2 }}
+              style={boxStyle(preview)}
             >
               {slotToTime(preview[0])}–{slotToTime(preview[1])}
             </div>
@@ -181,8 +185,7 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
                 onClick={() => onSelect(block.id)} // 키보드(Enter·Space)로 누를 때
                 className={`group/card absolute left-1 right-1 rounded-sm px-2 py-0.5 text-left text-xs overflow-hidden flex items-start gap-1.5 shadow-xs cursor-grab focus-visible:outline-2 focus-visible:outline-ring ${selected ? 'ring-2 ring-offset-1 ring-primary' : ''} ${isMoving ? 'opacity-90 shadow-md z-10 cursor-grabbing' : ''}`}
                 style={{
-                  top: start * ROW + 1,
-                  height: (end - start) * ROW - 2,
+                  ...boxStyle([start, end]),
                   backgroundColor: block.color,
                   color: readableTextOn(block.color),
                 }}

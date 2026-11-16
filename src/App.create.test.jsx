@@ -255,6 +255,14 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(timeCard('09:00')).toHaveAttribute('aria-pressed', 'true');
     });
 
+    it('카드는 시작 시각 줄 바로 아래에서 끝 시각 줄 바로 위까지 채운다 (위·아래 모두 줄에 딱 붙음)', async () => {
+      seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
+      const user = setup();
+      await openPanel(user, '2026-01-05');
+      // 한 칸 24px, 줄 1px: 09:00 줄은 432~433px, 10:00 줄은 480px부터 → 카드는 433px부터 47px(= 480 − 433)
+      expect(timeCard('09:00')).toHaveStyle({ top: '433px', height: '47px' });
+    });
+
     it('위로 끌어도 되고, 누르기만 하면 30분 카드가 생긴다', async () => {
       const user = setup();
       await openPanel(user, '2026-01-05');
