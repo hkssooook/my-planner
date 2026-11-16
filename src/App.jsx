@@ -113,8 +113,8 @@ export default function App() {
   return (
     // 왼쪽은 달력, 오른쪽은 (열려 있으면) 일정 패널. 달력은 패널이 열려도 계속 보인다.
     <div className="flex bg-background min-h-screen">
-      {/* 화면 바깥 여백은 머리말 안쪽 여백과 같은 24px(p-6)로 맞춘다 */}
-      <main className="flex-1 min-w-0 p-6">
+      {/* 화면 바깥 여백: 위·아래는 머리말 안쪽 여백과 같은 24px(py-6), 좌우는 달력과 패널을 넓게 쓰도록 12px(px-3) */}
+      <main className="flex-1 min-w-0 px-3 py-6">
         <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} />
 
         {/* 보기 방식 버튼은 달력의 설정이라 달력 상자 바로 위 오른쪽에, 달력과 한 묶음으로 보이게 좁은 간격(12px)으로 둔다 */}

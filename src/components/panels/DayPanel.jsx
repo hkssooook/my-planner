@@ -74,9 +74,9 @@ export default function DayPanel({
   return (
     <aside
       aria-label="상세 일정 관리"
-      // 위쪽과 오른쪽은 왼쪽 연도 카드처럼 화면 가장자리에서 24px, 아래쪽은 12px 떨어진다 (아래를 24px 띄우면 패널이 짧아 보여서 절반으로).
+      // 너비 460px. 위쪽은 왼쪽 연도 카드처럼 화면 가장자리에서 24px, 오른쪽은 왼쪽 여백과 같은 12px, 아래쪽은 12px 떨어진다 (아래를 24px 띄우면 패널이 짧아 보여서 절반으로).
       // 네 모서리 모두 둥글다(15px). 스크롤해도 그 자리에 머물고(sticky top-6), 높이는 화면 높이에서 위 24px + 아래 12px을 뺀 만큼이다.
-      className="w-[380px] shrink-0 self-start sticky top-6 mt-6 mb-3 mr-6 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
+      className="w-[460px] shrink-0 self-start sticky top-6 mt-6 mb-3 mr-3 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
     >
       {/* 머리말과 "이 날의 일정"은 패널을 스크롤해도 위에 붙어 있다 (그날 무슨 일이 있는지 늘 보이게).
           목록이 길어지면 고정 영역이 화면을 다 덮지 않도록 목록 높이를 200px(일정 5개 반쯤)로 제한하고 그 안에서만 스크롤한다. */}
