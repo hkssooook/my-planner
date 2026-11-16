@@ -28,7 +28,7 @@ function loadSavedTimeBlocks() {
 // 일정 데이터(기간·종일 일정 목록, 날짜별 시간 일정 카드)를 들고 있고 추가·수정·삭제·저장을 맡는 훅.
 // 화면(팝업 열고 닫기, 입력창 등)은 알지 못한다. 저장 방식이 바뀌면 이 파일만 고치면 된다.
 //
-//   events:     [{ id, title, start_date, end_date, color }]
+//   events:     [{ id, title, start_date, end_date, color, todos? }]  (todos는 할 일 목록, 예전 일정에는 없다)
 //   timeBlocks: { '2026-01-05': [{ id, start: '09:00', end: '10:00', content, color, is_important, todos? }] } (날짜마다 시작 시각 순서)
 //               todos는 할 일 목록 [{ id, text, done }]. 예전에 만든 카드에는 없다. (utils/todos.js 참고)
 //               (카드 모양은 utils/timeBlocks.js 설명 참고)
@@ -38,24 +38,39 @@ export default function usePlannerData() {
   const [events, setEvents] = useState(loadSavedEvents);
   const [timeBlocks, setTimeBlocks] = useState(loadSavedTimeBlocks);
 
-  // 목록을 바꾸고 저장하는 일을 한 곳에서 처리한다.
-  const commitEvents = (updatedEvents) => {
-    setEvents(updatedEvents);
-    saveJSON(STORAGE_KEYS.events, updatedEvents);
+  // 기간·종일 일정 목록을 고치고 저장하는 일을 한 곳에서 처리한다. change는 "지금 목록 → 새 목록" 함수다.
+  // 화면이 들고 있던 옛 목록이 아니라 늘 가장 최신 목록(prev)을 받아서 고치므로, 연달아 고쳐도 앞의 변경이 사라지지 않는다.
+  const updateEvents = (change) => {
+    setEvents((prev) => {
+      const updated = change(prev);
+      saveJSON(STORAGE_KEYS.events, updated);
+      return updated;
+    });
   };
 
   // 새 일정을 추가한다. id는 여기서 만든다. 예: addEvent({ title, start_date, end_date, color })
   const addEvent = (eventData) => {
-    commitEvents([...events, { ...eventData, id: Date.now() }]);
+    const id = Date.now();
+    updateEvents((list) => [...list, { ...eventData, id }]);
   };
 
   // id가 같은 일정을 통째로 교체한다.
   const changeEvent = (updatedEvent) => {
-    commitEvents(events.map(evt => evt.id === updatedEvent.id ? updatedEvent : evt));
+    updateEvents((list) => list.map((evt) => (evt.id === updatedEvent.id ? updatedEvent : evt)));
+  };
+
+  // id가 같은 일정에 바뀐 값(changes)만 덮어쓴다. 예: patchEvent(id, { title: '워크숍' }) — 패널에서 입력하는 즉시 저장할 때
+  const patchEvent = (id, changes) => {
+    updateEvents((list) => list.map((evt) => (evt.id === id ? { ...evt, ...changes } : evt)));
+  };
+
+  // 일정의 할 일 목록을 고친다. change는 "지금 할 일 목록 → 새 목록" 함수다. (utils/todos.js의 도구를 넘긴다)
+  const changeEventTodos = (id, change) => {
+    updateEvents((list) => list.map((evt) => (evt.id === id ? { ...evt, todos: change(todosOf(evt)) } : evt)));
   };
 
   const removeEvent = (id) => {
-    commitEvents(events.filter(evt => evt.id !== id));
+    updateEvents((list) => list.filter((evt) => evt.id !== id));
   };
 
   // 한 날짜의 카드 목록을 고친다. change는 "지금 목록 → 새 목록" 함수다.
@@ -95,7 +110,7 @@ export default function usePlannerData() {
     updateDayBlocks(date, (list) => list.filter((block) => block.id !== id || !isEmptyBlock(block)));
 
   return {
-    events, timeBlocks, addEvent, changeEvent, removeEvent,
+    events, timeBlocks, addEvent, changeEvent, patchEvent, changeEventTodos, removeEvent,
     saveDayBlocks, addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
   };
 }

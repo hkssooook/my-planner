@@ -230,6 +230,43 @@ describe('removeEvent (일정 삭제)', () => {
   });
 });
 
+describe('patchEvent · changeEventTodos (기간 일정 일부 고치기·할 일)', () => {
+  it('patchEvent: 바꾼 값만 덮어쓰고 나머지(기간·색 등)는 그대로 둔다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addEvent(eventData('워크숍')));
+    const { id } = result.current.events[0];
+    act(() => result.current.patchEvent(id, { title: '여름 워크숍' }));
+    expect(result.current.events[0]).toEqual({ ...eventData('여름 워크숍'), id });
+    expect(saved('planner_events')[0].title).toBe('여름 워크숍');
+  });
+
+  it('changeEventTodos: 할 일이 없던(예전) 일정에도 더하고, 연달아 고쳐도 앞의 변경이 남는다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addEvent(eventData('워크숍')));
+    const { id } = result.current.events[0];
+    act(() => {
+      result.current.changeEventTodos(id, (todos) => addTodo(todos, '장소 예약'));
+      result.current.changeEventTodos(id, (todos) => addTodo(todos, '자료 준비'));
+      result.current.changeEventTodos(id, (todos) => setTodoDone(todos, todos[0].id, true));
+      result.current.patchEvent(id, { color: '#FDCA59' });
+    });
+    expect(result.current.events[0].todos.map((t) => [t.text, t.done])).toEqual([['장소 예약', true], ['자료 준비', false]]);
+    expect(result.current.events[0].color).toBe('#FDCA59');
+    expect(saved('planner_events')[0].todos).toHaveLength(2);
+  });
+
+  it('다른 일정은 건드리지 않는다', () => {
+    const one = { ...eventData('하나'), id: 1 };
+    const two = { ...eventData('둘'), id: 2, todos: [{ id: 'x', text: '그대로', done: false }] };
+    localStorage.setItem('planner_events', JSON.stringify([one, two]));
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.changeEventTodos(1, (todos) => addTodo(todos, '새 할 일')));
+    act(() => result.current.patchEvent(1, { title: '하나 (고침)' }));
+    expect(result.current.events[0]).toEqual({ ...one, title: '하나 (고침)', todos: [expect.objectContaining({ text: '새 할 일' })] });
+    expect(result.current.events[1]).toEqual(two);
+  });
+});
+
 describe('옛 형식의 id (소수)로 저장된 일정', () => {
   // 예전에는 종일 일정의 id를 Date.now() + Math.random()으로 만들어서 소수였다. 이미 저장된 데이터도 계속 다룰 수 있어야 한다.
   const OLD_ID = 1794558320889.4521;
