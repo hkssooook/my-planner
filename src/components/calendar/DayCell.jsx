@@ -65,6 +65,7 @@ export default function DayCell({
       // 칸 아무 곳이나 누르면 오른쪽에 그날 일정 패널이 열린다. (두 칸 이상 끌면 드래그라서 여기까지 오지 않는다)
       onClick={(e) => onOpenDay(e, dateString)}
       aria-current={dateString === panelDate ? 'date' : undefined}
+      data-date={dateString} // 상단 바 "오늘"이 이 칸을 찾아 스크롤할 때 쓴다
       // 칸마다 자기 테두리와 9px 모서리(rounded-sm)를 갖는다. 칸 사이 4px 틈은 MonthRow가 둔다.
       // 테두리 색은 위의 cellLook이 정한다. (두께 1px은 늘 그대로라 칸 크기는 같다)
       // 너비: 가로 스크롤은 120px 고정, 화면 맞춤은 MonthRow의 격자가 정한다(최소 120px, 남는 폭을 나눠 가짐).

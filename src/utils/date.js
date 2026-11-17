@@ -5,6 +5,12 @@ export const getDayOfWeek = (year, month, day) => new Date(year, month - 1, day)
 // 올해(연도 숫자)를 알려 준다. 예: 2026
 export const getCurrentYear = () => new Date().getFullYear();
 
+// 오늘 날짜를 'YYYY-MM-DD' 글자로 알려 준다 (내 컴퓨터 시각 기준). 예: '2026-06-15'
+export const getTodayString = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
 // 기준 연도 앞뒤로 연도 목록을 만든다. 예: getYearOptions(2026, { before: 1, after: 3 }) → [2025, 2026, 2027, 2028, 2029]
 export const getYearOptions = (baseYear, { before, after }) =>
   Array.from({ length: before + after + 1 }, (_, i) => baseYear - before + i);

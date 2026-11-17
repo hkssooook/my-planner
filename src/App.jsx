@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { COLOR_PALETTE } from './constants/colors';
 import { YEAR_RANGE } from './constants/calendar';
-import { addDays, getCurrentYear, getYearOptions } from './utils/date';
+import { addDays, getCurrentYear, getTodayString, getYearOptions } from './utils/date';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
@@ -25,6 +25,16 @@ export default function App() {
   const [currentYear, setCurrentYear] = useState(thisYear);
   const yearOptions = getYearOptions(thisYear, YEAR_RANGE);
   const [isWrapMode, setIsWrapMode] = useState(false);
+
+  // 상단 바의 "오늘": 올해로 돌아가고, 달력 상자를 오늘 날짜 칸이 가운데 오도록 스크롤한다.
+  // 연도가 바뀌면 달력이 새로 그려진 뒤에 칸을 찾아야 하므로, 다음 화면 그리기 때(requestAnimationFrame) 스크롤한다.
+  const goToToday = () => {
+    setCurrentYear(thisYear);
+    requestAnimationFrame(() => {
+      const cell = document.querySelector(`[data-date="${getTodayString()}"]`);
+      cell?.scrollIntoView?.({ block: 'center', inline: 'center', behavior: 'smooth' });
+    });
+  };
 
   const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
@@ -148,10 +158,10 @@ export default function App() {
       {/* 화면 바깥 여백: 위는 머리말 안쪽 여백과 같은 24px(pt-6), 좌우와 아래는 일정 패널과 같은 12px(px-3 pb-3).
           세로로 머리말 → 보기 방식 버튼 → 달력 상자를 쌓고, 달력 상자가 남은 높이를 모두 채운다 */}
       <main className="flex-1 min-w-0 px-3 pt-6 pb-3 flex flex-col">
-        <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} />
-
-        {/* 보기 방식 버튼은 달력의 설정이라 달력 상자 바로 위 오른쪽에, 달력과 한 묶음으로 보이게 좁은 간격(12px)으로 둔다 */}
-        <div className="flex justify-end mb-3 shrink-0">
+        {/* 상단 바 한 줄: 왼쪽은 기간(연도) 캡슐, 오른쪽 끝은 달력 보기 방식 탭. 달력 상자와는 12px 띄운다.
+            (나중에 연·월·주 탭과 "새 일정" 버튼도 이 줄 오른쪽에 들어온다) */}
+        <div className="flex items-center justify-between gap-3 mb-3 shrink-0">
+          <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} onToday={goToToday} />
           <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
         </div>
 

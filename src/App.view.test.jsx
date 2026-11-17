@@ -222,24 +222,62 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(screen.getByText('2026')).toBeInTheDocument();
   });
 
-  it('연도 버튼은 입력칸 상자가 아니라 제목처럼 보이고(24px 반굵게) 좌우 여백이 같다(12px), 앱 이름은 그 밑의 작은 부제목이다', () => {
+  it('연도 버튼은 입력칸 상자가 아니라 제목처럼 보이고(24px 반굵게, 파랑 글자) 좌우 여백이 같다(12px), 앱 이름은 그 밑의 작은 부제목이다', () => {
     render(<App />);
-    expect(yearSelect()).toHaveClass('text-2xl', 'font-semibold', 'px-3');
+    expect(yearSelect()).toHaveClass('text-2xl', 'font-semibold', 'px-3', 'text-primary');
     expect(yearSelect()).not.toHaveClass('border', 'pl-[34px]');
     expect(yearSelect()).toHaveAccessibleName('연도 선택 (지금 2026년)');
     // 부제목은 연도 버튼과 같은 너비의 묶음 안에 있고, ⌄ 자리만큼 오른쪽 여백을 더 둬서 글자 가운데가 "2026년" 글자 가운데와 맞는다
-    const subtitleBox = screen.getByText('연간 플래너');
-    expect(subtitleBox.parentElement).toBe(yearSelect().parentElement);
-    expect(subtitleBox.parentElement).toHaveClass('inline-flex', 'flex-col');
-    expect(subtitleBox).toHaveClass('pl-3', 'pr-[34px]', 'text-center');
     const subtitle = screen.getByText('연간 플래너');
-    expect(subtitle).toHaveClass('text-sm', 'text-muted-foreground'); // 헤더 카드(파랑 2단계) 위에서 흐린 글자는 대비 4.61로 읽힌다
+    expect(subtitle.parentElement).toBe(yearSelect().parentElement);
+    expect(subtitle.parentElement).toHaveClass('inline-flex', 'flex-col');
+    expect(subtitle).toHaveClass('pl-3', 'pr-[34px]', 'text-center', 'text-xs', 'text-muted-foreground'); // 흰 캡슐 위에서 흐린 글자는 대비 6.17
     expect(yearSelect().compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // 연도가 먼저, 부제목이 뒤
   });
 
-  it('색 단계: 헤더 카드 2단계, 캘린더 섹션·연도 구분선 2단계, 월 이름 칸·날짜 칸 흰색', () => {
+  it('상단 바: ‹ 연도 › 오늘 이 흰 캡슐 하나에 있고, 보기 방식 탭은 같은 줄 오른쪽 끝에 있다', () => {
     render(<App />);
-    expect(yearSelect().closest('.rounded-lg.p-6')).toHaveClass('bg-surface-blue-2');
+    const capsule = screen.getByTestId('period-capsule');
+    expect(capsule).toHaveClass('bg-card', 'rounded-full');
+    for (const name of ['지난해', '다음 해', '오늘']) expect(within(capsule).getByRole('button', { name })).toBeInTheDocument();
+    expect(within(capsule).getByRole('button', { name: /^연도 선택/ })).toBeInTheDocument();
+    const row = capsule.closest('header').parentElement;
+    expect(row).toHaveClass('flex', 'justify-between');
+    expect(within(row).getByRole('tablist', { name: '보기 방식' })).toBeInTheDocument();
+  });
+
+  it('‹ ›로 한 해씩 넘기고, 고를 수 있는 연도(올해 −1 ~ +3년)의 끝에서는 눌리지 않는다', async () => {
+    const user = setup();
+    await user.click(screen.getByRole('button', { name: '다음 해' }));
+    expect(yearSelect()).toHaveTextContent('2027년');
+    expect(screen.getByText('2028')).toBeInTheDocument(); // 그 해와 다음 해의 달력
+    await user.click(screen.getByRole('button', { name: '지난해' }));
+    await user.click(screen.getByRole('button', { name: '지난해' }));
+    expect(yearSelect()).toHaveTextContent('2025년');
+    expect(screen.getByRole('button', { name: '지난해' })).toBeDisabled(); // 목록의 첫 해
+    await pickYear(user, '2029년');
+    expect(screen.getByRole('button', { name: '다음 해' })).toBeDisabled(); // 목록의 마지막 해
+    expect(screen.getByRole('button', { name: '지난해' })).toBeEnabled();
+  });
+
+  it('"오늘"을 누르면 올해로 돌아가고 오늘 날짜 칸이 보이게 스크롤한다', async () => {
+    const scrolled = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function () { scrolled.push(this.dataset.date); };
+    try {
+      const user = setup();
+      await pickYear(user, '2028년');
+      await user.click(screen.getByRole('button', { name: '오늘' }));
+      expect(yearSelect()).toHaveTextContent('2026년');
+      await waitFor(() => expect(scrolled).toEqual(['2026-06-15'])); // 시험 속 오늘
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it('색 단계: 상단 바 캡슐 흰색, 캘린더 섹션·연도 구분선 2단계, 월 이름 칸·날짜 칸 흰색', () => {
+    render(<App />);
+    expect(screen.getByTestId('period-capsule')).toHaveClass('bg-card');
     const cell = cellOf('2026-01-05');
     expect(cell).toHaveClass('bg-card');
     const monthLabel = cell.parentElement.firstElementChild.firstElementChild;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getDaysInMonth, getDayOfWeek, getCurrentYear, getYearOptions, addDays, daysBetween, formatLongDate, formatShortDate } from './date';
+import { getDaysInMonth, getDayOfWeek, getCurrentYear, getTodayString, getYearOptions, addDays, daysBetween, formatLongDate, formatShortDate } from './date';
 
 describe('getDaysInMonth (한 달의 일수)', () => {
   it('31일인 달과 30일인 달을 구분한다', () => {
@@ -30,6 +30,24 @@ describe('getDayOfWeek (요일, 일요일=0 ~ 토요일=6)', () => {
 
   it('윤일(2월 29일)도 계산한다', () => {
     expect(getDayOfWeek(2028, 2, 29)).toBe(2); // 2028-02-29 화요일
+  });
+});
+
+describe('getTodayString (오늘 날짜 글자)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('달·일이 한 자리여도 앞에 0을 붙여 YYYY-MM-DD로 돌려준다', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 5, 9, 0, 0));
+    expect(getTodayString()).toBe('2026-06-05');
+  });
+
+  it('내 컴퓨터 시각 기준이라 밤 11시 59분까지는 그날이다', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 11, 31, 23, 59, 59));
+    expect(getTodayString()).toBe('2026-12-31');
   });
 });
 
