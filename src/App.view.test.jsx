@@ -263,7 +263,7 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(screen.getByRole('button', { name: '지난해' })).toBeEnabled();
   });
 
-  it('"오늘"을 누르면 올해로 돌아가고 오늘 날짜 칸이 보이게 스크롤한다', async () => {
+  it('"오늘"을 누르면 올해로 돌아가 오늘 칸을 누른 것처럼 오늘의 일정 패널이 열리고(칸에 테두리), 그 칸이 보이게 스크롤한다', async () => {
     const scrolled = [];
     const original = Element.prototype.scrollIntoView;
     Element.prototype.scrollIntoView = function () { scrolled.push(this.dataset.date); };
@@ -272,7 +272,10 @@ describe('머리말: 연도와 보기 방식', () => {
       await pickYear(user, '2028년');
       await user.click(screen.getByRole('button', { name: '오늘' }));
       expect(yearSelect()).toHaveTextContent('2026년');
-      await waitFor(() => expect(scrolled).toEqual(['2026-06-15'])); // 시험 속 오늘
+      expect(within(dayPanel()).getByRole('heading', { name: '2026년 6월 15일 (월)' })).toBeInTheDocument(); // 시험 속 오늘
+      expect(cellOf('2026-06-15')).toHaveAttribute('aria-current', 'date');
+      expect(cellOf('2026-06-15')).toHaveClass('ring-2', 'ring-primary');
+      await waitFor(() => expect(scrolled).toEqual(['2026-06-15']));
     } finally {
       Element.prototype.scrollIntoView = original;
     }

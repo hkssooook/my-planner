@@ -42,12 +42,15 @@ export default function App() {
   // 일정 패널의 보기 방식: 'list'(목록) | 'timetable'(시간표). 날짜를 넘기거나 패널을 다시 열어도 고른 값을 유지한다
   const [panelView, setPanelView] = useState('list');
 
-  // 상단 바의 "오늘": 올해로 돌아가고, 달력 상자를 오늘 날짜 칸이 가운데 오도록 스크롤한다.
-  // 연도가 바뀌면 달력이 새로 그려진 뒤에 칸을 찾아야 하므로, 다음 화면 그리기 때(requestAnimationFrame) 스크롤한다.
+  // 상단 바의 "오늘": 올해로 돌아가 오늘 날짜 칸을 누른 것처럼 오늘의 일정 패널을 열고(칸에 테두리),
+  // 달력 상자를 오늘 칸이 가운데 오도록 스크롤한다.
+  // 연도가 바뀌거나 패널이 열리면 달력이 다시 그려진 뒤에 칸을 찾아야 하므로, 다음 화면 그리기 때(requestAnimationFrame) 스크롤한다.
   const goToToday = () => {
+    const today = getTodayString();
     setCurrentYear(thisYear);
+    openDayPanel(null, today);
     requestAnimationFrame(() => {
-      const cell = document.querySelector(`[data-date="${getTodayString()}"]`);
+      const cell = document.querySelector(`[data-date="${today}"]`);
       cell?.scrollIntoView?.({ block: 'center', inline: 'center', behavior: 'smooth' });
     });
   };
