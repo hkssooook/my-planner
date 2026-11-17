@@ -30,4 +30,8 @@ export function makeBackgroundScale(from, to, steps = 5) {
 export const BACKGROUND_SCALES = {
   // 파랑: 1단계 #FFFFFF(날짜 칸·카드) → 5단계 #9295FE(화면 기본 바탕). 2026-11-16에 #6D72FD에서 한 단계 밝게 바꿈
   blue: makeBackgroundScale('#FFFFFF', '#9295FE'),
+  // 앰버: 월 보기의 바탕 색 (2026-11-17 리디자인 기획서 "보기별 색"). 아직 화면에서 쓰지 않는다
+  amber: makeBackgroundScale('#FFFFFF', '#FFB54C'),
+  // 민트: 주 보기의 바탕 색. 아직 화면에서 쓰지 않는다
+  mint: makeBackgroundScale('#FFFFFF', '#5EC49B'),
 };

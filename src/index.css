@@ -79,6 +79,16 @@
   --color-surface-blue-3: var(--surface-blue-3);
   --color-surface-blue-4: var(--surface-blue-4);
   --color-surface-blue-5: var(--surface-blue-5);
+  --color-surface-amber-1: var(--surface-amber-1);
+  --color-surface-amber-2: var(--surface-amber-2);
+  --color-surface-amber-3: var(--surface-amber-3);
+  --color-surface-amber-4: var(--surface-amber-4);
+  --color-surface-amber-5: var(--surface-amber-5);
+  --color-surface-mint-1: var(--surface-mint-1);
+  --color-surface-mint-2: var(--surface-mint-2);
+  --color-surface-mint-3: var(--surface-mint-3);
+  --color-surface-mint-4: var(--surface-mint-4);
+  --color-surface-mint-5: var(--surface-mint-5);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -156,6 +166,18 @@
   --surface-blue-3: #c9caff;
   --surface-blue-4: #adb0fe;
   --surface-blue-5: #9295fe;
+  /* 앰버 1~5단계 (#FFFFFF → #FFB54C): 월 보기 바탕. BACKGROUND_SCALES.amber와 같다 */
+  --surface-amber-1: #ffffff;
+  --surface-amber-2: #ffedd2;
+  --surface-amber-3: #ffdaa6;
+  --surface-amber-4: #ffc879;
+  --surface-amber-5: #ffb54c;
+  /* 민트 1~5단계 (#FFFFFF → #5EC49B): 주 보기 바탕. BACKGROUND_SCALES.mint와 같다 */
+  --surface-mint-1: #ffffff;
+  --surface-mint-2: #d7f0e6;
+  --surface-mint-3: #afe2cd;
+  --surface-mint-4: #86d3b4;
+  --surface-mint-5: #5ec49b;
   --sidebar: #ffffff;
   --sidebar-foreground: #2f3137;
   --sidebar-primary: #5a68ec;

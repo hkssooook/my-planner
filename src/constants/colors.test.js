@@ -85,3 +85,40 @@ describe('BACKGROUND_SCALES (바탕 단계 색)', () => {
     }
   });
 });
+
+// 보기별 색: 월 보기 = 앰버, 주 보기 = 민트. 파랑과 같은 방식으로 문서·CSS·코드가 같은지 본다.
+describe.each([
+  ['amber', '앰버', '#FFB54C', ['#FFFFFF', '#FFEDD2', '#FFDAA6', '#FFC879', '#FFB54C']],
+  ['mint', '민트', '#5EC49B', ['#FFFFFF', '#D7F0E6', '#AFE2CD', '#86D3B4', '#5EC49B']],
+])('BACKGROUND_SCALES.%s (보기별 바탕 단계 색)', (key, docName, end, expected) => {
+  const css = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../index.css'), 'utf-8');
+  const root = css.match(/:root\s*\{([^}]*)\}/)?.[1] ?? '';
+  const scale = BACKGROUND_SCALES[key];
+
+  it(`흰색에서 ${end}까지 5단계다`, () => {
+    expect(scale).toEqual(expected);
+    expect(scale).toEqual(makeBackgroundScale('#FFFFFF', end));
+  });
+
+  it('값이 문서의 표와 같다', () => {
+    const sec = docs.split('## 6. 바탕 단계 색')[1].split('\n## ')[0].split(`### ${docName}`)[1].split('\n### ')[0];
+    const steps = [...sec.matchAll(/^\|\s*(\d)\s*\|\s*`(#[0-9A-Fa-f]{6})`\s*\|/gm)].map(([, , hex]) => hex.toUpperCase());
+    expect(steps).toHaveLength(5);
+    expect(scale).toEqual(steps);
+  });
+
+  it(`값이 src/index.css의 --surface-${key}-1~5와 같고, Tailwind 색 이름으로도 연결되어 있다`, () => {
+    scale.forEach((hex, i) => {
+      expect(root.match(new RegExp(`--surface-${key}-${i + 1}:\\s*([^;]+);`))?.[1].trim()).toBe(hex.toLowerCase());
+      expect(css).toContain(`--color-surface-${key}-${i + 1}: var(--surface-${key}-${i + 1});`);
+    });
+  });
+
+  it('기본 글자는 모든 단계 위에서 대비 4.5:1 이상이다', () => {
+    for (const bg of scale) expect(contrastRatio('#2F3137', bg), bg).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('2단계(달력 영역) 위의 흐린 글자·휴일 글자도 대비 4.5:1 이상이다', () => {
+    for (const fg of ['#5C6171', '#A64031']) expect(contrastRatio(fg, scale[1]), fg).toBeGreaterThanOrEqual(4.5);
+  });
+});
