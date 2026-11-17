@@ -16,6 +16,9 @@ const tint = (name) => {
   const { background, text } = eventColors(COLOR_PALETTE.find((c) => c.name === name).value);
   return { backgroundColor: background, borderColor: background, color: text };
 };
+// 칸 테두리: 달력 영역(보기 색 2단계)과 같은 색이라 보이지 않는다. 연 보기 파랑, 월 보기 앰버
+const CELL_BORDER = { blue: 'border-surface-blue-2', amber: 'border-surface-amber-2' };
+
 const PILL = {
   today: { className: 'bg-primary text-primary-foreground border-primary' },
   future: { className: 'bg-card text-primary border-surface-blue-3' },
@@ -32,6 +35,7 @@ export default function DayCell({
   selectionStart, selectionEnd,
   panelDate,
   today,
+  theme = 'blue',
   onMouseDown, onMouseEnter,
   onOpenDay, onShowMore,
 }) {
@@ -88,7 +92,7 @@ export default function DayCell({
   // (3·4단계 바탕은 흐린 글자·휴일 글자가 잘 안 읽혀서 칸 바탕으로 쓰지 않는다)
   const cellLook = isSelected
     ? 'bg-selection border-primary'
-    : `${isHoliday ? 'bg-holiday-surface' : 'bg-card'} border-surface-blue-2 hover:bg-selection hover:border-primary`;
+    : `${isHoliday ? 'bg-holiday-surface' : 'bg-card'} ${CELL_BORDER[theme]} hover:bg-selection hover:border-primary`;
 
   return (
     <div 

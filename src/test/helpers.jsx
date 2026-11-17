@@ -23,17 +23,10 @@ export const setupTestEnvironment = () => {
 };
 
 // --- 시험 도우미 -----------------------------------------------------------------------------
-// 날짜마다 "상세 일정 관리" 날짜 버튼이 정확히 하나씩 있고 날짜 순서대로 놓여 있으므로,
-// "시작 연도 1월 1일로부터 며칠째인가"로 몇 번째 날짜 버튼인지 계산해서 칸을 찾는다. (아래 '시험 도우미 점검'에서 확인)
-// (730개 중에서 이름으로 찾는 것보다 title로 모아 순서로 고르는 쪽이 훨씬 빠르다)
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export const dayButtonOf = (date, startYear = 2026) => {
-  const [y, m, d] = date.split('-').map(Number);
-  const index = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(startYear, 0, 1)) / DAY_MS);
-  return screen.getAllByTitle('상세 일정 관리')[index];
-};
-export const cellOf = (date, startYear) => dayButtonOf(date, startYear).closest('[class~="group/cell"]');
+// 날짜 칸은 칸에 붙은 날짜 표시(data-date)로 찾는다. 연 보기·월 보기 어디서나 같다.
+export const cellOf = (date) => document.querySelector(`[data-date="${date}"]`);
+// 그 칸의 날짜 버튼 (키보드·화면 낭독기용 입구)
+export const dayButtonOf = (date) => cellOf(date)?.querySelector('[title="상세 일정 관리"]');
 
 // 팝업(role="dialog")은 제목 글자로 찾는다. 다른 팝업이 위에 겹쳐 있으면 아래 팝업은 접근성 트리에서 가려지므로 hidden: true로 찾는다.
 export const popup = (title) => screen.getByRole('dialog', { name: title, hidden: true });

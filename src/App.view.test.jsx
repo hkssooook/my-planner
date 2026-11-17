@@ -30,7 +30,7 @@ const pickYear = async (user, label) => {
 };
 
 describe('시험 도우미 점검 (이게 틀리면 아래 시험 전체를 믿을 수 없다)', () => {
-  it('날짜 버튼 순서로 계산한 칸이 실제 날짜와 요일에 맞다', () => {
+  it('날짜 표시(data-date)로 찾은 칸이 실제 날짜와 요일에 맞다', () => {
     render(<App />);
     expect(cellOf('2026-01-01')).toHaveTextContent(/^1 \(목\)/);
     expect(cellOf('2026-01-05')).toHaveTextContent(/^5 \(월\)/);
@@ -451,15 +451,15 @@ describe('날짜 칸의 할 일 알약 (시험 속 오늘은 2026-06-15)', () =>
 });
 
 describe('상단 바의 연·월·주 탭과 요약 줄 (시험 속 오늘은 2026-06-15)', () => {
-  it('[연 | 월 | 주] 탭이 있고 연이 골라져 있다. 월·주는 아직 준비 중이라 눌러도 바뀌지 않는다. 점 색은 보기 색이다', async () => {
+  it('[연 | 월 | 주] 탭이 있고 연이 골라져 있다. 주는 아직 준비 중이라 눌러도 바뀌지 않는다. 점 색은 보기 색이다', async () => {
     const user = setup();
     const tabs = screen.getByRole('tablist', { name: '보기' });
     expect(within(tabs).getByRole('tab', { name: '연' })).toHaveAttribute('aria-selected', 'true');
-    expect(within(tabs).getByRole('tab', { name: /월/ })).toHaveAttribute('aria-disabled', 'true'); // 화면 낭독기에 "사용 불가"로 읽힌다
-    expect(within(tabs).getByRole('tab', { name: /주/ })).toHaveAttribute('aria-disabled', 'true');
-    await user.click(within(tabs).getByRole('tab', { name: /월/ }));
+    expect(within(tabs).getByRole('tab', { name: '월' })).not.toHaveAttribute('aria-disabled', 'true');
+    expect(within(tabs).getByRole('tab', { name: /주/ })).toHaveAttribute('aria-disabled', 'true'); // 화면 낭독기에 "사용 불가"로 읽힌다
+    expect(within(tabs).getByRole('tab', { name: /주/ })).toHaveAccessibleName(/주\s*\(준비 중\)/);
+    await user.click(within(tabs).getByRole('tab', { name: /주/ }));
     expect(within(tabs).getByRole('tab', { name: '연' })).toHaveAttribute('aria-selected', 'true');
-    expect(within(tabs).getByRole('tab', { name: /월/ })).toHaveAccessibleName(/월\s*\(준비 중\)/);
     const dots = within(tabs).getAllByRole('tab').map((tab) => tab.querySelector('[aria-hidden="true"]').className);
     expect(dots[0]).toContain('bg-surface-blue-5');
     expect(dots[1]).toContain('bg-surface-amber-5');
@@ -484,5 +484,67 @@ describe('상단 바의 연·월·주 탭과 요약 줄 (시험 속 오늘은 20
     const user = setup();
     await user.click(screen.getByRole('button', { name: '다음 해' }));
     expect(within(screen.getByRole('region', { name: '요약' })).getByText('2027년 할 일')).toBeInTheDocument();
+  });
+});
+
+describe('월 보기 (앰버, 시험 속 오늘은 2026-06-15)', () => {
+  const openMonth = async () => {
+    const user = setup();
+    await user.click(screen.getByRole('tab', { name: '월' }));
+    return user;
+  };
+  const grid = () => screen.getByTestId('month-grid');
+
+  it('[월]을 누르면 이번 달(2026년 6월)이 일요일부터 7칸으로 보이고, 앞뒤 빈칸은 점선이다', async () => {
+    await openMonth();
+    expect(screen.getByRole('button', { name: /^연도 선택/ })).toHaveTextContent('2026년 6월');
+    // 2026-06-01은 월요일 → 앞 빈칸 1개, 30일 → 1 + 30 = 31 → 5주(35칸) → 뒤 빈칸 4개
+    expect(within(grid()).getAllByTitle('상세 일정 관리')).toHaveLength(30);
+    expect(within(grid()).getAllByTestId('month-blank')).toHaveLength(5);
+    expect(within(grid()).getAllByTestId('month-blank')[0]).toHaveClass('border-dashed', 'border-surface-amber-3');
+    expect(grid().children[1]).toHaveAttribute('data-date', '2026-06-01'); // 둘째 칸(월요일)이 1일
+    expect(screen.queryByRole('tablist', { name: '보기 방식' })).toBeNull(); // 가로 스크롤/화면 맞춤은 연 보기에만
+  });
+
+  it('보기 색이 앰버다: 화면 바탕 5단계, 달력 영역 2단계, ‹ ›·오늘 버튼 2단계, 칸 테두리 2단계', async () => {
+    await openMonth();
+    expect(screen.getByTestId('calendar-scroll')).toHaveClass('bg-surface-amber-2');
+    expect(screen.getByTestId('calendar-scroll').closest('.h-screen')).toHaveClass('bg-surface-amber-5');
+    expect(screen.getByRole('button', { name: '지난달' })).toHaveClass('bg-surface-amber-2');
+    expect(screen.getByRole('button', { name: '오늘' })).toHaveClass('bg-surface-amber-2');
+    expect(cellOf('2026-06-02')).toHaveClass('border-surface-amber-2');
+  });
+
+  it('‹ ›는 한 달씩 넘기고, 해가 바뀌는 곳도 넘어간다. 요약 줄 이름은 "이달" → "7월"', async () => {
+    const user = await openMonth();
+    expect(within(screen.getByRole('region', { name: '요약' })).getByText('이달 할 일')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '다음 달' }));
+    expect(screen.getByRole('button', { name: /^연도 선택/ })).toHaveTextContent('2026년 7월');
+    expect(within(screen.getByRole('region', { name: '요약' })).getByText('7월 할 일')).toBeInTheDocument();
+    for (let i = 0; i < 6; i += 1) await user.click(screen.getByRole('button', { name: '다음 달' }));
+    expect(screen.getByRole('button', { name: /^연도 선택/ })).toHaveTextContent('2027년 1월');
+  });
+
+  it('날짜 칸은 연 보기와 같다: 일정 막대가 보이고, 누르면 그날 패널이 열린다', async () => {
+    seedEvents([makeEvent(1, '여름 휴가', '2026-06-10', '2026-06-12', COLOR.mint)]);
+    const user = await openMonth();
+    expect(within(cellOf('2026-06-11')).getByText('여름 휴가')).toBeInTheDocument();
+    await user.click(dayButtonOf('2026-06-11'));
+    expect(within(dayPanel()).getByRole('heading', { name: '2026년 6월 11일 (목)' })).toBeInTheDocument();
+  });
+
+  it('"오늘"을 누르면 다른 달에 있다가도 이번 달로 돌아와 오늘 패널을 연다', async () => {
+    const user = await openMonth();
+    await user.click(screen.getByRole('button', { name: '다음 달' }));
+    await user.click(screen.getByRole('button', { name: '오늘' }));
+    expect(screen.getByRole('button', { name: /^연도 선택/ })).toHaveTextContent('2026년 6월');
+    expect(cellOf('2026-06-15')).toHaveAttribute('aria-current', 'date');
+  });
+
+  it('[연]으로 돌아가면 파랑 연 보기와 보기 방식 탭이 다시 보인다', async () => {
+    const user = await openMonth();
+    await user.click(screen.getByRole('tab', { name: '연' }));
+    expect(screen.getByTestId('calendar-scroll')).toHaveClass('bg-surface-blue-2');
+    expect(screen.getByRole('tablist', { name: '보기 방식' })).toBeInTheDocument();
   });
 });
