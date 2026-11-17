@@ -10,6 +10,7 @@ import { todoProgress, todosOf } from '../../utils/todos';
 import StarIcon from '../icons/StarIcon';
 import TodoCount from '../common/TodoCount';
 import TimeGrid from './TimeGrid';
+import DayTodos from './DayTodos';
 import SelectBox from '../common/SelectBox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -35,6 +36,7 @@ function rangeLabel(evt, date) {
 //   blocks            그날의 시간 일정 카드 목록
 //   selectedBlockId   카드 상세 패널에 열린 카드
 //   view, onViewChange(view)  일정 보기 방식 'list' | 'timetable'
+//   onToggleTodo(kind, sourceId, todoId, done)  할 일 구역에서 체크를 바꿨을 때. kind는 'event'(기간 일정) | 'block'(시간 카드)
 //   onAddBlock(block) 새 카드 저장,  onChangeBlock(id, changes) 카드 시각 등 고치기,  onSelectBlock(id) 카드 고르기(상세 패널 열기)
 export default function DayPanel({
   date, dayEvents, blocks, selectedBlockId = null,
@@ -42,6 +44,7 @@ export default function DayPanel({
   onAddAllDay, selectedEventId = null, onSelectEvent,
   onAddBlock, onChangeBlock, onSelectBlock,
   view = 'list', onViewChange,
+  onToggleTodo,
 }) {
   const [allDayTitle, setAllDayTitle] = useState('');
   const [allDayColor, setAllDayColor] = useState(COLOR_PALETTE[0].value);
@@ -139,6 +142,19 @@ export default function DayPanel({
 
   const isTimetable = view === 'timetable';
 
+  // "할 일" 구역에 모을 할 일: 기간·종일 일정의 것 먼저, 그다음 시간 카드의 것(시작 시각 순서). 일정 안에서는 적은 순서대로.
+  const todoItems = [
+    ...dayEvents.flatMap((evt) => todosOf(evt).map((todo) => ({ key: `event-${evt.id}-${todo.id}`, kind: 'event', sourceId: evt.id, todo, sourceName: evt.title, color: evt.color }))),
+    ...sortBlocks(blocks).flatMap((block) => todosOf(block).map((todo) => ({ key: `block-${block.id}-${todo.id}`, kind: 'block', sourceId: block.id, todo, sourceName: block.content.trim() || '제목 없음', color: block.color }))),
+  ];
+  const todoSection = (
+    <DayTodos
+      items={todoItems}
+      compact={isTimetable}
+      onToggle={(item, done) => onToggleTodo(item.kind, item.sourceId, item.todo.id, done)}
+    />
+  );
+
   return (
     <aside
       aria-label="상세 일정 관리"
@@ -185,6 +201,8 @@ export default function DayPanel({
                 <p className="text-xs text-muted-foreground">이 날의 일정이 없어요.</p>
               )}
             </div>
+
+            {todoSection}
 
             <section aria-labelledby="day-panel-add" className="shrink-0 border-t border-border pt-4">
               <h4 id="day-panel-add" className="text-sm font-semibold text-foreground mb-2">종일 일정 추가</h4>
@@ -249,6 +267,7 @@ export default function DayPanel({
             />
           </div>
         )}
+        {isTimetable && todoSection}
       </section>
     </aside>
   );

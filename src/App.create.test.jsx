@@ -700,3 +700,65 @@ describe('팝업 버튼의 종류(모양): 취소는 secondary(파랑 2단계), 
     expect(localStorage.getItem('planner_events')).toBeNull();
   });
 });
+
+describe('일정 패널의 할 일 구역 (그날의 할 일을 한곳에)', () => {
+  // 기간 일정 하나(할 일 2개, 그중 1개 끝냄)와 시간 카드 하나(할 일 2개)를 넣고 1월 5일 패널을 연다
+  const openWithTodos = async () => {
+    seedEvents([{ ...makeEvent(1, '포트폴리오', '2026-01-04', '2026-01-08', COLOR.pink), todos: [
+      { id: 'e1', text: '표지 다시 그리기', done: true },
+      { id: 'e2', text: '설명 줄이기', done: false },
+    ] }]);
+    localStorage.setItem('planner_time_blocks', JSON.stringify({ '2026-01-05': [
+      { id: 'b1', start: '09:00', end: '10:00', content: '스터디', color: COLOR.blue, is_important: false, todos: [
+        { id: 't1', text: '문제 3번', done: false },
+        { id: 't2', text: '오답 정리', done: false },
+      ] },
+    ] }));
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    return [user, within(dayPanel()).getByRole('region', { name: /^할 일/ })];
+  };
+
+  it('기간 일정과 시간 카드의 할 일이 모이고, 머리 줄 오른쪽에 진행 숫자, 줄마다 일정 이름 꼬리표가 붙는다', async () => {
+    const [, todos] = await openWithTodos();
+    expect(within(todos).getByLabelText('4개 중 1개 완료')).toHaveTextContent('1 / 4');
+    const left = within(todos).getByRole('list', { name: '남은 할 일' });
+    expect(within(left).getAllByRole('checkbox').map((c) => c.closest('label').textContent)).toEqual([
+      '설명 줄이기포트폴리오', '문제 3번스터디', '오답 정리스터디',
+    ]);
+    // 끝낸 일은 눌러야 보인다
+    expect(within(todos).queryByText('표지 다시 그리기')).toBeNull();
+  });
+
+  it('"끝낸 일 n개 보기"를 누르면 끝낸 일이 줄이 그어져 보인다', async () => {
+    const [user, todos] = await openWithTodos();
+    await user.click(within(todos).getByRole('button', { name: /끝낸 일 1개 보기/ }));
+    expect(within(todos).getByText('표지 다시 그리기')).toHaveClass('line-through');
+  });
+
+  it('여기서 체크하면 그 일정(시간 카드·기간 일정)의 할 일로 저장된다', async () => {
+    const [user, todos] = await openWithTodos();
+    await user.click(within(todos).getByRole('checkbox', { name: /문제 3번/ }));
+    expect(stored('planner_time_blocks')['2026-01-05'][0].todos.map((t) => t.done)).toEqual([true, false]);
+    await user.click(within(todos).getByRole('checkbox', { name: /설명 줄이기/ }));
+    expect(stored('planner_events')[0].todos.map((t) => t.done)).toEqual([true, true]);
+    expect(within(todos).getByLabelText('4개 중 3개 완료')).toBeInTheDocument();
+  });
+
+  it('시간표 모드에서는 남은 할 일을 2개만 보이고, 목록 아래 "남은 할 일 n개 더보기"로 펼친다', async () => {
+    const [user] = await openWithTodos();
+    await showTimetable(user);
+    const todos = within(dayPanel()).getByRole('region', { name: /^할 일/ });
+    expect(within(within(todos).getByRole('list', { name: '남은 할 일' })).getAllByRole('checkbox')).toHaveLength(2);
+    await user.click(within(todos).getByRole('button', { name: /남은 할 일 1개 더보기/ }));
+    expect(within(within(todos).getByRole('list', { name: '남은 할 일' })).getAllByRole('checkbox')).toHaveLength(3);
+  });
+
+  it('할 일이 없으면 어디에 적는지 안내한다', async () => {
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    const todos = within(dayPanel()).getByRole('region', { name: /^할 일/ });
+    expect(within(todos).getByText('시간 일정이나 기간 일정에 할 일을 적으면 여기에 모여요.')).toBeInTheDocument();
+    expect(within(todos).queryByLabelText(/개 완료$/)).toBeNull();
+  });
+});

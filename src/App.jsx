@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { COLOR_PALETTE } from './constants/colors';
 import { YEAR_RANGE } from './constants/calendar';
 import { addDays, getCurrentYear, getTodayString, getYearOptions } from './utils/date';
+import { setTodoDone } from './utils/todos';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
@@ -202,6 +203,11 @@ export default function App() {
           onSelectBlock={selectBlock}
           view={panelView}
           onViewChange={setPanelView}
+          onToggleTodo={(kind, id, todoId, done) => {
+            const toggle = (todos) => setTodoDone(todos, todoId, done);
+            if (kind === 'event') changeEventTodos(id, toggle);
+            else changeTodos(panel.date, id, toggle);
+          }}
         />
       )}
 
