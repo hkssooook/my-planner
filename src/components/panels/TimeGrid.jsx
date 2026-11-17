@@ -7,8 +7,8 @@ import {
   SLOTS_PER_DAY, blockSlotRange, freeGapAround, freeRangeFrom, isSlotTaken, movedRange, resizedRange, slotToTime, timeToSlot,
 } from '../../utils/timeBlocks';
 
-// 30분 칸 한 줄의 높이(px). 30분 카드는 이 높이, 1시간 카드는 두 배다.
-export const ROW = 24;
+// 30분 칸 한 줄의 높이(px). 1시간 = 40px(정각 실선 + 30분 점선)으로 한 시간을 한 줄처럼 읽게 한다. 30분 카드는 이 높이, 1시간 카드는 두 배다.
+export const ROW = 20;
 const FIRST_VISIBLE_SLOT = 16; // 처음 열면 08:00이 맨 위에 오게 스크롤한다
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, slot) => slot);

@@ -382,7 +382,7 @@ describe('일정 막대·카드의 색 (연한 바탕 + 같은 계열 짙은 글
     expect(bar('2026-01-05', '파스텔 일정')).toHaveStyle({ backgroundColor: 'rgb(223, 230, 254)' }); // #DFE6FE
   });
 
-  it('패널의 "이 날의 일정"과 시간표 카드도 같은 색 규칙이다', async () => {
+  it('패널의 "일정" 목록(기간·종일·시간 일정)과 시간표 카드도 같은 색 규칙이다', async () => {
     seedEvents([makeEvent(1, '워크숍', '2026-01-05', '2026-01-05', COLOR.amber)]);
     seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.mint }] });
     const user = setup();
@@ -391,7 +391,9 @@ describe('일정 막대·카드의 색 (연한 바탕 + 같은 계열 짙은 글
     const amber = eventColors(COLOR.amber);
     const listItem = within(box).getByText('워크숍').closest('button');
     expect(listItem).toHaveStyle({ backgroundColor: hexToRgb(amber.background), color: hexToRgb(amber.text) });
-    const card = within(box).getByRole('button', { name: /^09:00–10:00 회의/ });
+    expect(within(box).getByRole('button', { name: /^회의 09:00/ })).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.mint).background) });
+    await user.click(within(box).getByRole('tab', { name: '시간표' }));
+    const card = within(dayPanel()).getByRole('button', { name: /^09:00–10:00 회의/ });
     expect(card).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.mint).background) });
   });
 });

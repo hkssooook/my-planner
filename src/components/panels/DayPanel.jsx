@@ -11,6 +11,7 @@ import StarIcon from '../icons/StarIcon';
 import TodoCount from '../common/TodoCount';
 import TimeGrid from './TimeGrid';
 import SelectBox from '../common/SelectBox';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const SLOT_OPTIONS = Array.from({ length: SLOTS_PER_DAY + 1 }, (_, slot) => slot); // 0(00:00) ~ 48(24:00)
 
@@ -25,19 +26,22 @@ function rangeLabel(evt, date) {
 // 날짜를 누르면 화면 오른쪽에 열리는 그날의 일정 패널. 왼쪽 달력은 계속 보인다.
 //   ① 머리말: 날짜, 전날/다음 날, 닫기
 //   ② 일정: 그날의 기간·종일 일정과 시간 일정을 한 목록으로 (누르면 오른쪽에 기간 일정 상세 / 카드 상세 패널)
-//   ③ 종일 일정 추가: 이름 + 색
-//   ④ 시간 일정: 0~24시 30분 칸 시간표. 빈 칸을 끌면 카드가 생기고, 카드를 누르면 오른쪽에 카드 상세 패널이 열린다.
+//      [목록 | 시간표] 스위치(view)로 보는 방식을 바꾼다.
+//        목록: 한 줄 목록 + 종일 일정 추가(이름 + 색)
+//        시간표: 종일 줄 + 0~24시 30분 칸 시간표. 빈 칸을 끌면 카드가 생기고, 카드를 누르면 오른쪽에 카드 상세 패널이 열린다.
 // 날짜가 바뀌면 부모가 key를 바꿔 이 부품을 새로 그린다. (입력 중이던 상태가 다른 날짜로 넘어가지 않게)
 //
 //   dayEvents         그날에 걸친 기간·종일 일정 목록
 //   blocks            그날의 시간 일정 카드 목록
 //   selectedBlockId   카드 상세 패널에 열린 카드
+//   view, onViewChange(view)  일정 보기 방식 'list' | 'timetable'
 //   onAddBlock(block) 새 카드 저장,  onChangeBlock(id, changes) 카드 시각 등 고치기,  onSelectBlock(id) 카드 고르기(상세 패널 열기)
 export default function DayPanel({
   date, dayEvents, blocks, selectedBlockId = null,
   onClose, onMoveDay,
   onAddAllDay, selectedEventId = null, onSelectEvent,
   onAddBlock, onChangeBlock, onSelectBlock,
+  view = 'list', onViewChange,
 }) {
   const [allDayTitle, setAllDayTitle] = useState('');
   const [allDayColor, setAllDayColor] = useState(COLOR_PALETTE[0].value);
@@ -82,6 +86,59 @@ export default function DayPanel({
     setAllDayTitle('');
   };
 
+  // 기간·종일 일정 한 줄 (목록 모드와 시간표 모드의 "종일" 줄이 함께 쓴다)
+  const eventRow = (evt) => {
+    const colors = eventColors(evt.color);
+    return (
+      <li key={evt.id} className="flex items-center gap-2">
+        <span className="w-11 shrink-0 text-xs text-muted-foreground">{evt.start_date === evt.end_date ? '종일' : '기간'}</span>
+        {/* 띠 전체가 버튼: 누르면 오른쪽에 기간 일정 상세 패널이 열린다. 열린 일정은 테두리로 표시 */}
+        <button
+          type="button"
+          aria-pressed={evt.id === selectedEventId}
+          onClick={() => onSelectEvent(evt.id)}
+          style={{ backgroundColor: colors.background, color: colors.text }}
+          className={`flex-1 text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${evt.id === selectedEventId ? 'ring-2 ring-inset ring-primary' : ''}`}
+        >
+          <span className="truncate flex-1">{evt.title}</span>
+          <span className="shrink-0 font-normal opacity-90">{rangeLabel(evt, date)}</span>
+        </button>
+      </li>
+    );
+  };
+
+  // 시간 일정 한 줄 (목록 모드)
+  const blockRow = (block) => {
+    const colors = eventColors(block.color);
+    const name = block.content.trim() || '제목 없음';
+    const todos = todoProgress(todosOf(block));
+    return (
+      <li key={block.id} className="flex items-center gap-2">
+        <span className="w-11 shrink-0 text-xs text-muted-foreground">{block.start}</span>
+        {/* 시간 일정 줄: 누르면 오른쪽에 카드 상세 패널이 열린다 (시간표의 카드를 누를 때와 같다).
+            접근성 이름은 이름부터 읽는다 (시간표 카드는 시각부터 읽어서 둘이 구분된다) */}
+        <button
+          type="button"
+          aria-label={`${name} ${block.start}–${block.end}${block.is_important ? ' (주요)' : ''}${todos.total ? `, 할 일 ${todos.total}개 중 ${todos.done}개 완료` : ''}`}
+          aria-pressed={block.id === selectedBlockId}
+          onClick={() => onSelectBlock(block.id)}
+          style={{ backgroundColor: colors.background, color: colors.text }}
+          className={`flex-1 text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${block.id === selectedBlockId ? 'ring-2 ring-inset ring-primary' : ''}`}
+        >
+          {block.is_important && <span aria-hidden="true" className="shrink-0"><StarIcon /></span>}
+          <span className={`truncate flex-1 ${block.content.trim() ? '' : 'opacity-70'}`}>{name}</span>
+          {todos.total > 0 && (
+            <span aria-hidden="true" className="shrink-0 rounded-full bg-card px-1.5 text-xs leading-[18px]">
+              <TodoCount done={todos.done} total={todos.total} aria-label={undefined} />
+            </span>
+          )}
+        </button>
+      </li>
+    );
+  };
+
+  const isTimetable = view === 'timetable';
+
   return (
     <aside
       aria-label="상세 일정 관리"
@@ -89,8 +146,7 @@ export default function DayPanel({
       // 네 모서리 모두 둥글다(15px). 스크롤해도 그 자리에 머물고(sticky top-6), 높이는 화면 높이에서 위 24px + 아래 12px을 뺀 만큼이다.
       className="w-[460px] shrink-0 self-start sticky top-6 mt-6 mb-3 mr-3 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
     >
-      {/* 머리말과 "이 날의 일정"은 패널을 스크롤해도 위에 붙어 있다 (그날 무슨 일이 있는지 늘 보이게).
-          목록이 길어지면 고정 영역이 화면을 다 덮지 않도록 목록 높이를 200px(일정 5개 반쯤)로 제한하고 그 안에서만 스크롤한다. */}
+      {/* 머리말과 "일정" 제목 줄([목록 | 시간표] 스위치)은 패널을 스크롤해도 위에 붙어 있다 */}
       <div data-testid="day-panel-pinned" className="sticky top-0 z-10 bg-card border-b border-border">
         <header className="flex items-center gap-1 px-4 py-3 border-b border-border">
           <Button variant="ghost" size="icon-sm" aria-label="전날" onClick={() => onMoveDay(-1)}><ChevronLeft /></Button>
@@ -100,129 +156,100 @@ export default function DayPanel({
           <Button variant="ghost" size="icon-sm" aria-label="다음 날" onClick={() => onMoveDay(1)}><ChevronRight /></Button>
           <Button variant="ghost" size="icon-sm" aria-label="닫기" onClick={onClose} className="ml-1"><X /></Button>
         </header>
-
-        {/* "일정" 구역: 그날의 모든 일정을 한 목록으로. 위에는 기간·종일 일정, 아래에는 시간 일정(시작 시각 순서).
-            줄마다 왼쪽에 시각 칸(종일 / 기간 / 09:00), 오른쪽에 일정 색 막대. 막대를 누르면 오른쪽에 상세 패널이 열린다. */}
-        <section aria-labelledby="day-panel-events" className="px-4 py-3">
-          <h3 id="day-panel-events" className="text-sm font-semibold text-foreground mb-2">
+        <div className="flex items-center gap-2 px-4 py-2.5">
+          <h3 id="day-panel-events" className="text-sm font-semibold text-foreground">
             일정 <span className="font-normal text-muted-foreground text-xs ml-1">{dayEvents.length + blocks.length}개</span>
           </h3>
-          <ul className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
-            {dayEvents.map((evt) => {
-              const colors = eventColors(evt.color);
-              return (
-              <li key={evt.id} className="flex items-center gap-2">
-                <span className="w-11 shrink-0 text-xs text-muted-foreground">{evt.start_date === evt.end_date ? '종일' : '기간'}</span>
-                {/* 띠 전체가 버튼: 누르면 오른쪽에 기간 일정 상세 패널이 열린다. 열린 일정은 테두리로 표시 */}
-                <button
-                  type="button"
-                  aria-pressed={evt.id === selectedEventId}
-                  onClick={() => onSelectEvent(evt.id)}
-                  style={{ backgroundColor: colors.background, color: colors.text }}
-                  className={`flex-1 text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${evt.id === selectedEventId ? 'ring-2 ring-inset ring-primary' : ''}`}
-                >
-                  <span className="truncate flex-1">{evt.title}</span>
-                  <span className="shrink-0 font-normal opacity-90">{rangeLabel(evt, date)}</span>
-                </button>
-              </li>
-              );
-            })}
-            {sortBlocks(blocks).map((block) => {
-              const colors = eventColors(block.color);
-              const name = block.content.trim() || '제목 없음';
-              const todos = todoProgress(todosOf(block));
-              return (
-              <li key={block.id} className="flex items-center gap-2">
-                <span className="w-11 shrink-0 text-xs text-muted-foreground">{block.start}</span>
-                {/* 시간 일정 줄: 누르면 오른쪽에 카드 상세 패널이 열린다 (시간표의 카드를 누를 때와 같다).
-                    접근성 이름은 이름부터 읽는다 (시간표 카드는 시각부터 읽어서 둘이 구분된다) */}
-                <button
-                  type="button"
-                  aria-label={`${name} ${block.start}–${block.end}${block.is_important ? ' (주요)' : ''}${todos.total ? `, 할 일 ${todos.total}개 중 ${todos.done}개 완료` : ''}`}
-                  aria-pressed={block.id === selectedBlockId}
-                  onClick={() => onSelectBlock(block.id)}
-                  style={{ backgroundColor: colors.background, color: colors.text }}
-                  className={`flex-1 text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${block.id === selectedBlockId ? 'ring-2 ring-inset ring-primary' : ''}`}
-                >
-                  {block.is_important && <span aria-hidden="true" className="shrink-0"><StarIcon /></span>}
-                  <span className={`truncate flex-1 ${block.content.trim() ? '' : 'opacity-70'}`}>{name}</span>
-                  {todos.total > 0 && (
-                    <span aria-hidden="true" className="shrink-0 rounded-full bg-card px-1.5 text-xs leading-[18px]">
-                      <TodoCount done={todos.done} total={todos.total} aria-label={undefined} />
-                    </span>
-                  )}
-                </button>
-              </li>
-              );
-            })}
-          </ul>
-          {dayEvents.length + blocks.length === 0 && (
-            <p className="text-xs text-muted-foreground">이 날의 일정이 없어요.</p>
-          )}
-        </section>
+          {/* 일정 보기 방식: 목록(한 줄씩) / 시간표(30분 칸). 고른 값은 날짜를 넘겨도 유지된다(App이 들고 있다) */}
+          <Tabs value={view} onValueChange={onViewChange} className="ml-auto">
+            <TabsList aria-label="일정 보기 방식" className="bg-surface-blue-2">
+              <TabsTrigger value="list" className="px-3">목록</TabsTrigger>
+              <TabsTrigger value="timetable" className="px-3">시간표</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
-      {/* 패널의 남은 높이를 채운다(flex-1). min-h-0이 있어야 내용 길이만큼 늘어나지 않고 남은 높이에 맞춰져서,
-          아래 시간표가 패널 바닥까지 차고 그 안에서 따로 스크롤된다. (화면이 아주 낮으면 시간 일정 칸 최소 320px을 지키고 패널 전체가 스크롤된다) */}
-      <div className="flex-1 min-h-0 flex flex-col gap-6 px-4 py-4">
-        <section aria-labelledby="day-panel-add" className="shrink-0">
-          <h3 id="day-panel-add" className="text-sm font-semibold text-foreground mb-2">종일 일정 추가</h3>
-          <form
-            className="flex flex-col gap-2"
-            onSubmit={(e) => { e.preventDefault(); addAllDay(); }}
-          >
-            <div className="flex gap-2">
-              <input
-                type="text" placeholder="예: 워크숍 일정" aria-label="종일 일정명" value={allDayTitle}
-                onChange={(e) => setAllDayTitle(e.target.value)}
-                className="flex-1 min-w-0 px-3 py-1.5 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
-              />
-              {/* 바탕은 파랑 2단계 (secondary 토큰 = #E4E5FF) */}
-              <Button type="submit" variant="secondary" size="sm">추가</Button>
+      {/* "일정" 구역: 패널의 남은 높이를 채운다(flex-1). min-h-0이 있어야 남은 높이에 맞춰져서 시간표가 그 안에서 따로 스크롤된다 */}
+      <section aria-labelledby="day-panel-events" className="flex-1 min-h-0 flex flex-col gap-5 px-4 py-3">
+        {!isTimetable && (
+          <>
+            {/* 목록: 그날의 모든 일정을 한 목록으로. 위에는 기간·종일 일정, 아래에는 시간 일정(시작 시각 순서).
+                줄마다 왼쪽에 시각 칸(종일 / 기간 / 09:00), 오른쪽에 일정 색 막대 */}
+            <div className="shrink-0">
+              <ul aria-label="일정 목록" className="flex flex-col gap-1.5">
+                {dayEvents.map(eventRow)}
+                {sortBlocks(blocks).map(blockRow)}
+              </ul>
+              {dayEvents.length + blocks.length === 0 && (
+                <p className="text-xs text-muted-foreground">이 날의 일정이 없어요.</p>
+              )}
             </div>
-            <ColorPicker size="md" label="종일 일정 색" value={allDayColor} onChange={setAllDayColor} />
-          </form>
-        </section>
 
-        {/* 시간 일정: 남은 높이를 모두 쓰고, 시간표는 그 안에서 따로 스크롤한다 (최소 320px) */}
-        <section aria-labelledby="day-panel-times" className="border-t border-border pt-5 flex-1 min-h-[320px] flex flex-col">
-          <div className="flex justify-between items-end mb-2">
-            <h3 id="day-panel-times" className="text-sm font-semibold text-foreground">시간 일정</h3>
-            <span className="text-[10px] text-muted-foreground">빈 칸을 끌어 만들기 · 카드를 끌어 옮기기 · 위아래 끝을 끌어 길이 바꾸기</span>
+            <section aria-labelledby="day-panel-add" className="shrink-0 border-t border-border pt-4">
+              <h4 id="day-panel-add" className="text-sm font-semibold text-foreground mb-2">종일 일정 추가</h4>
+              <form
+                className="flex flex-col gap-2"
+                onSubmit={(e) => { e.preventDefault(); addAllDay(); }}
+              >
+                <div className="flex gap-2">
+                  <input
+                    type="text" placeholder="예: 워크숍 일정" aria-label="종일 일정명" value={allDayTitle}
+                    onChange={(e) => setAllDayTitle(e.target.value)}
+                    className="flex-1 min-w-0 px-3 py-1.5 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
+                  />
+                  {/* 바탕은 파랑 2단계 (secondary 토큰 = #E4E5FF) */}
+                  <Button type="submit" variant="secondary" size="sm">추가</Button>
+                </div>
+                <ColorPicker size="md" label="종일 일정 색" value={allDayColor} onChange={setAllDayColor} />
+              </form>
+            </section>
+          </>
+        )}
+
+        {isTimetable && (
+          <div className="flex-1 min-h-[320px] flex flex-col">
+            {/* 종일 줄: 기간·종일 일정은 시간표 위에 따로 둔다 (시간표를 스크롤해도 늘 보인다) */}
+            {dayEvents.length > 0 && (
+              <ul aria-label="종일 일정" className="flex flex-col gap-1.5 mb-3 shrink-0">
+                {dayEvents.map(eventRow)}
+              </ul>
+            )}
+
+            {/* 마우스 없이 만들기: 시작·끝 시각을 고르고 추가 */}
+            <form
+              aria-label="시간 일정 추가"
+              className="flex items-center gap-1.5 mb-1 text-xs"
+              onSubmit={(e) => { e.preventDefault(); addByKeyboard(); }}
+            >
+              <SelectBox
+                aria-label="시작 시각" value={addStart}
+                onChange={(e) => changeAddStart(Number(e.target.value))}
+              >
+                {SLOT_OPTIONS.slice(0, SLOTS_PER_DAY).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
+              </SelectBox>
+              <span className="text-muted-foreground">~</span>
+              <SelectBox
+                aria-label="끝 시각" value={addEnd}
+                onChange={(e) => { setAddEnd(Number(e.target.value)); setAddError(''); }}
+              >
+                {SLOT_OPTIONS.slice(addStart + 1).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
+              </SelectBox>
+              <Button type="submit" variant="secondary" size="sm" className="ml-auto">추가</Button>
+            </form>
+            {addError && <p role="alert" className="text-xs text-destructive mb-1">{addError}</p>}
+            <p className="text-[10px] text-muted-foreground mb-1">빈 칸을 끌어 만들기 · 카드를 끌어 옮기기 · 위아래 끝을 끌어 길이 바꾸기</p>
+
+            <TimeGrid
+              blocks={blocks}
+              selectedBlockId={selectedBlockId}
+              onCreate={createBlock}
+              onChangeTime={(id, start, end) => onChangeBlock(id, { start: slotToTime(start), end: slotToTime(end) })}
+              onSelect={onSelectBlock}
+            />
           </div>
-
-          {/* 마우스 없이 만들기: 시작·끝 시각을 고르고 추가 */}
-          <form
-            aria-label="시간 일정 추가"
-            className="flex items-center gap-1.5 mb-1 text-xs"
-            onSubmit={(e) => { e.preventDefault(); addByKeyboard(); }}
-          >
-            <SelectBox
-              aria-label="시작 시각" value={addStart}
-              onChange={(e) => changeAddStart(Number(e.target.value))}
-            >
-              {SLOT_OPTIONS.slice(0, SLOTS_PER_DAY).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
-            </SelectBox>
-            <span className="text-muted-foreground">~</span>
-            <SelectBox
-              aria-label="끝 시각" value={addEnd}
-              onChange={(e) => { setAddEnd(Number(e.target.value)); setAddError(''); }}
-            >
-              {SLOT_OPTIONS.slice(addStart + 1).map((slot) => <option key={slot} value={slot}>{slotToTime(slot)}</option>)}
-            </SelectBox>
-            <Button type="submit" variant="secondary" size="sm" className="ml-auto">추가</Button>
-          </form>
-          {addError && <p role="alert" className="text-xs text-destructive mb-1">{addError}</p>}
-
-          <TimeGrid
-            blocks={blocks}
-            selectedBlockId={selectedBlockId}
-            onCreate={createBlock}
-            onChangeTime={(id, start, end) => onChangeBlock(id, { start: slotToTime(start), end: slotToTime(end) })}
-            onSelect={onSelectBlock}
-          />
-        </section>
-      </div>
+        )}
+      </section>
     </aside>
   );
 }

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import { COLOR_PALETTE } from '../constants/colors';
+import { ROW } from '../components/panels/TimeGrid';
 
 // 앱 전체를 사람처럼 눌러 보는 시험(App.*.test.jsx)이 함께 쓰는 도우미 모음.
 // 시험 속 "오늘"은 2026-06-15로 고정한다. 그래서 처음 보이는 달력은 2026년 + 2027년이다.
@@ -52,9 +53,11 @@ export const eventPanel = () => screen.getByRole('complementary', { name: '기�
 export const queryEventPanel = () => screen.queryByRole('complementary', { name: '기간 일정 상세', hidden: true });
 
 // 일정 패널의 30분 시간표. 시험 환경(jsdom)은 화면 배치를 계산하지 않아 시간표의 위쪽 끝이 0이므로,
-// 칸 번호 × 24px(한 칸 높이)이 곧 그 칸의 세로 위치다. (+5는 칸 안쪽을 누르려고)
+// 칸 번호 × ROW(한 칸 높이)이 곧 그 칸의 세로 위치다. (+5는 칸 안쪽을 누르려고)
+// 일정 패널의 보기 방식을 "시간표"로 바꾼다 (패널은 처음에 "목록"으로 열린다)
+export const showTimetable = (user) => user.click(within(dayPanel()).getByRole('tab', { name: '시간표' }));
 export const timeGrid = () => within(dayPanel()).getByTestId('time-grid');
-const slotY = (slot) => slot * 24 + 5;
+const slotY = (slot) => slot * ROW + 5;
 // 시간표의 fromSlot 칸을 눌러 toSlot 칸까지 끌었다 놓는다. 예: dragTime(18, 20) = 09:00~10:30
 export const dragTime = (fromSlot, toSlot = fromSlot) => {
   fireEvent.mouseDown(timeGrid(), { button: 0, clientY: slotY(fromSlot) });

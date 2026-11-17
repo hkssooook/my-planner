@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { within, waitFor } from '@testing-library/react';
-import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, colorButtonsIn, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, showTimetable, colorButtonsIn, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 import { eventColors } from './utils/color';
 
 // 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸을 눌러 오른쪽 일정 패널 열기)을 확인하는 시험.
@@ -169,8 +169,8 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       ] });
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      const list = within(box).getByRole('region', { name: /^일정/ });
-      expect(within(list).getByText('3개')).toBeInTheDocument();
+      expect(within(box).getByText('3개')).toBeInTheDocument();
+      const list = within(box).getByRole('list', { name: '일정 목록' });
       const rows = within(list).getAllByRole('listitem');
       expect(rows.map((r) => r.firstElementChild.textContent)).toEqual(['종일', '09:00', '14:00']);
       // 접근성 이름은 이름부터 (시간표 카드는 시각부터 읽어 둘이 구분된다)
@@ -186,9 +186,10 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       const pinned = within(box).getByTestId('day-panel-pinned');
       expect(pinned).toHaveClass('sticky', 'top-0');
       expect(within(pinned).getByRole('heading', { name: '2026년 1월 5일 (월)' })).toBeInTheDocument();
-      expect(within(pinned).getByRole('region', { name: /^일정/ })).toBeInTheDocument();
+      // "일정" 제목 줄과 [목록 | 시간표] 스위치가 위에 고정된다. 목록·추가 칸은 그 아래에서 스크롤된다
+      expect(within(pinned).getByRole('heading', { name: /^일정/ })).toBeInTheDocument();
+      expect(within(pinned).getByRole('tablist', { name: '일정 보기 방식' })).toBeInTheDocument();
       expect(within(pinned).queryByRole('region', { name: '종일 일정 추가' })).toBeNull();
-      expect(within(pinned).getByRole('list')).toHaveClass('max-h-[200px]', 'overflow-y-auto');
     });
 
     it('패널은 너비 460px이고, 위는 화면 가장자리에서 24px, 오른쪽·아래는 12px 떨어진 둥근 카드다', async () => {
@@ -209,9 +210,9 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('목록과 종일 일정 추가는 따로 나뉜 영역이고, 일정이 없으면 없다는 안내가 보인다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      const list = within(box).getByRole('region', { name: /^일정/ });
+      const list = within(box).getByRole('list', { name: '일정 목록' });
       const add = within(box).getByRole('region', { name: '종일 일정 추가' });
-      expect(within(list).getByText('이 날의 일정이 없어요.')).toBeInTheDocument();
+      expect(within(box).getByText('이 날의 일정이 없어요.')).toBeInTheDocument();
       expect(within(list).queryByRole('textbox')).toBeNull();
       expect(within(add).getByRole('textbox', { name: '종일 일정명' })).toBeInTheDocument();
     });
@@ -253,10 +254,17 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
   });
 
   describe('② 시간 일정 (30분 시간표 + 끌어서 카드 만들기)', () => {
+    // 패널을 열고 일정 보기 방식을 "시간표"로 바꾼다
+    const openTimetable = async (user, date) => {
+      await user.click(dayButtonOf(date));
+      await showTimetable(user);
+      return dayPanel();
+    };
+
     it('0~24시를 30분 칸 48개로 나눈 시간표가 있고, 정각마다 시각이 적혀 있다', async () => {
       const user = setup();
-      const box = await openPanel(user, '2026-01-05');
-      expect(timeGrid()).toHaveStyle({ height: `${48 * 24}px` });
+      const box = await openTimetable(user, '2026-01-05');
+      expect(timeGrid()).toHaveStyle({ height: `${48 * 20}px` }); // 30분 칸 20px → 1시간 40px
       const grid = within(box).getByTestId('time-grid-scroll');
       for (const time of ['00:00', '08:00', '23:00']) expect(within(grid).getByText(time)).toBeInTheDocument();
       expect(within(grid).queryByText('08:30')).toBeNull(); // 30분 줄에는 글자 없이 점선만
@@ -265,7 +273,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
     it('빈 칸을 끌면 30분 단위로 카드가 생기고, 오른쪽 카드 상세 패널이 열려 이름 칸에 커서가 놓인다', async () => {
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(18, 20); // 09:00 칸 ~ 10:00 칸 → 09:00~10:30
 
       expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
@@ -280,14 +288,14 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('카드는 시작 시각 줄 바로 아래에서 끝 시각 줄 바로 위까지 채운다 (위·아래 모두 줄에 딱 붙음)', async () => {
       seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
-      // 한 칸 24px, 줄 1px: 09:00 줄은 432~433px, 10:00 줄은 480px부터 → 카드는 433px부터 47px(= 480 − 433)
-      expect(timeCard('09:00')).toHaveStyle({ top: '433px', height: '47px' });
+      await openTimetable(user, '2026-01-05');
+      // 한 칸 20px, 줄 1px: 09:00 줄은 360~361px, 10:00 줄은 400px부터 → 카드는 361px부터 39px(= 400 − 361)
+      expect(timeCard('09:00')).toHaveStyle({ top: '361px', height: '39px' });
     });
 
     it('위로 끌어도 되고, 누르기만 하면 30분 카드가 생긴다', async () => {
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(29, 27); // 14:30 칸에서 13:30 칸으로 → 13:30~15:00
       await user.type(within(blockPanel()).getByRole('textbox', { name: '이름' }), '오후');
       dragTime(40); // 20:00 칸 클릭 → 20:00~20:30
@@ -297,7 +305,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('끄는 중에 기존 카드에 닿으면 그 앞에서 멈추고, 카드가 있는 칸에서는 새 카드가 시작되지 않는다 (겹침 없음)', async () => {
       seedDaily({ '2026-01-05': [{ hour: 10, content: '회의', is_important: false, color: COLOR.blue }] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(16, 24); // 08:00부터 12:00까지 끌었지만 10:00 회의 앞에서 멈춘다
       await user.type(within(blockPanel()).getByRole('textbox', { name: '이름' }), '준비');
       dragTime(21); // 10:30 칸은 회의(10:00~11:00) 안이라 아무 일도 없다
@@ -309,7 +317,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
     it('카드 상세 패널에서 이름·색·주요를 바꾸면 바로 저장되고, 달력 칸과 시간표 카드에 반영된다 (같은 카드 id 유지)', async () => {
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(18, 19);
       const id = stored('planner_time_blocks')['2026-01-05'][0].id;
       const detail = blockPanel();
@@ -328,7 +336,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
     it('이름 없이 카드 상세 패널을 닫으면 그 카드는 사라지고, 이름이 있으면 남는다', async () => {
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(18);
       await user.click(buttonIn(blockPanel(), '시간 일정 상세 닫기'));
       expect(queryBlockPanel()).toBeNull();
@@ -343,7 +351,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
     it('이름 없는 카드를 둔 채 다른 칸을 끌면, 앞의 빈 카드는 사라지고 새 카드가 남는다', async () => {
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(18);
       dragTime(30);
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => b.start)).toEqual(['15:00']);
@@ -352,7 +360,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('카드를 누르면 그 카드의 상세 패널이 열리고, 삭제 버튼으로 지울 수 있다', async () => {
       seedDaily({ '2026-01-05': [{ hour: 9, content: '아침 회의', is_important: true, color: COLOR.purple }] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       expect(queryBlockPanel()).toBeNull();
       await user.click(timeCard('09:00'));
       expect(within(blockPanel()).getByRole('textbox', { name: '이름' })).toHaveValue('아침 회의');
@@ -367,7 +375,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('키보드로도 만들 수 있다: 시작·끝 시각을 고르고 "추가" (겹치면 안내가 나오고 만들지 않는다)', async () => {
       seedDaily({ '2026-01-05': [{ hour: 10, content: '회의', is_important: false, color: COLOR.blue }] });
       const user = setup();
-      const box = await openPanel(user, '2026-01-05');
+      const box = await openTimetable(user, '2026-01-05');
       const form = within(box).getByRole('form', { name: '시간 일정 추가' });
       await user.selectOptions(within(form).getByRole('combobox', { name: '시작 시각' }), '09:30');
       await user.selectOptions(within(form).getByRole('combobox', { name: '끝 시각' }), '10:30');
@@ -384,7 +392,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
     it('끝 시각은 시작 시각보다 뒤의 시각만 고를 수 있다', async () => {
       const user = setup();
-      const box = await openPanel(user, '2026-01-05');
+      const box = await openTimetable(user, '2026-01-05');
       await user.selectOptions(within(box).getByRole('combobox', { name: '시작 시각' }), '23:30');
       const endOptions = within(within(box).getByRole('combobox', { name: '끝 시각' })).getAllByRole('option').map((o) => o.textContent);
       expect(endOptions).toEqual(['24:00']);
@@ -392,7 +400,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
     it('다음 날로 넘기면 카드 상세 패널이 닫히고, 날짜마다 카드가 따로 저장된다', async () => {
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(18);
       await user.type(within(blockPanel()).getByRole('textbox', { name: '이름' }), '이 날 일정');
       await user.click(buttonIn(dayPanel(), '다음 날'));
@@ -407,7 +415,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
     it('일정 패널을 닫으면 카드 상세 패널도 함께 닫힌다', async () => {
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragTime(18);
       await user.click(buttonIn(dayPanel(), '닫기'));
       expect(queryDayPanel()).toBeNull();
@@ -417,7 +425,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('카드 가운데를 잡고 끌면 길이는 그대로 옮겨지고, 그 카드의 상세 패널이 열린다 (id 유지)', async () => {
       seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       const id = stored('planner_time_blocks')['2026-01-05'][0].id;
       dragCard('09:00', 18, 21); // 09:00 칸을 잡고 10:30 칸으로 → 3칸 아래
       expect(stored('planner_time_blocks')['2026-01-05']).toEqual([expect.objectContaining({ id, start: '10:30', end: '11:30', content: '회의' })]);
@@ -431,7 +439,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
         { hour: 12, content: '점심', is_important: false, color: COLOR.mint },
       ] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragCard('09:00', 18, 28); // 회의를 잡고 14:00 칸으로 → 점심을 넘어간다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
         ['점심', '12:00', '13:00'],
@@ -446,7 +454,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
         { hour: 12, content: '점심', is_important: false, color: COLOR.mint },
       ] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragCard('09:00', 18, 25); // 회의를 12:30 칸(점심 한가운데)에 놓으면 → 점심 바로 뒤 13:00
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
         ['점심', '12:00', '13:00'],
@@ -457,7 +465,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('아래 가장자리를 끌면 끝 시각이, 위 가장자리를 끌면 시작 시각이 30분 단위로 바뀐다 (최소 30분)', async () => {
       seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       dragCard('09:00', 19, 22, 'end'); // 끝을 11:00 칸까지 → 11:30 끝
       dragCard('09:00', 18, 16, 'start'); // 시작을 08:00 칸으로
       const [block] = stored('planner_time_blocks')['2026-01-05'];
@@ -469,7 +477,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('카드를 누르기만 하면(칸이 안 바뀌면) 시각은 그대로이고 상세 패널만 열린다', async () => {
       seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       const before = stored('planner_time_blocks')['2026-01-05'];
       dragCard('09:00', 18, 18);
       expect(stored('planner_time_blocks')['2026-01-05']).toEqual(before);
@@ -483,7 +491,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
         { hour: 12, content: '점심', is_important: false, color: COLOR.mint },
       ] });
       const user = setup();
-      await openPanel(user, '2026-01-05');
+      await openTimetable(user, '2026-01-05');
       await user.click(timeCard('10:00'));
       const detail = blockPanel();
       const startBox = within(detail).getByRole('combobox', { name: '카드 시작 시각' });
@@ -521,8 +529,9 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       const name = within(blockPanel()).getByRole('textbox', { name: '이름' });
       expect(name).toHaveValue('고객사 미팅');
       await waitFor(() => expect(name).toHaveFocus());
-      expect(timeCard('14:00')).toHaveAttribute('aria-pressed', 'true');
-      expect(timeCard('09:00')).toHaveAttribute('aria-pressed', 'false');
+      // 패널은 목록으로 열리고, 목록에서 그 카드 줄이 눌린 상태로 보인다
+      expect(within(dayPanel()).getByRole('button', { name: /^고객사 미팅 14:00/ })).toHaveAttribute('aria-pressed', 'true');
+      expect(within(dayPanel()).getByRole('button', { name: /^아침 회의 09:00/ })).toHaveAttribute('aria-pressed', 'false');
     });
 
     it('칸의 빈 곳으로 열면 카드 상세 패널은 열리지 않는다', async () => {
@@ -543,6 +552,7 @@ describe('카드 상세 패널의 할 일', () => {
     seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
+    await showTimetable(user);
     await user.click(timeCard('09:00'));
     return [user, blockPanel()];
   };
@@ -615,15 +625,16 @@ describe('카드 상세 패널의 할 일', () => {
       { hour: 14, content: '미팅', is_important: false, color: COLOR.mint },
     ] });
     const user = setup();
+    const row = (name) => within(dayPanel()).getByRole('button', { name: new RegExp(`^${name} `) }); // 패널 목록의 시간 일정 줄
     await user.click(dayButtonOf('2026-01-05'));
-    await user.click(timeCard('09:00'));
+    await user.click(row('회의'));
     await user.type(within(blockPanel()).getByRole('textbox', { name: '새 할 일' }), '회의 자료{Enter}');
-    await user.click(timeCard('14:00'));
+    await user.click(row('미팅'));
     expect(within(blockPanel()).queryByRole('button', { name: '회의 자료 고치기' })).toBeNull();
 
     await user.click(buttonIn(dayPanel(), '닫기'));
     await user.click(dayButtonOf('2026-01-05'));
-    await user.click(timeCard('09:00'));
+    await user.click(row('회의'));
     expect(within(blockPanel()).getByRole('button', { name: '회의 자료 고치기' })).toBeInTheDocument();
   });
 
@@ -650,6 +661,7 @@ describe('카드 상세 패널의 할 일', () => {
   it('이름 없이 만든 카드도 할 일을 적어 두면 닫아도 사라지지 않는다', async () => {
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
+    await showTimetable(user);
     dragTime(30); // 15:00 칸
     await user.type(within(blockPanel()).getByRole('textbox', { name: '새 할 일' }), '전화하기{Enter}');
     await user.click(buttonIn(blockPanel(), '시간 일정 상세 닫기'));

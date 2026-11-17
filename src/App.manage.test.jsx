@@ -58,7 +58,7 @@ describe('+N 더보기', () => {
     for (const title of ['일정 하나', '일정 둘', '일정 셋', '일정 넷']) {
       expect(barIn(box, title)).toBeInTheDocument();
     }
-    expect(within(box).getByRole('button', { name: '09:00–10:00 주요 회의 (주요)' })).toBeInTheDocument(); // 시간표에 카드로 보인다
+    expect(within(box).getByRole('button', { name: '주요 회의 09:00–10:00 (주요)' })).toBeInTheDocument(); // 시간 일정도 같은 목록에 보인다
     expect(popupCount()).toBe(0); // 더보기 팝업은 없어졌다
 
     await user.click(buttonIn(box, '닫기'));
@@ -146,7 +146,7 @@ describe('기간 일정 상세 패널', () => {
     seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
     const user = setup();
     await openEvent(user, '2026-01-05', '워크숍');
-    await user.click(within(dayPanel()).getByRole('button', { name: /^09:00–/ }));
+    await user.click(within(dayPanel()).getByRole('button', { name: /^회의 09:00/ }));
     expect(queryEventPanel()).toBeNull();
     expect(blockPanel()).toBeInTheDocument();
     await user.click(within(dayPanel()).getByRole('button', { name: /^워크숍/ }));

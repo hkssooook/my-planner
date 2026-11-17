@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, dayPanel, popup, drag, blockPanel, eventPanel, dragTime, timeCard } from './test/helpers';
+import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, dayPanel, popup, drag, blockPanel, eventPanel, dragTime, timeCard, showTimetable } from './test/helpers';
 import { COLOR_PALETTE } from './constants/colors';
 
 // 화면을 눈으로 못 보는 사람(스크린 리더)이 버튼을 알아들을 수 있는지 확인하는 시험.
@@ -85,6 +85,7 @@ describe('접근성: 색 선택 버튼', () => {
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
     expect(within(dayPanel()).getByRole('group', { name: '종일 일정 색' })).toBeInTheDocument();
+    await showTimetable(user);
     dragTime(18);
     expect(within(blockPanel()).getByRole('group', { name: '시간 일정 색' })).toBeInTheDocument();
   });
@@ -106,6 +107,7 @@ describe('접근성: 입력칸의 이름', () => {
     await user.click(dayButtonOf('2026-01-05'));
     const box = dayPanel();
     expect(within(box).getByRole('textbox', { name: '종일 일정명' })).toBeInTheDocument();
+    await showTimetable(user);
     expect(within(box).getByRole('combobox', { name: '시작 시각' })).toBeInTheDocument();
     expect(within(box).getByRole('combobox', { name: '끝 시각' })).toBeInTheDocument();
     expect(within(box).getByRole('button', { name: '09:30–11:00 회의 (주요)' })).toHaveAttribute('aria-pressed', 'false');
@@ -114,6 +116,7 @@ describe('접근성: 입력칸의 이름', () => {
   it('카드 상세 패널: 이름 입력칸과 주요 체크박스가 이름으로 찾아지고, 쓰면 그 카드에 저장된다', async () => {
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
+    await showTimetable(user);
     dragTime(20); // 10:00 칸
     const detail = blockPanel();
     await user.type(within(detail).getByRole('textbox', { name: '이름' }), '열 시 회의');
