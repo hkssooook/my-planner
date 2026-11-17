@@ -237,29 +237,35 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(yearSelect().compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // 연도가 먼저, 부제목이 뒤
   });
 
-  it('색 단계: 헤더 카드 2단계, 캘린더 섹션·연도 구분선 4단계, 월 이름 칸 3단계, 날짜 칸 흰색', () => {
+  it('색 단계: 헤더 카드 2단계, 캘린더 섹션·연도 구분선 2단계, 월 이름 칸·날짜 칸 흰색', () => {
     render(<App />);
     expect(yearSelect().closest('.rounded-lg.p-6')).toHaveClass('bg-surface-blue-2');
     const cell = cellOf('2026-01-05');
     expect(cell).toHaveClass('bg-card');
     const monthLabel = cell.parentElement.firstElementChild.firstElementChild;
     expect(monthLabel).toHaveTextContent('1월');
-    expect(monthLabel).toHaveClass('bg-surface-blue-3');
-    // 연도 구분선은 캘린더 섹션과 같은 4단계라 섹션과 하나로 이어져 보이고, 섹션 안쪽 여백 없이 좌우 끝까지 붙는다.
+    // 월 이름 칸은 흰 바탕 + 파랑 글자 (리디자인 기획서의 월 이름표)
+    expect(monthLabel).toHaveClass('bg-card', 'text-primary');
+    expect(monthLabel.parentElement).toHaveClass('bg-surface-blue-2'); // 옆 틈을 가리는 바깥 상자는 섹션과 같은 색
+    // 연도 구분선은 캘린더 섹션과 같은 2단계라 섹션과 하나로 이어져 보이고, 섹션 안쪽 여백 없이 좌우 끝까지 붙는다.
     // 맨 위 줄만 위쪽에도 붙어 위 모서리가 섹션과 같다(15px). 중간 해(2027)는 모서리 없는 띠다
     const divider2026 = screen.getByText('2026').parentElement;
     const divider2027 = screen.getByText('2027').parentElement;
-    expect(divider2026).toHaveClass('bg-surface-blue-4', '-mt-1', 'rounded-t-lg');
-    expect(divider2027).toHaveClass('bg-surface-blue-4');
+    expect(divider2026).toHaveClass('bg-surface-blue-2', '-mt-1', 'rounded-t-lg');
+    expect(divider2027).toHaveClass('bg-surface-blue-2');
     expect(divider2026).not.toHaveClass('-mx-1'); // 섹션에 좌우 안쪽 여백이 없어서 늘릴 필요가 없다
     expect(divider2027).not.toHaveClass('-mt-1', 'rounded-t-lg', 'rounded-sm');
     expect(screen.getByText('2026')).toHaveClass('text-foreground'); // 연도 글자는 기본 글자색 (밝은 바탕 위에서도 잘 보이게)
     // 연도 글자 칸은 월 이름 칸과 같은 자리에 선다 (섹션 왼쪽 끝부터 64px, 가운데 맞춤)
     expect(screen.getByText('2026')).toHaveClass('w-[calc(4rem+0.25rem)]', 'pr-1', 'justify-center');
-    expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('bg-surface-blue-4');
-    // 날짜 칸 테두리는 섹션 바탕과 같은 파랑 4단계 (옅은 2단계 띠가 생기지 않게)
-    expect(cell).toHaveClass('border', 'border-surface-blue-4');
-    expect(cell).not.toHaveClass('border-border');
+    expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('bg-surface-blue-2');
+    // 날짜 칸 테두리는 섹션 바탕과 같은 파랑 2단계라 보이지 않고,
+    // 마우스를 올리면 끌어서 고른 칸과 같은 모양(2단계 바탕 + 파랑 테두리)이 된다. 바탕만 바꾸면 섹션에 묻혀서 테두리를 함께 쓴다
+    expect(cell).toHaveClass('border', 'border-surface-blue-2', 'hover:bg-selection', 'hover:border-primary');
+    expect(cell).not.toHaveClass('border-border', 'hover:bg-muted');
+    // 없는 날(2월 30일 등) 자리는 칠하지 않고 3단계 점선 테두리만
+    expect(screen.getAllByTestId('empty-day')[0]).toHaveClass('border-dashed', 'border-surface-blue-3');
+    expect(screen.getAllByTestId('empty-day')[0].className).not.toMatch(/\bbg-/);
     // 달력 상자는 남은 높이를 채우고 안에서 스크롤한다 (페이지는 스크롤되지 않아 상자의 둥근 모서리가 늘 보인다)
     expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('flex-1', 'min-h-0', 'rounded-lg', 'overflow-auto');
     expect(cell.closest('main').parentElement).toHaveClass('h-screen', 'overflow-hidden');

@@ -19,8 +19,8 @@ export default function DayCell({
   
   if (day > maxDays) {
     if (isWrapMode) return null;
-    // 없는 날(예: 2월 30일) 자리: 날짜 칸보다 한 층 바깥 느낌이 나도록 월 이름 칸과 같은 파랑 3단계, 테두리 없음
-    return <div className="bg-surface-blue-3 rounded-sm w-[120px] shrink-0"></div>;
+    // 없는 날(예: 2월 30일) 자리: 칠하지 않고 파랑 3단계 점선 테두리만 둔다 (리디자인 기획서 "빈 칸 점선 = 3단계")
+    return <div data-testid="empty-day" className="border border-dashed border-surface-blue-3 rounded-sm w-[120px] shrink-0"></div>;
   }
 
   const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -49,8 +49,14 @@ export default function DayCell({
     if (dateString >= sorted[0] && dateString <= sorted[1]) isSelected = true;
   }
 
-  // 칸 바탕: 끌어서 고른 칸(파랑 2단계)이 먼저, 그다음 쉬는 날(연한 빨강), 나머지는 흰색. 고르지 않은 칸은 마우스를 올리면 파랑 2단계.
-  const cellBg = isSelected ? 'bg-selection' : `${isHoliday ? 'bg-holiday-surface' : 'bg-card'} hover:bg-muted`;
+  // 칸 바탕과 테두리. 캘린더 섹션이 파랑 2단계라, 칸 바탕을 2단계로 바꾸면 섹션에 묻혀 칸이 사라져 보인다. 그래서
+  //   끌어서 고른 칸: 파랑 2단계 바탕 + 파랑(primary) 테두리
+  //   그 밖의 칸: 쉬는 날은 연한 빨강, 나머지는 흰색. 테두리는 섹션과 같은 2단계라 보이지 않는다.
+  //              마우스를 올리면 끌어서 고른 칸과 같은 모양(2단계 바탕 + 파랑 테두리)이 된다. (테두리만 진하게 하면 잘 안 보였다)
+  // (3·4단계 바탕은 흐린 글자·휴일 글자가 잘 안 읽혀서 칸 바탕으로 쓰지 않는다)
+  const cellLook = isSelected
+    ? 'bg-selection border-primary'
+    : `${isHoliday ? 'bg-holiday-surface' : 'bg-card'} border-surface-blue-2 hover:bg-selection hover:border-primary`;
 
   return (
     <div 
@@ -60,9 +66,9 @@ export default function DayCell({
       onClick={(e) => onOpenDay(e, dateString)}
       aria-current={dateString === panelDate ? 'date' : undefined}
       // 칸마다 자기 테두리와 9px 모서리(rounded-sm)를 갖는다. 칸 사이 4px 틈은 MonthRow가 둔다.
-      // 테두리는 섹션 바탕과 같은 파랑 4단계라 바탕에 녹아들어, 칸이 옅은 띠 없이 부드럽게 끝난다. (두께 1px은 그대로라 칸 크기는 같다)
+      // 테두리 색은 위의 cellLook이 정한다. (두께 1px은 늘 그대로라 칸 크기는 같다)
       // 너비: 가로 스크롤은 120px 고정, 화면 맞춤은 MonthRow의 격자가 정한다(최소 120px, 남는 폭을 나눠 가짐).
-      className={`group/cell p-1 border border-surface-blue-4 rounded-sm ${cellBg} ${isWrapMode ? 'min-w-0' : 'w-[120px] shrink-0'} h-28 flex flex-col gap-1 relative select-none cursor-pointer ${dateString === panelDate ? 'ring-2 ring-inset ring-primary' : ''}`}
+      className={`group/cell p-1 border rounded-sm ${cellLook} ${isWrapMode ? 'min-w-0' : 'w-[120px] shrink-0'} h-28 flex flex-col gap-1 relative select-none cursor-pointer ${dateString === panelDate ? 'ring-2 ring-inset ring-primary' : ''}`}
     >
       <div className="flex justify-between items-start text-xs min-w-0">
         {/* 키보드·화면 낭독기용 입구. 누르면 클릭이 칸까지 올라가 위의 onClick이 일정 패널을 연다. */}

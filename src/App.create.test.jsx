@@ -32,7 +32,7 @@ describe('기간 일정 만들기 (날짜 끌기)', () => {
   it('팝업이 열려 있는 동안 고른 칸이 강조되고, 닫으면 강조가 풀린다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    expect(cellOf('2026-01-06')).toHaveClass('bg-selection');
+    expect(cellOf('2026-01-06')).toHaveClass('bg-selection', 'border-primary'); // 섹션(2단계)에 묻히지 않게 파랑 테두리도 둔다
     expect(cellOf('2026-01-08')).not.toHaveClass('bg-selection');
 
     await user.click(buttonIn(popup('기간 일정 등록'), '취소'));

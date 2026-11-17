@@ -155,12 +155,12 @@ export default function App() {
           <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
         </div>
 
-        {/* 캘린더 섹션: 헤더 카드와 같은 층이라 같은 파랑 4단계 바탕. 안쪽의 월 이름·연도 구분선은 3단계, 날짜 칸은 1단계(흰색)로 점점 옅어진다.
+        {/* 캘린더 섹션: 파랑 2단계 바탕(연도 구분선도 같은 색). 그 위에 월 이름 칸과 날짜 칸이 흰색(1단계)으로 떠 보인다. (리디자인 기획서 "달력 영역 = 2단계")
             남은 높이를 채우고(flex-1 min-h-0) 상자 안에서 스크롤한다. 그래서 스크롤해도 상자의 네 모서리(15px)가 늘 둥글게 보이고, 가로 스크롤 막대도 늘 상자 아래에 있다.
             가로 스크롤은 위아래·좌우 모두(overflow-auto), 화면 맞춤은 위아래만(overflow-y-auto overflow-x-hidden) */}
         <div
           data-testid="calendar-scroll"
-          className={`flex-1 min-h-0 rounded-lg shadow-xs bg-surface-blue-4 relative ${isWrapMode ? 'overflow-y-auto overflow-x-hidden' : 'overflow-auto'}`}
+          className={`flex-1 min-h-0 rounded-lg shadow-xs bg-surface-blue-2 relative ${isWrapMode ? 'overflow-y-auto overflow-x-hidden' : 'overflow-auto'}`}
         >
           {/* 칸 사이에 4px 틈(gap-1)을 둬서 둥근 칸들이 떠 보이게 한다. 상자 안쪽 여백은 위 4px(pt-1, 첫 연도 띠가 -mt-1로 덮음)뿐이라 좌우·아래는 칸이 상자 끝에 붙는다 */}
           <div className={`flex flex-col gap-1 pt-1 ${isWrapMode ? '' : 'min-w-max'}`}>
