@@ -302,12 +302,13 @@ export default function App() {
             남은 높이를 채우고(flex-1 min-h-0) 상자 안에서 스크롤한다. 그래서 스크롤해도 상자의 네 모서리(15px)가 늘 둥글게 보이고, 가로 스크롤 막대도 늘 상자 아래에 있다.
             가로 스크롤은 위아래·좌우 모두(overflow-auto), 화면 맞춤은 위아래만(overflow-y-auto overflow-x-hidden) */}
         {isWeekView ? (
-          // 주 보기: 민트 2단계 달력 영역에 날짜 칸 7개 + 7일 시간표 (위아래로 스크롤)
-          <div data-testid="calendar-scroll" className="flex-1 min-h-0 rounded-lg shadow-xs bg-surface-mint-2 overflow-y-auto">
+          // 주 보기(보드형): 민트 2단계 달력 영역에 요일마다 한 칸. 칸이 영역 높이를 채우고, 넘치면 그 칸만 스크롤한다
+          <div data-testid="calendar-scroll" className="flex-1 min-h-0 rounded-lg shadow-xs bg-surface-mint-2 overflow-hidden">
             <WeekView
-              weekStart={weekStart} cellProps={cellProps} timeBlocks={savedTimeBlocks} today={getTodayString()}
-              onOpenBlock={(date, id) => openDayPanel(null, date, id)}
-              onCreate={(date, startSlot, endSlot) => openNewEvent(date, 'timed', { startSlot, endSlot })}
+              weekStart={weekStart} events={savedEvents} timeBlocks={savedTimeBlocks}
+              today={getTodayString()} panelDate={panel?.date ?? null}
+              onOpenDay={(date, blockId = null, eventId = null) => openDayPanel(null, date, blockId, eventId)}
+              onAddEvent={(date) => openNewEvent(date, 'timed')}
             />
           </div>
         ) : isMonthView ? (

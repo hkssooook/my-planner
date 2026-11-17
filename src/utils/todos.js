@@ -33,3 +33,14 @@ export const removeTodo = (todos, id) => todos.filter((todo) => todo.id !== id);
 
 // 진행 상황: { done: 완료한 개수, total: 전체 개수 } — 화면에 "2/5"처럼 보여 줄 때 쓴다.
 export const todoProgress = (todos) => ({ done: todos.filter((todo) => todo.done).length, total: todos.length });
+
+// 할 일 목록과 날짜로 알약 모양을 정한다. 할 일이 없으면 null
+// (화면의 TodoPill 부품이 이 결과로 알약을 그린다)
+export function todoPillOf(todos, date, today) {
+  const { done, total } = todoProgress(todos);
+  if (total === 0) return null;
+  if (done === total) return { kind: 'done', text: '✓ 할 일 끝' };
+  if (today && date < today) return { kind: 'left', text: `! ${total - done}개 남음` };
+  if (date === today) return { kind: 'today', text: `할 일 ${done}/${total}` };
+  return { kind: 'future', text: `할 일 ${total}` };
+}
