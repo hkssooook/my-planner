@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { COLOR_PALETTE } from '../../constants/colors';
 import { eventColors } from '../../utils/color';
 import { daysBetween, formatLongDate, formatShortDate } from '../../utils/date';
-import { SLOTS_PER_DAY, isRangeFree, makeTimeBlock, slotToTime } from '../../utils/timeBlocks';
+import { SLOTS_PER_DAY, isRangeFree, makeTimeBlock, slotToTime, sortBlocks } from '../../utils/timeBlocks';
+import { todoProgress, todosOf } from '../../utils/todos';
+import StarIcon from '../icons/StarIcon';
+import TodoCount from '../common/TodoCount';
 import TimeGrid from './TimeGrid';
 import SelectBox from '../common/SelectBox';
 
@@ -21,7 +24,7 @@ function rangeLabel(evt, date) {
 
 // 날짜를 누르면 화면 오른쪽에 열리는 그날의 일정 패널. 왼쪽 달력은 계속 보인다.
 //   ① 머리말: 날짜, 전날/다음 날, 닫기
-//   ② 이 날의 일정: 그날에 걸친 기간·종일 일정 목록 (누르면 오른쪽에 기간 일정 상세 패널)
+//   ② 일정: 그날의 기간·종일 일정과 시간 일정을 한 목록으로 (누르면 오른쪽에 기간 일정 상세 / 카드 상세 패널)
 //   ③ 종일 일정 추가: 이름 + 색
 //   ④ 시간 일정: 0~24시 30분 칸 시간표. 빈 칸을 끌면 카드가 생기고, 카드를 누르면 오른쪽에 카드 상세 패널이 열린다.
 // 날짜가 바뀌면 부모가 key를 바꿔 이 부품을 새로 그린다. (입력 중이던 상태가 다른 날짜로 넘어가지 않게)
@@ -98,22 +101,25 @@ export default function DayPanel({
           <Button variant="ghost" size="icon-sm" aria-label="닫기" onClick={onClose} className="ml-1"><X /></Button>
         </header>
 
+        {/* "일정" 구역: 그날의 모든 일정을 한 목록으로. 위에는 기간·종일 일정, 아래에는 시간 일정(시작 시각 순서).
+            줄마다 왼쪽에 시각 칸(종일 / 기간 / 09:00), 오른쪽에 일정 색 막대. 막대를 누르면 오른쪽에 상세 패널이 열린다. */}
         <section aria-labelledby="day-panel-events" className="px-4 py-3">
           <h3 id="day-panel-events" className="text-sm font-semibold text-foreground mb-2">
-            이 날의 일정 <span className="font-normal text-muted-foreground text-xs ml-1">{dayEvents.length}개</span>
+            일정 <span className="font-normal text-muted-foreground text-xs ml-1">{dayEvents.length + blocks.length}개</span>
           </h3>
           <ul className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
             {dayEvents.map((evt) => {
               const colors = eventColors(evt.color);
               return (
-              <li key={evt.id}>
+              <li key={evt.id} className="flex items-center gap-2">
+                <span className="w-11 shrink-0 text-xs text-muted-foreground">{evt.start_date === evt.end_date ? '종일' : '기간'}</span>
                 {/* 띠 전체가 버튼: 누르면 오른쪽에 기간 일정 상세 패널이 열린다. 열린 일정은 테두리로 표시 */}
                 <button
                   type="button"
                   aria-pressed={evt.id === selectedEventId}
                   onClick={() => onSelectEvent(evt.id)}
                   style={{ backgroundColor: colors.background, color: colors.text }}
-                  className={`w-full text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${evt.id === selectedEventId ? 'ring-2 ring-inset ring-primary' : ''}`}
+                  className={`flex-1 text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${evt.id === selectedEventId ? 'ring-2 ring-inset ring-primary' : ''}`}
                 >
                   <span className="truncate flex-1">{evt.title}</span>
                   <span className="shrink-0 font-normal opacity-90">{rangeLabel(evt, date)}</span>
@@ -121,9 +127,37 @@ export default function DayPanel({
               </li>
               );
             })}
+            {sortBlocks(blocks).map((block) => {
+              const colors = eventColors(block.color);
+              const name = block.content.trim() || '제목 없음';
+              const todos = todoProgress(todosOf(block));
+              return (
+              <li key={block.id} className="flex items-center gap-2">
+                <span className="w-11 shrink-0 text-xs text-muted-foreground">{block.start}</span>
+                {/* 시간 일정 줄: 누르면 오른쪽에 카드 상세 패널이 열린다 (시간표의 카드를 누를 때와 같다).
+                    접근성 이름은 이름부터 읽는다 (시간표 카드는 시각부터 읽어서 둘이 구분된다) */}
+                <button
+                  type="button"
+                  aria-label={`${name} ${block.start}–${block.end}${block.is_important ? ' (주요)' : ''}${todos.total ? `, 할 일 ${todos.total}개 중 ${todos.done}개 완료` : ''}`}
+                  aria-pressed={block.id === selectedBlockId}
+                  onClick={() => onSelectBlock(block.id)}
+                  style={{ backgroundColor: colors.background, color: colors.text }}
+                  className={`flex-1 text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${block.id === selectedBlockId ? 'ring-2 ring-inset ring-primary' : ''}`}
+                >
+                  {block.is_important && <span aria-hidden="true" className="shrink-0"><StarIcon /></span>}
+                  <span className={`truncate flex-1 ${block.content.trim() ? '' : 'opacity-70'}`}>{name}</span>
+                  {todos.total > 0 && (
+                    <span aria-hidden="true" className="shrink-0 rounded-full bg-card px-1.5 text-xs leading-[18px]">
+                      <TodoCount done={todos.done} total={todos.total} aria-label={undefined} />
+                    </span>
+                  )}
+                </button>
+              </li>
+              );
+            })}
           </ul>
-          {dayEvents.length === 0 && (
-            <p className="text-xs text-muted-foreground">이 날에 걸친 기간·종일 일정이 없어요.</p>
+          {dayEvents.length + blocks.length === 0 && (
+            <p className="text-xs text-muted-foreground">이 날의 일정이 없어요.</p>
           )}
         </section>
       </div>

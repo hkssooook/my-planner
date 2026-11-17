@@ -146,7 +146,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     expect(queryDayPanel()).toBeNull();
   });
 
-  describe('① 이 날의 일정 (기간·종일)', () => {
+  describe('① 일정 구역 (기간·종일·시간 일정을 한 목록으로)', () => {
     it('그날에 걸친 기간 일정과 종일 일정이 모두 보이고, 기간 일정에는 기간과 며칠째인지가 붙는다', async () => {
       seedEvents([
         makeEvent(1, '제주 여행', '2026-01-04', '2026-01-08'),
@@ -161,13 +161,32 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(within(box).queryByText('다른 날 일정')).toBeNull();
     });
 
-    it('머리말과 "이 날의 일정"은 패널을 스크롤해도 위에 고정되고, 목록이 길면 목록 안에서만 스크롤된다', async () => {
+    it('시간 일정도 같은 목록에 시작 시각 순서로 보이고(기간·종일 아래), 왼쪽에 시각·할 일 진행 숫자가 붙으며, 누르면 카드 상세 패널이 열린다', async () => {
+      seedEvents([makeEvent(1, '팀 워크숍', '2026-01-05')]);
+      seedDaily({ '2026-01-05': [
+        { hour: 14, content: '미팅', is_important: false, color: COLOR.mint },
+        { hour: 9, content: '회의', is_important: true, color: COLOR.blue },
+      ] });
+      const user = setup();
+      const box = await openPanel(user, '2026-01-05');
+      const list = within(box).getByRole('region', { name: /^일정/ });
+      expect(within(list).getByText('3개')).toBeInTheDocument();
+      const rows = within(list).getAllByRole('listitem');
+      expect(rows.map((r) => r.firstElementChild.textContent)).toEqual(['종일', '09:00', '14:00']);
+      // 접근성 이름은 이름부터 (시간표 카드는 시각부터 읽어 둘이 구분된다)
+      const row = within(list).getByRole('button', { name: '회의 09:00–10:00 (주요)' });
+      await user.click(row);
+      expect(blockPanel()).toBeInTheDocument();
+      expect(row).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('머리말과 "일정" 목록은 패널을 스크롤해도 위에 고정되고, 목록이 길면 목록 안에서만 스크롤된다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
       const pinned = within(box).getByTestId('day-panel-pinned');
       expect(pinned).toHaveClass('sticky', 'top-0');
       expect(within(pinned).getByRole('heading', { name: '2026년 1월 5일 (월)' })).toBeInTheDocument();
-      expect(within(pinned).getByRole('region', { name: /이 날의 일정/ })).toBeInTheDocument();
+      expect(within(pinned).getByRole('region', { name: /^일정/ })).toBeInTheDocument();
       expect(within(pinned).queryByRole('region', { name: '종일 일정 추가' })).toBeNull();
       expect(within(pinned).getByRole('list')).toHaveClass('max-h-[200px]', 'overflow-y-auto');
     });
@@ -190,9 +209,9 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     it('목록과 종일 일정 추가는 따로 나뉜 영역이고, 일정이 없으면 없다는 안내가 보인다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      const list = within(box).getByRole('region', { name: /이 날의 일정/ });
+      const list = within(box).getByRole('region', { name: /^일정/ });
       const add = within(box).getByRole('region', { name: '종일 일정 추가' });
-      expect(within(list).getByText('이 날에 걸친 기간·종일 일정이 없어요.')).toBeInTheDocument();
+      expect(within(list).getByText('이 날의 일정이 없어요.')).toBeInTheDocument();
       expect(within(list).queryByRole('textbox')).toBeNull();
       expect(within(add).getByRole('textbox', { name: '종일 일정명' })).toBeInTheDocument();
     });
