@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { YEAR_RANGE } from './constants/calendar';
-import { addDays, formatShortDate, getCurrentYear, getDaysInMonth, getTodayString, getYearOptions, weekStartOf } from './utils/date';
+import { addDays, formatShortDate, getCurrentYear, getDaysInMonth, getNowTime, getTodayString, getYearOptions, weekStartOf } from './utils/date';
 import { setTodoDone } from './utils/todos';
 import { isRangeFree } from './utils/timeBlocks';
 import { Plus } from 'lucide-react';
@@ -288,11 +288,11 @@ export default function App() {
           </div>
         </div>
 
-      {/* 요약 줄: 지금 보는 해의 할 일 · 다가오는 일정 · 못 끝낸 일 (저장된 일정 기준) */}
+      {/* 요약 줄: 지금 보는 범위의 할 일 · 7일간 주요 일정 · 못 끝낸 일 (저장된 일정 기준) */}
       {/* 범위만 보기에 따라 바뀐다: 연 = 그 해, 월 = 그달 */}
       <SummaryRow
         scope={summaryScope}
-        summary={summarize({ events: savedEvents, timeBlocks: savedTimeBlocks, ...summaryRange, today: getTodayString() })}
+        summary={summarize({ events: savedEvents, timeBlocks: savedTimeBlocks, ...summaryRange, today: getTodayString(), now: getNowTime() })}
       />
 
       {/* 아래 한 줄: 남은 높이를 모두 쓰고, 달력 상자와 패널들이 같은 높이로 선다 */}

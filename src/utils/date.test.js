@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getDaysInMonth, getDayOfWeek, getCurrentYear, getTodayString, weekStartOf, formatWeekRange, getYearOptions, addDays, daysBetween, formatLongDate, formatShortDate } from './date';
+import { getDaysInMonth, getDayOfWeek, getCurrentYear, getTodayString, getNowTime, weekStartOf, formatWeekRange, getYearOptions, addDays, daysBetween, formatLongDate, formatShortDate } from './date';
 
 describe('getDaysInMonth (한 달의 일수)', () => {
   it('31일인 달과 30일인 달을 구분한다', () => {
@@ -115,5 +115,14 @@ describe('formatWeekRange (주 보기 기간 이름)', () => {
     expect(formatWeekRange('2026-11-15')).toBe('2026년 11월 15–21일');
     expect(formatWeekRange('2026-11-29')).toBe('2026년 11월 29일–12월 5일');
     expect(formatWeekRange('2026-12-27')).toBe('2026년 12월 27일–2027년 1월 2일');
+  });
+});
+
+describe('getNowTime (지금 시각 글자)', () => {
+  afterEach(() => vi.useRealTimers());
+  it('시·분이 한 자리여도 앞에 0을 붙여 HH:MM으로 돌려준다', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 15, 9, 5, 30));
+    expect(getNowTime()).toBe('09:05');
   });
 });

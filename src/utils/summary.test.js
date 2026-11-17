@@ -16,7 +16,7 @@ describe('summarize (요약 줄 숫자)', () => {
     expect(r.todos).toEqual({ done: 2, total: 3 });
   });
 
-  it('다가오는 일정: 오늘부터 7일 안에 끝나는 기간·종일 일정과 ★ 시간 일정을 세고, 가장 가까운 것을 알려 준다', () => {
+  it('7일간 주요 일정: 오늘부터 7일 안에 끝나는 기간·종일 일정과 ★ 시간 일정을 세고, 가장 가까운 것을 알려 준다', () => {
     const r = summarize({
       ...YEAR,
       events: [
@@ -32,8 +32,31 @@ describe('summarize (요약 줄 숫자)', () => {
     expect(r.upcoming).toEqual({ count: 3, next: { date: '2026-06-16', title: '중요 회의' } });
   });
 
-  it('다가오는 일정이 없으면 0개, next는 null이다', () => {
+  it('7일간 주요 일정이 없으면 0개, next는 null이다', () => {
     expect(summarize({ ...YEAR, events: [], timeBlocks: {} }).upcoming).toEqual({ count: 0, next: null });
+  });
+
+  it('7일간 주요 일정: 오늘의 ★ 시간 일정은 끝나는 시각이 지나면 빼고(진행 중은 센다), 오늘 끝나는 기간 일정은 오늘 하루 동안 센다', () => {
+    const r = summarize({
+      ...YEAR, now: '14:30',
+      events: [evt('오늘 끝남', '2026-06-13', '2026-06-15')],
+      timeBlocks: { '2026-06-15': [
+        block('아침 회의', '09:00', { end: '10:00', is_important: true }), // 이미 끝남 → 뺌
+        block('진행 중', '14:00', { end: '15:00', is_important: true }), // 진행 중 → 셈
+        block('저녁', '19:00', { end: '20:00', is_important: true }), // 아직 → 셈
+      ] },
+    });
+    expect(r.upcoming).toEqual({ count: 3, next: { date: '2026-06-15', title: '오늘 끝남' } });
+  });
+
+  it('7일간 주요 일정은 보는 범위 안으로 잘린다: 이번 달·이번 주 안의 날만, 지난 범위나 7일보다 먼 범위는 0개', () => {
+    const events = [evt('6월 말', '2026-06-20'), evt('7월 초', '2026-07-01')];
+    const base = { events, timeBlocks: {}, today: '2026-06-26' }; // 6/26 ~ 7/2
+    expect(summarize({ ...base, from: '2026-06-01', to: '2026-06-30' }).upcoming.count).toBe(0); // 6/20은 지난 일
+    expect(summarize({ ...base, from: '2026-07-01', to: '2026-07-31' }).upcoming.next).toEqual({ date: '2026-07-01', title: '7월 초' }); // 다음 달이지만 7일 안
+    expect(summarize({ ...base, from: '2026-06-21', to: '2026-06-27' }).upcoming.count).toBe(0); // 이번 주 토요일(6/27)까지만
+    expect(summarize({ ...base, from: '2026-05-01', to: '2026-05-31' }).upcoming.count).toBe(0); // 지난 달
+    expect(summarize({ ...base, from: '2026-08-01', to: '2026-08-31' }).upcoming.count).toBe(0); // 7일보다 먼 달
   });
 
   it('못 끝낸 일: 오늘 이전 날의 남은 할 일만 센다. 기간 일정은 끝나는 날이 오늘 이전이어야 지난 일이다', () => {

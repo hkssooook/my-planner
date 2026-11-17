@@ -462,7 +462,7 @@ describe('상단 바의 연·월·주 탭과 요약 줄 (시험 속 오늘은 20
     expect(dots[2]).toContain('bg-surface-mint-5');
   });
 
-  it('요약 줄: 올해 할 일 진행, 다가오는 일정(7일 안), 못 끝낸 일을 저장된 일정으로 보여 준다', () => {
+  it('요약 줄: 올해 할 일 진행, 7일간 주요 일정, 못 끝낸 일을 저장된 일정으로 보여 준다', () => {
     seedEvents([{ ...makeEvent(1, '여행 준비', '2026-06-01', '2026-06-03'), todos: [{ id: 'a', text: '짐', done: false }, { id: 'b', text: '표', done: true }] }]);
     localStorage.setItem('planner_time_blocks', JSON.stringify({
       '2026-06-17': [{ id: 'x', start: '10:00', end: '11:00', content: '발표', color: COLOR.blue, is_important: true }],
@@ -470,7 +470,7 @@ describe('상단 바의 연·월·주 탭과 요약 줄 (시험 속 오늘은 20
     render(<App />);
     const summary = screen.getByRole('region', { name: '요약' });
     expect(within(summary).getByText('올해 할 일').parentElement).toHaveTextContent('1 / 2');
-    expect(within(summary).getByText('다가오는 일정').parentElement).toHaveTextContent('1');
+    expect(within(summary).getByText('7일간 주요 일정').parentElement).toHaveTextContent('1');
     expect(within(summary).getByText('6/17 · 발표')).toBeInTheDocument();
     expect(within(summary).getByText('못 끝낸 일').parentElement).toHaveTextContent('1');
     expect(within(summary).getByText('못 끝낸 일').parentElement).not.toHaveClass('border-l-[6px]', 'border-warning'); // 세 카드 모두 같은 흰 카드 (띠 없음)
