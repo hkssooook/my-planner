@@ -9,7 +9,7 @@
 //
 // 돌려주는 값
 //   todos     { done, total }  범위 안의 할 일 (범위에 걸친 기간·종일 일정 + 범위 안 날짜의 시간 카드)
-//   upcoming  { count, next }  "7일간 주요 일정": 지금부터 7일(오늘 포함) 중 범위(from~to) 안에 들어가는 날의
+//   upcoming  { count, next }  "7일 이내 주요 일정": 지금부터 7일(오늘 포함) 중 범위(from~to) 안에 들어가는 날의
 //             ① 그 기간 안에 끝나는 기간·종일 일정 ② ★ 시간 일정. 이미 지난 것은 뺀다
 //             (오늘 끝나는 기간·종일 일정은 오늘 하루 동안 센다. 오늘의 ★ 시간 일정은 끝나는 시각이 지나면 뺀다).
 //             지난 해·달·주를 보거나, 7일보다 먼 범위를 보면 0개다.
@@ -33,7 +33,7 @@ export function summarize({ events, timeBlocks, from, to, today, now = '00:00' }
   ];
   const todos = { done: allTodos.filter((t) => t.done).length, total: allTodos.length };
 
-  // 7일간 주요 일정: [오늘, 6일 뒤]를 범위 [from, to] 안으로 자른 기간
+  // 7일 이내 주요 일정: [오늘, 6일 뒤]를 범위 [from, to] 안으로 자른 기간
   const windowFrom = today > from ? today : from;
   const lastDay = addDays(today, UPCOMING_DAYS - 1);
   const windowTo = lastDay < to ? lastDay : to;

@@ -16,7 +16,7 @@ describe('summarize (요약 줄 숫자)', () => {
     expect(r.todos).toEqual({ done: 2, total: 3 });
   });
 
-  it('7일간 주요 일정: 오늘부터 7일 안에 끝나는 기간·종일 일정과 ★ 시간 일정을 세고, 가장 가까운 것을 알려 준다', () => {
+  it('7일 이내 주요 일정: 오늘부터 7일 안에 끝나는 기간·종일 일정과 ★ 시간 일정을 세고, 가장 가까운 것을 알려 준다', () => {
     const r = summarize({
       ...YEAR,
       events: [
@@ -32,11 +32,11 @@ describe('summarize (요약 줄 숫자)', () => {
     expect(r.upcoming).toEqual({ count: 3, next: { date: '2026-06-16', title: '중요 회의' } });
   });
 
-  it('7일간 주요 일정이 없으면 0개, next는 null이다', () => {
+  it('7일 이내 주요 일정이 없으면 0개, next는 null이다', () => {
     expect(summarize({ ...YEAR, events: [], timeBlocks: {} }).upcoming).toEqual({ count: 0, next: null });
   });
 
-  it('7일간 주요 일정: 오늘의 ★ 시간 일정은 끝나는 시각이 지나면 빼고(진행 중은 센다), 오늘 끝나는 기간 일정은 오늘 하루 동안 센다', () => {
+  it('7일 이내 주요 일정: 오늘의 ★ 시간 일정은 끝나는 시각이 지나면 빼고(진행 중은 센다), 오늘 끝나는 기간 일정은 오늘 하루 동안 센다', () => {
     const r = summarize({
       ...YEAR, now: '14:30',
       events: [evt('오늘 끝남', '2026-06-13', '2026-06-15')],
@@ -49,7 +49,7 @@ describe('summarize (요약 줄 숫자)', () => {
     expect(r.upcoming).toEqual({ count: 3, next: { date: '2026-06-15', title: '오늘 끝남' } });
   });
 
-  it('7일간 주요 일정은 보는 범위 안으로 잘린다: 이번 달·이번 주 안의 날만, 지난 범위나 7일보다 먼 범위는 0개', () => {
+  it('7일 이내 주요 일정은 보는 범위 안으로 잘린다: 이번 달·이번 주 안의 날만, 지난 범위나 7일보다 먼 범위는 0개', () => {
     const events = [evt('6월 말', '2026-06-20'), evt('7월 초', '2026-07-01')];
     const base = { events, timeBlocks: {}, today: '2026-06-26' }; // 6/26 ~ 7/2
     expect(summarize({ ...base, from: '2026-06-01', to: '2026-06-30' }).upcoming.count).toBe(0); // 6/20은 지난 일
