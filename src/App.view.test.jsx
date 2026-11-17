@@ -449,3 +449,40 @@ describe('날짜 칸의 할 일 알약 (시험 속 오늘은 2026-06-15)', () =>
     expect(within(cellOf('2026-06-20')).queryByText('셋')).toBeNull();
   });
 });
+
+describe('상단 바의 연·월·주 탭과 요약 줄 (시험 속 오늘은 2026-06-15)', () => {
+  it('[연 | 월 | 주] 탭이 있고 연이 골라져 있다. 월·주는 아직 준비 중이라 눌러도 바뀌지 않는다. 점 색은 보기 색이다', async () => {
+    const user = setup();
+    const tabs = screen.getByRole('tablist', { name: '보기' });
+    expect(within(tabs).getByRole('tab', { name: '연' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(tabs).getByRole('tab', { name: /월/ })).toHaveAttribute('aria-disabled', 'true'); // 화면 낭독기에 "사용 불가"로 읽힌다
+    expect(within(tabs).getByRole('tab', { name: /주/ })).toHaveAttribute('aria-disabled', 'true');
+    await user.click(within(tabs).getByRole('tab', { name: /월/ }));
+    expect(within(tabs).getByRole('tab', { name: '연' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(tabs).getByRole('tab', { name: /월/ })).toHaveAccessibleName(/월\s*\(준비 중\)/);
+    const dots = within(tabs).getAllByRole('tab').map((tab) => tab.querySelector('[aria-hidden="true"]').className);
+    expect(dots[0]).toContain('bg-surface-blue-5');
+    expect(dots[1]).toContain('bg-surface-amber-5');
+    expect(dots[2]).toContain('bg-surface-mint-5');
+  });
+
+  it('요약 줄: 올해 할 일 진행, 다가오는 일정(7일 안), 못 끝낸 일을 저장된 일정으로 보여 준다', () => {
+    seedEvents([{ ...makeEvent(1, '여행 준비', '2026-06-01', '2026-06-03'), todos: [{ id: 'a', text: '짐', done: false }, { id: 'b', text: '표', done: true }] }]);
+    localStorage.setItem('planner_time_blocks', JSON.stringify({
+      '2026-06-17': [{ id: 'x', start: '10:00', end: '11:00', content: '발표', color: COLOR.blue, is_important: true }],
+    }));
+    render(<App />);
+    const summary = screen.getByRole('region', { name: '요약' });
+    expect(within(summary).getByText('올해 할 일').parentElement).toHaveTextContent('1 / 2');
+    expect(within(summary).getByText('다가오는 일정').parentElement).toHaveTextContent('1');
+    expect(within(summary).getByText('6/17 · 발표')).toBeInTheDocument();
+    expect(within(summary).getByText('못 끝낸 일').parentElement).toHaveTextContent('1');
+    expect(within(summary).getByText('못 끝낸 일').parentElement).toHaveClass('border-l-[6px]', 'border-warning');
+  });
+
+  it('다른 해를 고르면 범위 이름이 "2027년"으로 바뀐다', async () => {
+    const user = setup();
+    await user.click(screen.getByRole('button', { name: '다음 해' }));
+    expect(within(screen.getByRole('region', { name: '요약' })).getByText('2027년 할 일')).toBeInTheDocument();
+  });
+});

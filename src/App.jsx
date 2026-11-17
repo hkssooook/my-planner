@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
+import ViewTabs from './components/layout/ViewTabs';
+import SummaryRow from './components/layout/SummaryRow';
+import { summarize } from './utils/summary';
 import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
@@ -43,6 +46,8 @@ export default function App() {
   const [currentYear, setCurrentYear] = useState(thisYear);
   const yearOptions = getYearOptions(thisYear, YEAR_RANGE);
   const [isWrapMode, setIsWrapMode] = useState(false);
+  // 보기: 'year'(연) | 'month'(월) | 'week'(주). 월·주는 아직 준비 중이라 연만 고를 수 있다
+  const [view, setView] = useState('year');
   // 일정 패널의 보기 방식: 'list'(목록) | 'timetable'(시간표). 날짜를 넘기거나 패널을 다시 열어도 고른 값을 유지한다
   const [panelView, setPanelView] = useState('list');
 
@@ -219,6 +224,7 @@ export default function App() {
         <div className="flex items-center gap-3 mb-3 shrink-0">
           <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} onToday={goToToday} />
           <div className="ml-auto flex items-center gap-3">
+            <ViewTabs view={view} onViewChange={setView} />
             <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
             {/* 새 일정: 열린 날(없으면 오늘)의 일정 패널 + 새 일정 패널(시간 일정) */}
             <Button className="h-10 rounded-full px-4 font-semibold" onClick={() => openNewEvent(panel?.date ?? getTodayString(), 'timed')}>
@@ -226,6 +232,15 @@ export default function App() {
             </Button>
           </div>
         </div>
+
+      {/* 요약 줄: 지금 보는 해의 할 일 · 다가오는 일정 · 못 끝낸 일 (저장된 일정 기준) */}
+      <SummaryRow
+        scope={currentYear === thisYear ? '올해' : `${currentYear}년`}
+        summary={summarize({
+          events: savedEvents, timeBlocks: savedTimeBlocks,
+          from: `${currentYear}-01-01`, to: `${currentYear}-12-31`, today: getTodayString(),
+        })}
+      />
 
       {/* 아래 한 줄: 남은 높이를 모두 쓰고, 달력 상자와 패널들이 같은 높이로 선다 */}
       <div className="flex-1 min-h-0 flex gap-3">
