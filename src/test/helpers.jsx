@@ -48,6 +48,10 @@ export const queryDayPanel = () => screen.queryByRole('complementary', { name: '
 export const blockPanel = () => screen.getByRole('complementary', { name: '시간 일정 상세', hidden: true });
 export const queryBlockPanel = () => screen.queryByRole('complementary', { name: '시간 일정 상세', hidden: true });
 
+// 일정 패널 오른쪽의 새 일정 패널 ([시간 일정 | 종일 일정], 저장해야 생긴다)
+export const newPanel = () => screen.getByRole('complementary', { name: '새 일정', hidden: true });
+export const queryNewPanel = () => screen.queryByRole('complementary', { name: '새 일정', hidden: true });
+
 // 일정 패널 오른쪽의 기간 일정 상세 패널
 export const eventPanel = () => screen.getByRole('complementary', { name: '기간 일정 상세', hidden: true });
 export const queryEventPanel = () => screen.queryByRole('complementary', { name: '기간 일정 상세', hidden: true });

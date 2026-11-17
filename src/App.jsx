@@ -1,19 +1,32 @@
 import { useState } from 'react';
 
-import { COLOR_PALETTE } from './constants/colors';
 import { YEAR_RANGE } from './constants/calendar';
 import { addDays, getCurrentYear, getTodayString, getYearOptions } from './utils/date';
 import { setTodoDone } from './utils/todos';
+import { isRangeFree } from './utils/timeBlocks';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
 import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
-import PeriodEventModal from './components/modals/PeriodEventModal';
 import DayPanel from './components/panels/DayPanel';
 import BlockPanel from './components/panels/BlockPanel';
 import EventPanel from './components/panels/EventPanel';
+import NewEventPanel from './components/panels/NewEventPanel';
+
+// 새 시간 일정의 처음 시각: 1시간짜리 빈자리 중 가장 이른 곳 [시작 칸, 끝 칸).
+// 오늘이면 지금 다음 정각부터, 다른 날이면 09:00부터 찾는다. 빈자리가 없으면 09:00~10:00(저장할 때 겹친다고 알린다)
+function nextFreeHour(blocks, date) {
+  const now = new Date();
+  const from = date === getTodayString() ? Math.min(46, (now.getHours() + 1) * 2) : 18;
+  for (let slot = from; slot + 2 <= 48; slot += 1) {
+    if (isRangeFree(blocks, slot, slot + 2)) return [slot, slot + 2];
+  }
+  return [18, 20];
+}
 
 export default function App() {
   const {
@@ -39,15 +52,14 @@ export default function App() {
     });
   };
 
-  const [showPeriodModal, setShowPeriodModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
+  // 새 일정 패널(오른쪽 두 번째 패널)의 처음 값. null이면 닫혀 있다. (NewEventPanel의 draft 설명 참고)
+  //   openCount를 key로 써서, 새로 열 때마다 입력칸을 비운 새 패널을 그린다.
+  const [newDraft, setNewDraft] = useState(null);
 
-  // 날짜를 끌어서 고르면 기간 일정 등록 팝업을 연다
+  // 날짜를 두 칸 이상 끌어서 고르면: 시작한 날의 일정 패널 + 새 일정 패널(종일, 고른 기간 채움)을 연다.
+  // 고른 칸의 모양(파랑 테두리)은 새 일정을 저장하거나 취소할 때까지 남겨 둔다. (어디에 생길지 보이게)
   const { selectionStart, selectionEnd, handleMouseDown, handleMouseEnter, clearSelection } = useDragSelect({
-    onSelect: (start, end) => {
-      setNewEvent(prev => ({ ...prev, start_date: start, end_date: end }));
-      setShowPeriodModal(true);
-    },
+    onSelect: (start, end) => openNewEvent(start, 'allday', { startDate: start, endDate: end }, { keepSelection: true }),
   });
 
   // 오른쪽 일정 패널. null이면 닫힘.
@@ -71,7 +83,7 @@ export default function App() {
   const selectBlock = (id) => {
     if (id !== selectedBlockId) releaseBlock();
     setSelectedBlockId(id);
-    if (id !== null) setOpenEventId(null);
+    if (id !== null) { setOpenEventId(null); closeNewEvent(); }
   };
 
   // 기간 일정을 고른다(기간 일정 상세 패널을 연다). id가 null이면 닫는다. 열려 있던 시간 카드 상세 패널은 닫는다.
@@ -79,6 +91,32 @@ export default function App() {
     releaseBlock();
     setSelectedBlockId(null);
     setOpenEventId(id);
+    if (id !== null) closeNewEvent();
+  };
+
+  // 새 일정 패널을 닫는다. 끌어서 고른 칸의 모양도 지운다.
+  const closeNewEvent = () => {
+    setNewDraft(null);
+    clearSelection();
+  };
+
+  // 새 일정 패널을 연다. date의 일정 패널도 함께 연다(이미 그 날이 열려 있으면 그대로 둔다). 열려 있던 카드·기간 일정 상세 패널은 닫는다.
+  //   kind: 'timed'(시간 일정) | 'allday'(종일 일정),  extra: 처음 값 덮어쓰기 (예: 끈 기간 { startDate, endDate })
+  const openNewEvent = (date, kind, extra = {}, { keepSelection = false } = {}) => {
+    if (!keepSelection) clearSelection();
+    releaseBlock();
+    setSelectedBlockId(null);
+    setOpenEventId(null);
+    if (panel?.date !== date) setPanel(prev => ({ date, openCount: (prev?.openCount ?? 0) + 1 }));
+    const [startSlot, endSlot] = nextFreeHour(timeBlocks[date] || [], date);
+    setNewDraft(prev => ({ kind, date, startDate: date, endDate: date, startSlot, endSlot, ...extra, openCount: (prev?.openCount ?? 0) + 1 }));
+  };
+
+  // 새 일정 패널의 저장: 시간 일정은 그날 카드로, 종일 일정은 기간 일정으로 저장하고 패널을 닫는다
+  const saveNewEvent = (result) => {
+    if (result.kind === 'timed') addTimeBlock(newDraft.date, result.block);
+    else addEvent(result.event);
+    closeNewEvent();
   };
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -90,7 +128,7 @@ export default function App() {
   // e는 달력 칸에서 누른 경우에만 있다.
   const openDayPanel = (e, dateString, blockId = null, eventId = null) => {
     if (e) e.stopPropagation();
-    clearSelection();
+    closeNewEvent();
     releaseBlock();
     setSelectedBlockId(blockId);
     setOpenEventId(eventId);
@@ -102,6 +140,7 @@ export default function App() {
     releaseBlock();
     setSelectedBlockId(null);
     setOpenEventId(null);
+    closeNewEvent();
     setPanel(prev => ({ date: addDays(prev.date, days), openCount: prev.openCount + 1 }));
   };
 
@@ -109,18 +148,8 @@ export default function App() {
     releaseBlock();
     setSelectedBlockId(null);
     setOpenEventId(null);
+    closeNewEvent();
     setPanel(null);
-  };
-
-  const savePeriodEvent = () => {
-    if (newEvent.title.trim()) addEvent(newEvent);
-    closePeriodModal();
-  };
-
-  const closePeriodModal = () => {
-    setShowPeriodModal(false);
-    clearSelection();
-    setNewEvent({ title: '', start_date: '', end_date: '', color: COLOR_PALETTE[0].value });
   };
 
   // 기간 일정 상세 패널의 "삭제"를 누르면 확인 팝업을 띄운다.
@@ -162,11 +191,17 @@ export default function App() {
       {/* 화면 바깥 여백: 위는 머리말 안쪽 여백과 같은 24px(pt-6), 좌우와 아래는 일정 패널과 같은 12px(px-3 pb-3).
           세로로 머리말 → 보기 방식 버튼 → 달력 상자를 쌓고, 달력 상자가 남은 높이를 모두 채운다 */}
       <main className="flex-1 min-w-0 px-3 pt-6 pb-3 flex flex-col">
-        {/* 상단 바 한 줄: 왼쪽은 기간(연도) 캡슐, 오른쪽 끝은 달력 보기 방식 탭. 달력 상자와는 12px 띄운다.
-            (나중에 연·월·주 탭과 "새 일정" 버튼도 이 줄 오른쪽에 들어온다) */}
-        <div className="flex items-center justify-between gap-3 mb-3 shrink-0">
+        {/* 상단 바 한 줄: 왼쪽은 기간(연도) 캡슐, 오른쪽 끝은 달력 보기 방식 탭과 "새 일정" 버튼. 달력 상자와는 12px 띄운다.
+            (나중에 연·월·주 탭도 이 줄 오른쪽에 들어온다) */}
+        <div className="flex items-center gap-3 mb-3 shrink-0">
           <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} onToday={goToToday} />
-          <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
+          <div className="ml-auto flex items-center gap-3">
+            <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />
+            {/* 새 일정: 열린 날(없으면 오늘)의 일정 패널 + 새 일정 패널(시간 일정) */}
+            <Button className="h-10 rounded-full px-4 font-semibold" onClick={() => openNewEvent(panel?.date ?? getTodayString(), 'timed')}>
+              <Plus aria-hidden="true" />새 일정
+            </Button>
+          </div>
         </div>
 
         {/* 캘린더 섹션: 파랑 2단계 바탕(연도 구분선도 같은 색). 그 위에 월 이름 칸과 날짜 칸이 흰색(1단계)으로 떠 보인다. (리디자인 기획서 "달력 영역 = 2단계")
@@ -196,7 +231,7 @@ export default function App() {
           selectedBlockId={selectedBlockId}
           onClose={closeDayPanel}
           onMoveDay={moveDayPanel}
-          onAddAllDay={({ title, color }) => addEvent({ title, start_date: panel.date, end_date: panel.date, color })}
+          onNewEvent={(kind) => openNewEvent(panel.date, kind)}
           selectedEventId={openEventId}
           onSelectEvent={selectEvent}
           onAddBlock={(block) => addTimeBlock(panel.date, block)}
@@ -238,13 +273,14 @@ export default function App() {
         />
       )}
 
-      {/* --- 기간 일정 등록 모달 --- */}
-      {showPeriodModal && (
-        <PeriodEventModal
-          event={newEvent}
-          onChange={(changes) => setNewEvent(prev => ({ ...prev, ...changes }))}
-          onClose={closePeriodModal}
-          onSave={savePeriodEvent}
+      {/* --- 그 오른쪽: 새 일정 패널 ([시간 일정 | 종일 일정], 저장해야 생긴다) --- */}
+      {panel && newDraft && (
+        <NewEventPanel
+          key={newDraft.openCount}
+          draft={newDraft}
+          blocks={timeBlocks[newDraft.date] || []}
+          onSave={saveNewEvent}
+          onCancel={closeNewEvent}
         />
       )}
 

@@ -235,15 +235,18 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(yearSelect().compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // 연도가 먼저, 부제목이 뒤
   });
 
-  it('상단 바: ‹ 연도 › 오늘 이 흰 캡슐 하나에 있고, 보기 방식 탭은 같은 줄 오른쪽 끝에 있다', () => {
+  it('상단 바: ‹ 연도 › 오늘 이 흰 캡슐 하나에 있고, 보기 방식 탭과 "새 일정" 버튼은 같은 줄 오른쪽 끝에 있다', () => {
     render(<App />);
     const capsule = screen.getByTestId('period-capsule');
     expect(capsule).toHaveClass('bg-card', 'rounded-full');
     for (const name of ['지난해', '다음 해', '오늘']) expect(within(capsule).getByRole('button', { name })).toBeInTheDocument();
     expect(within(capsule).getByRole('button', { name: /^연도 선택/ })).toBeInTheDocument();
     const row = capsule.closest('header').parentElement;
-    expect(row).toHaveClass('flex', 'justify-between');
-    expect(within(row).getByRole('tablist', { name: '보기 방식' })).toBeInTheDocument();
+    expect(row).toHaveClass('flex');
+    // 오른쪽 끝 묶음(ml-auto): 보기 방식 탭 + "새 일정" 버튼
+    const right = within(row).getByRole('tablist', { name: '보기 방식' }).closest('.ml-auto');
+    expect(right).toBeInTheDocument();
+    expect(within(right).getByRole('button', { name: '새 일정' })).toBeInTheDocument();
   });
 
   it('‹ ›로 한 해씩 넘기고, 고를 수 있는 연도(올해 −1 ~ +3년)의 끝에서는 눌리지 않는다', async () => {

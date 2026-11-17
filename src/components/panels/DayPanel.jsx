@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import ColorPicker from '../common/ColorPicker';
 import { Button } from '@/components/ui/button';
 import { COLOR_PALETTE } from '../../constants/colors';
 import { eventColors } from '../../utils/color';
@@ -28,26 +27,25 @@ function rangeLabel(evt, date) {
 //   ① 머리말: 날짜, 전날/다음 날, 닫기
 //   ② 일정: 그날의 기간·종일 일정과 시간 일정을 한 목록으로 (누르면 오른쪽에 기간 일정 상세 / 카드 상세 패널)
 //      [목록 | 시간표] 스위치(view)로 보는 방식을 바꾼다.
-//        목록: 한 줄 목록 + 종일 일정 추가(이름 + 색)
-//        시간표: 종일 줄 + 0~24시 30분 칸 시간표. 빈 칸을 끌면 카드가 생기고, 카드를 누르면 오른쪽에 카드 상세 패널이 열린다.
+//        목록: 한 줄 목록 + "+ 일정 더하기"(오른쪽에 새 일정 패널) + 할 일 구역
+//        시간표: 종일 줄("+ 종일") + 0~24시 30분 칸 시간표. 빈 칸을 끌면 카드가 생기고, 카드를 누르면 오른쪽에 카드 상세 패널이 열린다.
 // 날짜가 바뀌면 부모가 key를 바꿔 이 부품을 새로 그린다. (입력 중이던 상태가 다른 날짜로 넘어가지 않게)
 //
 //   dayEvents         그날에 걸친 기간·종일 일정 목록
 //   blocks            그날의 시간 일정 카드 목록
 //   selectedBlockId   카드 상세 패널에 열린 카드
+//   onNewEvent(kind)  새 일정 패널을 연다. kind는 'timed' | 'allday'
 //   view, onViewChange(view)  일정 보기 방식 'list' | 'timetable'
 //   onToggleTodo(kind, sourceId, todoId, done)  할 일 구역에서 체크를 바꿨을 때. kind는 'event'(기간 일정) | 'block'(시간 카드)
 //   onAddBlock(block) 새 카드 저장,  onChangeBlock(id, changes) 카드 시각 등 고치기,  onSelectBlock(id) 카드 고르기(상세 패널 열기)
 export default function DayPanel({
   date, dayEvents, blocks, selectedBlockId = null,
   onClose, onMoveDay,
-  onAddAllDay, selectedEventId = null, onSelectEvent,
+  onNewEvent, selectedEventId = null, onSelectEvent,
   onAddBlock, onChangeBlock, onSelectBlock,
   view = 'list', onViewChange,
   onToggleTodo,
 }) {
-  const [allDayTitle, setAllDayTitle] = useState('');
-  const [allDayColor, setAllDayColor] = useState(COLOR_PALETTE[0].value);
   // 키보드로 추가하기: 시작·끝 칸 번호 (처음에는 09:00~10:00)
   const [addStart, setAddStart] = useState(18);
   const [addEnd, setAddEnd] = useState(20);
@@ -83,11 +81,6 @@ export default function DayPanel({
     createBlock(addStart, addEnd);
   };
 
-  const addAllDay = () => {
-    if (!allDayTitle.trim()) return;
-    onAddAllDay({ title: allDayTitle.trim(), color: allDayColor });
-    setAllDayTitle('');
-  };
 
   // 기간·종일 일정 한 줄 (목록 모드와 시간표 모드의 "종일" 줄이 함께 쓴다)
   const eventRow = (evt) => {
@@ -200,39 +193,30 @@ export default function DayPanel({
               {dayEvents.length + blocks.length === 0 && (
                 <p className="text-xs text-muted-foreground">이 날의 일정이 없어요.</p>
               )}
+              {/* 새 일정 패널(오른쪽)을 시간 일정으로 연다 */}
+              <button
+                type="button" onClick={() => onNewEvent('timed')}
+                className="mt-2 w-full min-h-9 rounded-md border-[1.5px] border-dashed border-surface-blue-3 text-sm font-semibold text-primary hover:bg-surface-blue-1 hover:border-primary"
+              >
+                + 일정 더하기
+              </button>
             </div>
 
             {todoSection}
 
-            <section aria-labelledby="day-panel-add" className="shrink-0 border-t border-border pt-4">
-              <h4 id="day-panel-add" className="text-sm font-semibold text-foreground mb-2">종일 일정 추가</h4>
-              <form
-                className="flex flex-col gap-2"
-                onSubmit={(e) => { e.preventDefault(); addAllDay(); }}
-              >
-                <div className="flex gap-2">
-                  <input
-                    type="text" placeholder="예: 워크숍 일정" aria-label="종일 일정명" value={allDayTitle}
-                    onChange={(e) => setAllDayTitle(e.target.value)}
-                    className="flex-1 min-w-0 px-3 py-1.5 border border-input rounded-md focus:outline-hidden focus:ring-2 focus:ring-ring text-sm"
-                  />
-                  {/* 바탕은 파랑 2단계 (secondary 토큰 = #E4E5FF) */}
-                  <Button type="submit" variant="secondary" size="sm">추가</Button>
-                </div>
-                <ColorPicker size="md" label="종일 일정 색" value={allDayColor} onChange={setAllDayColor} />
-              </form>
-            </section>
           </>
         )}
 
         {isTimetable && (
           <div className="flex-1 min-h-[320px] flex flex-col">
             {/* 종일 줄: 기간·종일 일정은 시간표 위에 따로 둔다 (시간표를 스크롤해도 늘 보인다) */}
-            {dayEvents.length > 0 && (
-              <ul aria-label="종일 일정" className="flex flex-col gap-1.5 mb-3 shrink-0">
-                {dayEvents.map(eventRow)}
-              </ul>
-            )}
+            {/* 종일 줄 오른쪽 "+ 종일": 새 일정 패널을 종일 일정으로 연다 */}
+            <div className="flex items-start gap-2 mb-3 shrink-0">
+              {dayEvents.length > 0
+                ? <ul aria-label="종일 일정" className="flex-1 min-w-0 flex flex-col gap-1.5">{dayEvents.map(eventRow)}</ul>
+                : <p className="flex-1 text-xs text-muted-foreground py-1.5">종일 일정 없음</p>}
+              <Button variant="secondary" size="sm" onClick={() => onNewEvent('allday')}>+ 종일</Button>
+            </div>
 
             {/* 마우스 없이 만들기: 시작·끝 시각을 고르고 추가 */}
             <form

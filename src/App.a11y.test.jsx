@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, dayPanel, popup, drag, blockPanel, eventPanel, dragTime, timeCard, showTimetable } from './test/helpers';
+import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, dayPanel, drag, blockPanel, eventPanel, dragTime, timeCard, showTimetable, newPanel } from './test/helpers';
 import { COLOR_PALETTE } from './constants/colors';
 
 // 화면을 눈으로 못 보는 사람(스크린 리더)이 버튼을 알아들을 수 있는지 확인하는 시험.
@@ -68,10 +68,10 @@ describe('접근성: 보기 방식 탭', () => {
 });
 
 describe('접근성: 색 선택 버튼', () => {
-  it('색 버튼마다 색 이름이 있고, 지금 고른 색만 눌림 상태다 (기간 등록 팝업)', async () => {
+  it('색 버튼마다 색 이름이 있고, 지금 고른 색만 눌림 상태다 (새 일정 패널)', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    const group = within(popup('기간 일정 등록')).getByRole('group', { name: '일정 색' });
+    const group = within(newPanel()).getByRole('group', { name: '새 일정 색' });
     const buttons = within(group).getAllByRole('button');
     expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(COLOR_PALETTE.map((c) => c.name));
     expect(buttons.map((b) => b.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false', 'false', 'false']);
@@ -81,10 +81,12 @@ describe('접근성: 색 선택 버튼', () => {
     expect(within(group).getByRole('button', { name: '블루' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('일정 패널의 종일 색 선택기와 카드 상세 패널의 색 선택기는 이름이 서로 다르다', async () => {
+  it('새 일정 패널의 색 선택기와 카드 상세 패널의 색 선택기는 이름이 서로 다르다', async () => {
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
-    expect(within(dayPanel()).getByRole('group', { name: '종일 일정 색' })).toBeInTheDocument();
+    await user.click(within(dayPanel()).getByRole('button', { name: '+ 일정 더하기' }));
+    expect(within(newPanel()).getByRole('group', { name: '새 일정 색' })).toBeInTheDocument();
+    await user.click(within(newPanel()).getByRole('button', { name: '취소' }));
     await showTimetable(user);
     dragTime(18);
     expect(within(blockPanel()).getByRole('group', { name: '시간 일정 색' })).toBeInTheDocument();
@@ -93,20 +95,26 @@ describe('접근성: 색 선택 버튼', () => {
 });
 
 describe('접근성: 입력칸의 이름', () => {
-  it('기간 등록 팝업의 일정명 입력칸에 이름이 있다 (안내 글자만 있으면 이름이 아니다)', async () => {
+  it('새 일정 패널의 이름·날짜·시각 입력칸에 이름이 있다 (안내 글자만 있으면 이름이 아니다)', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    expect(within(popup('기간 일정 등록')).getByRole('textbox', { name: '일정명' })).toBeInTheDocument();
+    const box = newPanel();
+    expect(within(box).getByRole('textbox', { name: '이름' })).toBeInTheDocument();
+    expect(within(box).getByLabelText('새 일정 시작일')).toBeInTheDocument();
+    expect(within(box).getByLabelText('새 일정 종료일')).toBeInTheDocument();
+    expect(within(box).getByRole('tablist', { name: '일정 종류' })).toBeInTheDocument();
+    await user.click(within(box).getByRole('tab', { name: '시간 일정' }));
+    expect(within(box).getByRole('combobox', { name: '새 일정 시작 시각' })).toBeInTheDocument();
+    expect(within(box).getByRole('combobox', { name: '새 일정 끝 시각' })).toBeInTheDocument();
   });
 
-  it('일정 패널: 종일 입력칸, 시간 일정 추가 칸(시작·끝 시각)에 이름이 있고, 시간표 카드는 시각과 이름으로 읽힌다', async () => {
+  it('일정 패널: 시간 일정 추가 칸(시작·끝 시각)에 이름이 있고, 시간표 카드는 시각과 이름으로 읽힌다', async () => {
     localStorage.setItem('planner_time_blocks', JSON.stringify({ '2026-01-05': [
       { id: 'a', start: '09:30', end: '11:00', content: '회의', color: COLOR_PALETTE[0].value, is_important: true },
     ] }));
     const user = setup();
     await user.click(dayButtonOf('2026-01-05'));
     const box = dayPanel();
-    expect(within(box).getByRole('textbox', { name: '종일 일정명' })).toBeInTheDocument();
     await showTimetable(user);
     expect(within(box).getByRole('combobox', { name: '시작 시각' })).toBeInTheDocument();
     expect(within(box).getByRole('combobox', { name: '끝 시각' })).toBeInTheDocument();

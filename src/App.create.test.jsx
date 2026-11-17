@@ -1,53 +1,66 @@
 import { describe, it, expect } from 'vitest';
-import { within, waitFor } from '@testing-library/react';
-import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, showTimetable, colorButtonsIn, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popup, popupCount, queryDayPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { screen, within, waitFor } from '@testing-library/react';
+import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, showTimetable, newPanel, queryNewPanel, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popupCount, queryDayPanel, seedDaily, seedEvents, setup, stored } from './test/helpers';
 import { eventColors } from './utils/color';
 
-// 새 일정을 만드는 두 가지 방법(날짜 끌기 / 날짜 칸을 눌러 오른쪽 일정 패널 열기)을 확인하는 시험.
+// 새 일정을 만드는 방법(새 일정 패널 / 날짜 칸을 눌러 오른쪽 일정 패널 열기 / 시간표 끌기)을 확인하는 시험.
 // 공통 도우미와 "오늘 = 2026-06-15" 고정은 src/test/helpers.jsx 참고.
 
 setupTestEnvironment();
 
-describe('기간 일정 만들기 (날짜 끌기)', () => {
-  it('날짜를 끌었다 놓으면 기간이 적힌 등록 팝업이 열린다', async () => {
+describe('새 일정 패널 ([시간 일정 | 종일 일정], 저장해야 생긴다)', () => {
+  const kindTab = (name) => within(newPanel()).getByRole('tab', { name });
+
+  it('날짜를 두 칸 이상 끌었다 놓으면 시작한 날의 일정 패널과 새 일정 패널(종일, 고른 기간)이 함께 열린다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-
-    const box = popup('기간 일정 등록');
-    expect(within(box).getByText('2026-01-05 ~ 2026-01-07')).toBeInTheDocument();
+    expect(within(dayPanel()).getByRole('heading', { name: '2026년 1월 5일 (월)' })).toBeInTheDocument();
+    expect(kindTab('종일 일정')).toHaveAttribute('aria-selected', 'true');
+    expect(within(newPanel()).getByLabelText('새 일정 시작일')).toHaveValue('2026-01-05');
+    expect(within(newPanel()).getByLabelText('새 일정 종료일')).toHaveValue('2026-01-07');
+    expect(within(newPanel()).getByText('1/5–1/7 · 3일')).toBeInTheDocument();
+    await waitFor(() => expect(within(newPanel()).getByRole('textbox', { name: '이름' })).toHaveFocus());
+    expect(popupCount()).toBe(0); // 예전 기간 일정 등록 팝업은 없다
   });
 
-  it('거꾸로(뒤 날짜에서 앞 날짜로) 끌어도 기간이 날짜 순서로 적힌다', async () => {
+  it('거꾸로(뒤 날짜에서 앞 날짜로) 끌어도 기간이 날짜 순서로 채워진다', async () => {
     const user = setup();
     await drag(user, '2026-01-07', '2026-01-05');
-    expect(within(popup('기간 일정 등록')).getByText('2026-01-05 ~ 2026-01-07')).toBeInTheDocument();
+    expect(within(newPanel()).getByLabelText('새 일정 시작일')).toHaveValue('2026-01-05');
+    expect(within(newPanel()).getByLabelText('새 일정 종료일')).toHaveValue('2026-01-07');
   });
 
-  it('한 칸만 눌렀다 놓으면 팝업이 열리지 않는다', async () => {
+  it('한 칸만 눌렀다 놓으면 새 일정 패널은 열리지 않는다', async () => {
     const user = setup();
     await user.pointer([{ keys: '[MouseLeft>]', target: cellOf('2026-01-05') }, { keys: '[/MouseLeft]' }]);
-    expect(queryPopup('기간 일정 등록')).toBeNull();
+    expect(queryNewPanel()).toBeNull();
   });
 
-  it('팝업이 열려 있는 동안 고른 칸이 강조되고, 닫으면 강조가 풀린다', async () => {
+  it('새 일정 패널이 열려 있는 동안 끈 칸이 강조되고, 취소하면 강조가 풀리고 아무것도 생기지 않는다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
     expect(cellOf('2026-01-06')).toHaveClass('bg-selection', 'border-primary'); // 섹션(2단계)에 묻히지 않게 파랑 테두리도 둔다
     expect(cellOf('2026-01-08')).not.toHaveClass('bg-selection');
 
-    await user.click(buttonIn(popup('기간 일정 등록'), '취소'));
+    await user.type(within(newPanel()).getByRole('textbox', { name: '이름' }), '버릴 이름');
+    await user.click(buttonIn(newPanel(), '취소'));
+    expect(queryNewPanel()).toBeNull();
     expect(cellOf('2026-01-06')).not.toHaveClass('bg-selection');
+    expect(localStorage.getItem('planner_events')).toBeNull();
+
+    await drag(user, '2026-01-10', '2026-01-12');
+    expect(within(newPanel()).getByRole('textbox', { name: '이름' })).toHaveValue(''); // 다시 열면 비어 있다
   });
 
   it('이름과 색을 입력해 저장하면 기간의 모든 날짜 칸에 그 색의 막대가 생기고 저장소에도 저장된다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    const box = popup('기간 일정 등록');
-    await user.type(within(box).getByPlaceholderText('일정명 입력'), '여름 워크숍');
-    await user.click(colorButtonsIn(box)[2]); // 세 번째 색(핑크)
+    const box = newPanel();
+    await user.type(within(box).getByRole('textbox', { name: '이름' }), '여름 워크숍');
+    await user.click(within(within(box).getByRole('group', { name: '새 일정 색' })).getByRole('button', { name: '핑크' }));
     await user.click(buttonIn(box, '저장'));
 
-    expect(queryPopup('기간 일정 등록')).toBeNull();
+    expect(queryNewPanel()).toBeNull();
     for (const date of ['2026-01-05', '2026-01-06', '2026-01-07']) {
       expect(barIn(cellOf(date), '여름 워크숍')).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.pink).background) });
     }
@@ -55,28 +68,95 @@ describe('기간 일정 만들기 (날짜 끌기)', () => {
     expect(stored('planner_events')).toEqual([
       expect.objectContaining({ title: '여름 워크숍', start_date: '2026-01-05', end_date: '2026-01-07', color: COLOR.pink }),
     ]);
+    expect(cellOf('2026-01-06')).not.toHaveClass('bg-selection');
   });
 
-  it('이름을 비우고 저장하면 일정은 만들어지지 않고 팝업만 닫힌다', async () => {
+  it('이름 칸에서 Enter로도 저장된다', async () => {
+    const user = setup();
+    await drag(user, '2026-01-05', '2026-01-06');
+    await user.type(within(newPanel()).getByRole('textbox', { name: '이름' }), '엔터 일정{Enter}');
+    expect(stored('planner_events').map((e) => e.title)).toEqual(['엔터 일정']);
+  });
+
+  it('이름이 비어 있으면 저장하지 않고 패널에 알린다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    await user.click(buttonIn(popup('기간 일정 등록'), '저장'));
-
-    expect(queryPopup('기간 일정 등록')).toBeNull();
+    await user.click(buttonIn(newPanel(), '저장'));
+    expect(within(newPanel()).getByRole('alert')).toHaveTextContent('이름을 적어 주세요.');
     expect(localStorage.getItem('planner_events')).toBeNull();
   });
 
-  it('취소하면 일정이 만들어지지 않고, 다시 열면 입력칸이 비어 있다', async () => {
+  it('"+ 일정 더하기"는 시간 일정(다음 빈 1시간)으로 열리고, 저장하면 그날 시간 카드로 생긴다', async () => {
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(buttonIn(dayPanel(), '+ 일정 더하기'));
+    expect(kindTab('시간 일정')).toHaveAttribute('aria-selected', 'true');
+    expect(within(newPanel()).getByText('1/5 · 09:00–10:00')).toBeInTheDocument(); // 오늘이 아닌 날은 09:00부터 찾는다
+    await user.type(within(newPanel()).getByRole('textbox', { name: '이름' }), '아침 회의');
+    await user.click(within(newPanel()).getByRole('checkbox', { name: '주요 일정 (달력에 ★ 표시)' }));
+    await user.click(buttonIn(newPanel(), '저장'));
+    expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
+      expect.objectContaining({ start: '09:00', end: '10:00', content: '아침 회의', is_important: true }),
+    ]);
+    expect(within(dayPanel()).getByRole('button', { name: /^아침 회의 09:00/ })).toBeInTheDocument();
+  });
+
+  it('09:00에 카드가 있으면 그다음 빈 1시간으로 열리고, 겹치는 시각으로 바꿔 저장하면 알리고 저장하지 않는다', async () => {
+    seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(buttonIn(dayPanel(), '+ 일정 더하기'));
+    expect(within(newPanel()).getByText('1/5 · 10:00–11:00')).toBeInTheDocument(); // 09:00~10:00 회의 다음
+    await user.type(within(newPanel()).getByRole('textbox', { name: '이름' }), '겹칠 일정');
+    await user.selectOptions(within(newPanel()).getByRole('combobox', { name: '새 일정 시작 시각' }), '09:00');
+    await user.click(buttonIn(newPanel(), '저장'));
+    expect(within(newPanel()).getByRole('alert')).toHaveTextContent('이미 있는 시간 일정과 겹쳐요');
+    expect(stored('planner_time_blocks')['2026-01-05']).toHaveLength(1);
+  });
+
+  it('[시간 일정 | 종일 일정]을 바꿔도 이름은 남고, "시간" 칸만 "날짜" 칸으로 바뀐다', async () => {
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(buttonIn(dayPanel(), '+ 일정 더하기'));
+    await user.type(within(newPanel()).getByRole('textbox', { name: '이름' }), '바꿀 일정');
+    await user.click(kindTab('종일 일정'));
+    expect(within(newPanel()).getByRole('textbox', { name: '이름' })).toHaveValue('바꿀 일정');
+    expect(within(newPanel()).queryByRole('combobox', { name: '새 일정 시작 시각' })).toBeNull();
+    expect(within(newPanel()).getByLabelText('새 일정 시작일')).toHaveValue('2026-01-05');
+    await user.click(buttonIn(newPanel(), '저장'));
+    expect(stored('planner_events')).toEqual([expect.objectContaining({ title: '바꿀 일정', start_date: '2026-01-05', end_date: '2026-01-05' })]);
+  });
+
+  it('시간표 모드 종일 줄의 "+ 종일"은 종일 일정으로 연다', async () => {
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await showTimetable(user);
+    await user.click(buttonIn(dayPanel(), '+ 종일'));
+    expect(kindTab('종일 일정')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('상단 바의 "새 일정"은 오늘의 일정 패널과 새 일정 패널(시간 일정)을 연다', async () => {
+    const user = setup();
+    await user.click(screen.getByRole('button', { name: '새 일정' }));
+    expect(within(dayPanel()).getByRole('heading', { name: '2026년 6월 15일 (월)' })).toBeInTheDocument();
+    expect(kindTab('시간 일정')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('새 일정 패널은 두 번째 패널 자리 하나만 쓴다: 목록의 일정을 누르면 상세 패널로 바뀐다', async () => {
+    seedEvents([makeEvent(1, '워크숍', '2026-01-05')]);
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(buttonIn(dayPanel(), '+ 일정 더하기'));
+    await user.click(within(dayPanel()).getByRole('button', { name: /^워크숍/ }));
+    expect(queryNewPanel()).toBeNull();
+    expect(eventPanel()).toBeInTheDocument();
+  });
+
+  it('새 일정 패널의 취소는 secondary(파랑 2단계), 저장은 primary 버튼이다', async () => {
     const user = setup();
     await drag(user, '2026-01-05', '2026-01-07');
-    await user.type(within(popup('기간 일정 등록')).getByPlaceholderText('일정명 입력'), '버릴 이름');
-    await user.click(buttonIn(popup('기간 일정 등록'), '취소'));
-
-    expect(queryPopup('기간 일정 등록')).toBeNull();
-    expect(localStorage.getItem('planner_events')).toBeNull();
-
-    await drag(user, '2026-01-10', '2026-01-12');
-    expect(within(popup('기간 일정 등록')).getByPlaceholderText('일정명 입력')).toHaveValue('');
+    expect(buttonIn(newPanel(), '취소')).toHaveClass('bg-secondary', 'text-secondary-foreground');
+    expect(buttonIn(newPanel(), '저장')).toHaveClass('bg-primary', 'text-primary-foreground');
   });
 });
 
@@ -139,13 +219,6 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
     expect(popupCount()).toBe(0);
   });
 
-  it('두 칸 이상 끌면 기간 일정 등록만 열리고 패널은 열리지 않는다', async () => {
-    const user = setup();
-    await drag(user, '2026-01-05', '2026-01-07');
-    expect(popup('기간 일정 등록')).toBeInTheDocument();
-    expect(queryDayPanel()).toBeNull();
-  });
-
   describe('① 일정 구역 (기간·종일·시간 일정을 한 목록으로)', () => {
     it('그날에 걸친 기간 일정과 종일 일정이 모두 보이고, 기간 일정에는 기간과 며칠째인지가 붙는다', async () => {
       seedEvents([
@@ -199,47 +272,13 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(box).not.toHaveClass('my-6', 'rounded-t-lg', 'border-b-0');
     });
 
-    it('종일 일정 "추가" 버튼은 파랑 2단계 바탕(secondary)이다', async () => {
+    it('일정이 없으면 없다는 안내와 "+ 일정 더하기"가 보이고, 예전 "종일 일정 추가" 칸은 없다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      const add = buttonIn(within(box).getByRole('region', { name: '종일 일정 추가' }), '추가');
-      expect(add).toHaveClass('bg-secondary');
-      expect(add).not.toHaveClass('bg-background');
-    });
-
-    it('목록과 종일 일정 추가는 따로 나뉜 영역이고, 일정이 없으면 없다는 안내가 보인다', async () => {
-      const user = setup();
-      const box = await openPanel(user, '2026-01-05');
-      const list = within(box).getByRole('list', { name: '일정 목록' });
-      const add = within(box).getByRole('region', { name: '종일 일정 추가' });
       expect(within(box).getByText('이 날의 일정이 없어요.')).toBeInTheDocument();
-      expect(within(list).queryByRole('textbox')).toBeNull();
-      expect(within(add).getByRole('textbox', { name: '종일 일정명' })).toBeInTheDocument();
-    });
-
-    it('종일 일정을 입력하고 추가하면 곧바로 패널 목록과 달력 칸에 생기고 저장된다. 입력칸은 비워진다', async () => {
-      const user = setup();
-      const box = await openPanel(user, '2026-01-05');
-      await user.type(within(box).getByRole('textbox', { name: '종일 일정명' }), '종일 워크숍');
-      await user.click(within(within(box).getByRole('group', { name: '종일 일정 색' })).getByRole('button', { name: '앰버' }));
-      await user.click(buttonIn(within(box).getByRole('region', { name: '종일 일정 추가' }), '추가'));
-
-      expect(barIn(box, '종일 워크숍')).toBeInTheDocument();
-      expect(within(cellOf('2026-01-05')).getByText('종일 워크숍')).toBeInTheDocument();
-      expect(stored('planner_events')).toEqual([
-        expect.objectContaining({ title: '종일 워크숍', start_date: '2026-01-05', end_date: '2026-01-05', color: COLOR.amber }),
-      ]);
-      expect(within(box).getByRole('textbox', { name: '종일 일정명' })).toHaveValue('');
-    });
-
-    it('Enter로도 추가되고, 이름이 비어 있으면 추가되지 않는다', async () => {
-      const user = setup();
-      const box = await openPanel(user, '2026-01-05');
-      const input = within(box).getByRole('textbox', { name: '종일 일정명' });
-      await user.type(input, '   {Enter}');
-      expect(localStorage.getItem('planner_events')).toBeNull();
-      await user.type(input, '엔터 일정{Enter}');
-      expect(stored('planner_events').map((e) => e.title)).toEqual(['엔터 일정']);
+      expect(buttonIn(box, '+ 일정 더하기')).toBeInTheDocument();
+      expect(within(box).queryByRole('region', { name: '종일 일정 추가' })).toBeNull();
+      expect(within(box).queryByRole('textbox')).toBeNull();
     });
 
     it('목록의 띠를 누르면 오른쪽에 기간 일정 상세 패널이 열리고, 그 띠가 눌림 상태로 보인다', async () => {
@@ -668,36 +707,6 @@ describe('카드 상세 패널의 할 일', () => {
     expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
       expect.objectContaining({ start: '15:00', content: '', todos: [expect.objectContaining({ text: '전화하기' })] }),
     ]);
-  });
-});
-
-describe('팝업 버튼의 종류(모양): 취소는 secondary(파랑 2단계), 저장은 primary', () => {
-  it('기간 등록 팝업', async () => {
-    const user = setup();
-    await drag(user, '2026-01-05', '2026-01-07');
-    const box = popup('기간 일정 등록');
-    expect(buttonIn(box, '취소')).toHaveClass('bg-secondary', 'text-secondary-foreground');
-    expect(buttonIn(box, '저장')).toHaveClass('bg-primary', 'text-primary-foreground');
-  });
-
-  it('기간 등록 팝업: shadcn 기본 모양(바깥 여백 p-4, 둥근 모서리)이고, 버튼줄은 오른쪽 정렬이다', async () => {
-    const user = setup();
-    await drag(user, '2026-01-05', '2026-01-07');
-    const box = popup('기간 일정 등록');
-    expect(box).toHaveClass('rounded-xl', 'p-4', 'sm:max-w-sm'); // 팝업 너비: 중간
-    expect(buttonIn(box, '저장').parentElement).toHaveClass('sm:justify-end');
-    expect(buttonIn(box, '취소').parentElement).toHaveClass('sm:justify-end');
-    expect(buttonIn(box, '저장')).not.toHaveClass('flex-1'); // 폭을 반씩 나눠 갖지 않는다
-  });
-
-  it('기간 등록 팝업: 제목줄의 X 버튼으로 닫을 수 있다 (저장하지 않고 선택 표시도 풀린다)', async () => {
-    const user = setup();
-    await drag(user, '2026-01-05', '2026-01-07');
-    await user.click(within(popup('기간 일정 등록')).getByRole('button', { name: '닫기' })); // 오른쪽 위 X
-
-    expect(queryPopup('기간 일정 등록')).toBeNull();
-    expect(cellOf('2026-01-06')).not.toHaveClass('bg-selection');
-    expect(localStorage.getItem('planner_events')).toBeNull();
   });
 });
 
