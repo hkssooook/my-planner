@@ -138,7 +138,7 @@ describe('기간 일정 상세 패널', () => {
     await user.type(within(box).getByRole('textbox', { name: '새 할 일' }), '장소 예약{Enter}자료 준비{Enter}');
     await user.click(within(box).getByRole('checkbox', { name: '장소 예약 완료' }));
     expect(stored('planner_events')[0].todos.map((t) => [t.text, t.done])).toEqual([['장소 예약', true], ['자료 준비', false]]);
-    expect(within(box).getByLabelText('2개 중 1개 완료')).toHaveTextContent('1/2');
+    expect(within(box).getByLabelText('2개 중 1개 완료')).toHaveTextContent('1 / 2');
   });
 
   it('오른쪽 상세 패널은 하나만: 기간 일정을 열다가 시간 카드를 누르면 카드 상세로 바뀌고, 반대도 같다', async () => {

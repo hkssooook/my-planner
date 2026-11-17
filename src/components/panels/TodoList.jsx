@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import DeleteIcon from '../icons/DeleteIcon';
+import TodoCount from '../common/TodoCount';
 import { addTodo, removeTodo, renameTodo, setTodoDone, todoProgress } from '../../utils/todos';
 
 // 카드 상세 패널의 "할 일" 칸.
@@ -32,13 +33,10 @@ export default function TodoList({ todos, onChange }) {
 
   return (
     <section aria-labelledby="block-todos" className="flex flex-col gap-1.5">
-      <h3 id="block-todos" className="text-sm font-semibold text-foreground">
+      {/* 제목 줄: 왼쪽 "할 일", 오른쪽 끝 진행 숫자 "1 / 4" */}
+      <h3 id="block-todos" className="flex items-baseline text-sm font-semibold text-foreground">
         할 일
-        {total > 0 && (
-          <span className="ml-1.5 font-normal text-xs text-muted-foreground" aria-label={`${total}개 중 ${done}개 완료`}>
-            {done}/{total}
-          </span>
-        )}
+        {total > 0 && <TodoCount done={done} total={total} className="ml-auto text-sm" />}
       </h3>
 
       {total > 0 && (

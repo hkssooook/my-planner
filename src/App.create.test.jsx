@@ -546,15 +546,18 @@ describe('카드 상세 패널의 할 일', () => {
     expect(savedTodos()).toEqual([]);
   });
 
-  it('체크하면 완료로 저장되고 줄이 그어지며, 제목 옆에 "완료/전체"가 보인다', async () => {
+  it('체크하면 완료로 저장되고 줄이 그어지며, 제목 줄 오른쪽 끝에 "완료 / 전체"가 보인다', async () => {
     const [user, detail] = await openCard();
     await user.type(within(detail).getByRole('textbox', { name: '새 할 일' }), '하나{Enter}둘{Enter}');
-    expect(within(detail).getByLabelText('2개 중 0개 완료')).toHaveTextContent('0/2');
+    expect(within(detail).getByLabelText('2개 중 0개 완료')).toHaveTextContent('0 / 2');
 
     await user.click(within(detail).getByRole('checkbox', { name: '하나 완료' }));
     expect(savedTodos().map((t) => t.done)).toEqual([true, false]);
     expect(within(detail).getByRole('button', { name: '하나 고치기' })).toHaveClass('line-through');
-    expect(within(detail).getByLabelText('2개 중 1개 완료')).toHaveTextContent('1/2');
+    expect(within(detail).getByLabelText('2개 중 1개 완료')).toHaveTextContent('1 / 2');
+    // 진행 숫자는 제목 줄 오른쪽 끝에, 끝낸 수는 굵은 파랑으로 (리디자인: 막대 없이 "1 / 2")
+    expect(within(detail).getByLabelText('2개 중 1개 완료')).toHaveClass('ml-auto');
+    expect(within(within(detail).getByLabelText('2개 중 1개 완료')).getByText('1')).toHaveClass('font-bold', 'text-primary');
     expect(savedTodos().map((t) => t.text)).toEqual(['하나', '둘']); // 완료해도 순서는 그대로
   });
 
@@ -605,24 +608,23 @@ describe('카드 상세 패널의 할 일', () => {
     expect(within(blockPanel()).getByRole('button', { name: '회의 자료 고치기' })).toBeInTheDocument();
   });
 
-  it('시간표 카드에 할 일 진행 상황(완료/전체)이 보이고, 달력 칸에는 보이지 않는다', async () => {
+  it('시간표 카드에 할 일 진행 숫자(완료 / 전체)가 보이고, 달력 칸에는 보이지 않는다', async () => {
     const [user, detail] = await openCard();
     expect(within(timeCard('09:00')).queryByTestId('todo-progress')).toBeNull(); // 할 일이 없으면 표시 없음
 
     await user.type(within(detail).getByRole('textbox', { name: '새 할 일' }), '하나{Enter}둘{Enter}');
     await user.click(within(detail).getByRole('checkbox', { name: '하나 완료' }));
     const card = timeCard('09:00');
-    expect(within(card).getByTestId('todo-progress')).toHaveTextContent('1/2');
-    expect(within(card).getByTestId('todo-progress')).toHaveClass('opacity-70');
+    expect(within(card).getByTestId('todo-progress')).toHaveTextContent('1 / 2');
+    expect(within(card).getByTestId('todo-progress').parentElement).toHaveClass('bg-card', 'rounded-full'); // 카드 색 위에서도 읽히게 흰 알약
     // 진행 표시는 시각 바로 앞(오른쪽 끝 묶음)에 있다
-    expect(within(card).getByTestId('todo-progress').nextElementSibling).toHaveTextContent('09:00–10:00');
+    expect(within(card).getByTestId('todo-progress').parentElement.nextElementSibling).toHaveTextContent('09:00–10:00');
     expect(card).toHaveAccessibleName('09:00–10:00 회의, 할 일 2개 중 1개 완료');
 
     await user.click(within(detail).getByRole('checkbox', { name: '둘 완료' }));
-    expect(within(timeCard('09:00')).getByTestId('todo-progress')).toHaveTextContent('2/2');
-    expect(within(timeCard('09:00')).getByTestId('todo-progress')).not.toHaveClass('opacity-70'); // 다 끝내면 진하게
+    expect(within(timeCard('09:00')).getByTestId('todo-progress')).toHaveTextContent('2 / 2');
 
-    expect(within(cellOf('2026-01-05')).queryByText('2/2')).toBeNull();
+    expect(within(cellOf('2026-01-05')).queryByText('/ 2')).toBeNull();
     expect(within(cellOf('2026-01-05')).queryByTestId('todo-progress')).toBeNull();
   });
 

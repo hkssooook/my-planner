@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { SquareCheck } from 'lucide-react';
 import StarIcon from '../icons/StarIcon';
+import TodoCount from '../common/TodoCount';
 import { todoProgress, todosOf } from '../../utils/todos';
 import { eventColors } from '../../utils/color';
 import {
@@ -203,15 +203,12 @@ export default function TimeGrid({ blocks, selectedBlockId, onCreate, onChangeTi
                 <span className={`font-semibold truncate ${block.content.trim() ? '' : 'opacity-70'}`}>{name}</span>
                 {/* 오른쪽 끝 묶음: [할 일 진행 표시] [시각] */}
                 <span className="shrink-0 ml-auto flex items-start gap-1.5 text-xs/[18px] font-medium">
-                  {/* 할 일 진행 표시 (할 일이 있을 때만): 체크박스 모양 + 완료/전체. 다 끝내면 조금 더 진하게.
+                  {/* 할 일 진행 숫자 (할 일이 있을 때만): 흰 알약 안에 "1 / 4". 카드 색 위에서도 늘 같은 모양으로 읽히게 흰 바탕에 둔다.
+                      (화면 낭독기는 카드 이름에서 이미 "할 일 n개 중 m개 완료"를 읽으므로 여기서는 숨긴다)
                       달력 칸에는 일부러 넣지 않는다 (칸이 작아 복잡해 보여서) */}
                   {todos.total > 0 && (
-                    <span
-                      aria-hidden="true" data-testid="todo-progress"
-                      className={`inline-flex items-center gap-0.5 ${todos.done === todos.total ? '' : 'opacity-70'}`}
-                    >
-                      <SquareCheck className="size-3.5" />
-                      {todos.done}/{todos.total}
+                    <span aria-hidden="true" className="rounded-full bg-card px-1.5 leading-[16px] mt-px">
+                      <TodoCount data-testid="todo-progress" done={todos.done} total={todos.total} aria-label={undefined} />
                     </span>
                   )}
                   {/* 끄는 중에는 바뀔 시각을 미리 보여 준다 */}
