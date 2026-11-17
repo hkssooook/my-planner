@@ -4,7 +4,7 @@ import { formatShortDate } from '../../utils/date';
 // 상단 바 아래 요약 줄: 카드 세 장 (리디자인 기획서 ② 요약 줄). 숫자 계산은 utils/summary.js가 한다.
 //   [올해 할 일 3 / 7]  [다가오는 일정 2 · 11/18 제주 여행]  [못 끝낸 일 4]
 // 범위 이름(scope)만 보기에 따라 바뀐다: 연 보기는 "올해" (그 해가 올해가 아니면 "2027년").
-// 못 끝낸 일 카드는 흰 카드 + 왼쪽 노란(warning) 띠. 노란 카드로 칠하면 월 보기(앰버 바탕)에 묻혀서다.
+// 세 카드 모두 같은 흰 카드다. (못 끝낸 일 카드에만 있던 왼쪽 노란 띠는 2026-11-17에 없앴다)
 //
 //   scope    '올해' 등 범위 이름
 //   summary  summarize()의 결과 { todos, upcoming, overdue }
@@ -31,7 +31,7 @@ export default function SummaryRow({ scope, summary }) {
         )}
       </div>
 
-      <div className={`${card} border-l-[6px] border-warning`}>
+      <div className={card}>
         <span className={label}>못 끝낸 일</span>
         <span className={`text-lg font-bold ${overdue > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>{overdue}</span>
       </div>

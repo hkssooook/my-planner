@@ -473,7 +473,7 @@ describe('상단 바의 연·월·주 탭과 요약 줄 (시험 속 오늘은 20
     expect(within(summary).getByText('다가오는 일정').parentElement).toHaveTextContent('1');
     expect(within(summary).getByText('6/17 · 발표')).toBeInTheDocument();
     expect(within(summary).getByText('못 끝낸 일').parentElement).toHaveTextContent('1');
-    expect(within(summary).getByText('못 끝낸 일').parentElement).toHaveClass('border-l-[6px]', 'border-warning');
+    expect(within(summary).getByText('못 끝낸 일').parentElement).not.toHaveClass('border-l-[6px]', 'border-warning'); // 세 카드 모두 같은 흰 카드 (띠 없음)
   });
 
   it('다른 해를 고르면 범위 이름이 "2027년"으로 바뀐다', async () => {
