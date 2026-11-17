@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { screen, within, waitFor } from '@testing-library/react';
-import { setupTestEnvironment, saveChanges, COLOR, barIn, blockPanel, buttonIn, cellOf, showTimetable, newPanel, queryNewPanel, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popupCount, queryDayPanel, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { setupTestEnvironment, saveChanges, COLOR, barIn, blockPanel, buttonIn, cellOf, popup, showTimetable, newPanel, queryNewPanel, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popupCount, queryDayPanel, seedDaily, seedEvents, setup, stored } from './test/helpers';
 import { eventColors } from './utils/color';
 
 // 새 일정을 만드는 방법(새 일정 패널 / 날짜 칸을 눌러 오른쪽 일정 패널 열기 / 시간표 끌기)을 확인하는 시험.
@@ -479,6 +479,8 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       await openTimetable(user, '2026-01-05');
       dragTime(18);
       await user.click(buttonIn(dayPanel(), '닫기'));
+      // 끌어서 만든 카드가 저장 전이라 먼저 묻는다
+      await user.click(buttonIn(popup('저장하지 않은 변경이 있어요'), '버리고 닫기'));
       expect(queryDayPanel()).toBeNull();
       expect(queryBlockPanel()).toBeNull();
     });
@@ -708,6 +710,7 @@ describe('카드 상세 패널의 할 일', () => {
     expect(within(blockPanel()).queryByRole('button', { name: '회의 자료 고치기' })).toBeNull();
 
     await user.click(buttonIn(dayPanel(), '닫기'));
+    await user.click(buttonIn(popup('저장하지 않은 변경이 있어요'), '저장하고 닫기'));
     await user.click(dayButtonOf('2026-01-05'));
     await user.click(row('회의'));
     expect(within(blockPanel()).getByRole('button', { name: '회의 자료 고치기' })).toBeInTheDocument();

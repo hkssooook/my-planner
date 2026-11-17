@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import ColorPicker from '../common/ColorPicker';
 import TodoList from './TodoList';
+import SaveBar from '../common/SaveBar';
 import { Button } from '@/components/ui/button';
 import { daysBetween, formatShortDate } from '../../utils/date';
 import { todosOf } from '../../utils/todos';
@@ -14,7 +15,7 @@ import { todosOf } from '../../utils/todos';
 //   event              고른 일정 { id, title, start_date, end_date, color, todos? }
 //   onChange(changes)  예: onChange({ title: '워크숍' }), onChange({ start_date: '2026-01-05', end_date: '2026-01-07' })
 //   onChangeTodos(change)  할 일 목록 고치기 ("지금 목록 → 새 목록" 함수, TodoList 참고)
-export default function EventPanel({ event, onChange, onChangeTodos, onDelete, onClose }) {
+export default function EventPanel({ event, onChange, onChangeTodos, onDelete, onClose, changeCount = 0, onSave, onRevert }) {
   const titleRef = useRef(null);
   // 닫힐 때(어떤 방법으로 닫히든 이 부품이 사라질 때) 이름이 비어 있으면 처음 이름으로 되돌린다.
   const openedTitle = useRef(event.title);
@@ -99,10 +100,12 @@ export default function EventPanel({ event, onChange, onChangeTodos, onDelete, o
           <TodoList todos={todosOf(event)} onChange={onChangeTodos} />
         </div>
 
-        <p className="text-[11px] text-muted-foreground">고친 내용은 일정 패널의 [저장]을 눌러야 저장돼요.</p>
+        <p className="text-[11px] text-muted-foreground">고친 내용은 아래 [저장]을 눌러야 저장돼요.</p>
 
         <Button variant="destructive" size="sm" className="self-start" onClick={onDelete}>이 기간 일정 삭제</Button>
       </div>
+      {/* 일정 패널과 같은 저장 줄 (어느 쪽을 눌러도 같다) */}
+      <SaveBar changeCount={changeCount} onSave={onSave} onRevert={onRevert} />
     </aside>
   );
 }

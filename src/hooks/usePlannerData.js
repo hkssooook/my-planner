@@ -141,12 +141,19 @@ export default function usePlannerData() {
   const removeTimeBlockIfEmpty = (date, id) =>
     updateDayBlocks(date, (list) => list.filter((block) => block.id !== id || !isEmptyBlock(block)));
 
-  // [저장]: 고치는 중인 것을 저장소에 쓰고 "저장된 것"으로 삼는다
-  const save = () => {
+  // [저장]: 고치는 중인 것을 저장소에 쓰고 "저장된 것"으로 삼는다.
+  // emptyBlock({ date, id })을 주면 그 카드가 이름도 할 일도 없을 때 먼저 치우고 저장한다. (패널을 닫으며 저장할 때)
+  const save = (emptyBlock = null) => {
+    let blocksToSave = timeBlocks;
+    if (emptyBlock) {
+      const { date, id } = emptyBlock;
+      blocksToSave = { ...timeBlocks, [date]: (timeBlocks[date] || []).filter((block) => block.id !== id || !isEmptyBlock(block)) };
+      setTimeBlocks(blocksToSave);
+    }
     saveJSON(STORAGE_KEYS.events, events);
-    saveJSON(STORAGE_KEYS.timeBlocks, timeBlocks);
+    saveJSON(STORAGE_KEYS.timeBlocks, blocksToSave);
     setSavedEvents(events);
-    setSavedTimeBlocks(timeBlocks);
+    setSavedTimeBlocks(blocksToSave);
   };
 
   // [되돌리기]: 마지막으로 저장한 상태로 돌아간다

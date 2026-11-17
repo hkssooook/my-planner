@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { YEAR_RANGE } from './constants/calendar';
 import { addDays, getCurrentYear, getTodayString, getYearOptions } from './utils/date';
@@ -12,6 +12,7 @@ import Header from './components/layout/Header';
 import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
+import UnsavedCloseModal from './components/modals/UnsavedCloseModal';
 import DayPanel from './components/panels/DayPanel';
 import BlockPanel from './components/panels/BlockPanel';
 import EventPanel from './components/panels/EventPanel';
@@ -151,13 +152,28 @@ export default function App() {
     setPanel(prev => ({ date: addDays(prev.date, days), openCount: prev.openCount + 1 }));
   };
 
-  const closeDayPanel = () => {
+  const closePanelNow = () => {
     releaseBlock();
     setSelectedBlockId(null);
     setOpenEventId(null);
     closeNewEvent();
     setPanel(null);
   };
+
+  // 일정 패널의 X: 저장 안 한 변경이 있으면 먼저 묻는다 (닫으면 고치던 내용이 화면에서 사라져 보이므로).
+  // 날짜·카드를 옮길 때는 묻지 않는다. 고치던 내용은 옮겨도 그대로 남고 저장 줄에 계속 보이기 때문이다.
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const closeDayPanel = () => {
+    if (changeCount > 0) setShowCloseConfirm(true);
+    else closePanelNow();
+  };
+  // 저장 안 한 변경이 있으면 창을 닫거나 새로 고칠 때 브라우저가 "사이트에서 나가시겠습니까?"로 한 번 막는다
+  useEffect(() => {
+    if (changeCount === 0) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [changeCount]);
 
   // 기간 일정 상세 패널의 "삭제"를 누르면 확인 팝업을 띄운다.
   const openDeleteModal = (eventItem) => {
@@ -250,7 +266,7 @@ export default function App() {
           view={panelView}
           onViewChange={setPanelView}
           changeCount={changeCount}
-          onSave={save}
+          onSave={() => save()}
           onRevert={revert}
           onToggleTodo={(kind, id, todoId, done) => {
             const toggle = (todos) => setTodoDone(todos, todoId, done);
@@ -269,6 +285,9 @@ export default function App() {
           onChangeTodos={(change) => changeEventTodos(openEvent.id, change)}
           onDelete={() => openDeleteModal(openEvent)}
           onClose={() => selectEvent(null)}
+          changeCount={changeCount}
+          onSave={() => save()}
+          onRevert={revert}
         />
       )}
 
@@ -283,6 +302,9 @@ export default function App() {
           onChangeTodos={(change) => changeTodos(panel.date, selectedBlock.id, change)}
           onDelete={() => { removeTimeBlock(panel.date, selectedBlock.id); setSelectedBlockId(null); }}
           onClose={() => selectBlock(null)}
+          changeCount={changeCount}
+          onSave={() => save()}
+          onRevert={revert}
         />
       )}
 
@@ -294,6 +316,17 @@ export default function App() {
           blocks={timeBlocks[newDraft.date] || []}
           onSave={saveNewEvent}
           onCancel={closeNewEvent}
+        />
+      )}
+
+      {/* --- 저장 안 한 채 패널을 닫을 때 묻는 팝업 --- */}
+      {showCloseConfirm && (
+        <UnsavedCloseModal
+          changeCount={changeCount}
+          // [저장하고 닫기]: 열려 있던 빈 카드(이름도 할 일도 없음)는 치우고 저장한 뒤 닫는다
+          onSave={() => { setShowCloseConfirm(false); save(selectedBlockId ? { date: panel.date, id: selectedBlockId } : null); closePanelNow(); }}
+          onDiscard={() => { setShowCloseConfirm(false); closePanelNow(); revert(); }}
+          onCancel={() => setShowCloseConfirm(false)}
         />
       )}
 

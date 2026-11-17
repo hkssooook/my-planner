@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { render, within, fireEvent } from '@testing-library/react';
 import App from './App';
 import { setupTestEnvironment, saveChanges, COLOR, barIn, blockPanel, buttonIn, cellOf, dayButtonOf, dayPanel, eventPanel, newPanel, hexToRgb, makeEvent, popup, popupCount, queryBlockPanel, queryDayPanel, queryEventPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 import { eventColors } from './utils/color';
@@ -86,7 +86,7 @@ describe('기간 일정 상세 패널', () => {
     fireEvent.change(within(box).getByLabelText('시작일'), { target: { value: '2026-02-03' } });
     await user.click(within(within(box).getByRole('group', { name: '기간 일정 색' })).getByRole('button', { name: '앰버' }));
 
-    expect(within(box).queryByRole('button', { name: /저장/ })).toBeNull();
+    expect(within(box).getByTestId('save-bar')).toHaveTextContent('저장 안 한 변경 1개'); // 두 번째 패널에도 저장 줄이 있다
     await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(within(cellOf('2026-01-05')).queryByText('바뀐 이름')).not.toBeInTheDocument();
     expect(barIn(cellOf('2026-02-03'), '바뀐 이름')).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.amber).background) });
@@ -230,7 +230,7 @@ describe('기간 일정 삭제 (확인 팝업)', () => {
 });
 
 describe('저장 줄 (저장 버튼을 눌러야만 저장)', () => {
-  const bar = () => screen.getByTestId('save-bar');
+  const bar = () => within(dayPanel()).getByTestId('save-bar'); // 일정 패널의 저장 줄
 
   it('처음에는 "모두 저장됨"이고, 고치면 "저장 안 한 변경 n개"와 [되돌리기] [저장]이 나온다. 저장 전에는 달력과 저장소가 그대로다', async () => {
     seedEvents([makeEvent(1, '원래 이름', '2026-01-05')]);
@@ -279,5 +279,81 @@ describe('저장 줄 (저장 버튼을 눌러야만 저장)', () => {
     expect(bar()).toHaveTextContent('저장 안 한 변경 1개');
     await user.click(within(bar()).getByRole('button', { name: '저장' }));
     expect(stored('planner_events')[0].todos[0].done).toBe(true);
+  });
+});
+
+describe('저장 안 한 변경 알림 (노란 점 · 두 번째 패널 저장 줄 · 닫을 때 묻기 · 창 닫을 때 경고)', () => {
+  // 1월 5일 패널을 열고 기간 일정 이름을 고쳐 "저장 안 한 변경 1개"를 만든다
+  const editOne = async () => {
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05')]);
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(within(dayPanel()).getByRole('button', { name: /^원래 이름/ }));
+    await user.type(within(eventPanel()).getByLabelText('이름'), ' 고침');
+    return user;
+  };
+  const closeX = (user) => user.click(within(dayPanel()).getByRole('button', { name: '닫기' }));
+
+  it('저장 안 한 변경이 있으면 일정 패널 머리의 날짜 옆에 노란 점이 찍히고, 저장하면 사라진다', async () => {
+    const user = await editOne();
+    expect(within(dayPanel()).getByRole('img', { name: '저장 안 한 변경 있음' })).toHaveClass('bg-warning');
+    await saveChanges(user);
+    expect(within(dayPanel()).queryByRole('img', { name: '저장 안 한 변경 있음' })).toBeNull();
+  });
+
+  it('두 번째 패널(기간 일정)에도 같은 저장 줄이 있고, 거기서 저장해도 된다', async () => {
+    const user = await editOne();
+    const bar = within(eventPanel()).getByTestId('save-bar');
+    expect(bar).toHaveTextContent('저장 안 한 변경 1개');
+    await user.click(within(bar).getByRole('button', { name: '저장' }));
+    expect(stored('planner_events')[0].title).toBe('원래 이름 고침');
+    expect(within(dayPanel()).getByTestId('save-bar')).toHaveTextContent('모두 저장됨');
+  });
+
+  it('저장 안 한 채 X로 닫으면 묻는다: [취소]는 그대로 두고, [버리고 닫기]는 버리고 닫는다', async () => {
+    const user = await editOne();
+    await closeX(user);
+    expect(popup('저장하지 않은 변경이 있어요')).toHaveTextContent('저장 안 한 변경 1개');
+    await user.click(buttonIn(popup('저장하지 않은 변경이 있어요'), '취소'));
+    expect(queryPopup('저장하지 않은 변경이 있어요')).toBeNull();
+    expect(dayPanel()).toBeInTheDocument();
+
+    await closeX(user);
+    await user.click(buttonIn(popup('저장하지 않은 변경이 있어요'), '버리고 닫기'));
+    expect(queryDayPanel()).toBeNull();
+    expect(stored('planner_events')[0].title).toBe('원래 이름');
+    await user.click(dayButtonOf('2026-01-05'));
+    expect(within(dayPanel()).getByTestId('save-bar')).toHaveTextContent('모두 저장됨'); // 버린 변경은 남지 않는다
+  });
+
+  it('[저장하고 닫기]는 저장한 뒤 닫는다', async () => {
+    const user = await editOne();
+    await closeX(user);
+    await user.click(buttonIn(popup('저장하지 않은 변경이 있어요'), '저장하고 닫기'));
+    expect(queryDayPanel()).toBeNull();
+    expect(stored('planner_events')[0].title).toBe('원래 이름 고침');
+    expect(within(cellOf('2026-01-05')).getByText('원래 이름 고침')).toBeInTheDocument();
+  });
+
+  it('바뀐 것이 없으면 묻지 않고 바로 닫는다. 날짜를 옮길 때는 묻지 않고 고치던 내용이 그대로 남는다', async () => {
+    const user = await editOne();
+    await user.click(within(dayPanel()).getByRole('button', { name: '다음 날' }));
+    expect(queryPopup('저장하지 않은 변경이 있어요')).toBeNull();
+    expect(within(dayPanel()).getByTestId('save-bar')).toHaveTextContent('저장 안 한 변경 1개');
+    await saveChanges(user);
+    await closeX(user);
+    expect(queryPopup('저장하지 않은 변경이 있어요')).toBeNull();
+    expect(queryDayPanel()).toBeNull();
+  });
+
+  it('저장 안 한 변경이 있으면 창을 닫거나 새로 고칠 때 브라우저가 경고한다', async () => {
+    const user = await editOne();
+    const leave = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(leave);
+    expect(leave.defaultPrevented).toBe(true);
+    await saveChanges(user);
+    const leaveAfterSave = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(leaveAfterSave);
+    expect(leaveAfterSave.defaultPrevented).toBe(false);
   });
 });

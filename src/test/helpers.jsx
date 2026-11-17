@@ -61,7 +61,8 @@ export const queryEventPanel = () => screen.queryByRole('complementary', { name:
 // 일정 패널 맨 아래 저장 줄의 [저장]을 누른다 (고친 내용은 저장을 눌러야 저장소·달력에 반영된다)
 // 저장할 것이 없거나(저장 줄이 "저장됨") 패널이 닫혀 있으면 아무것도 하지 않는다.
 export const saveChanges = async (user) => {
-  const bar = screen.queryByTestId('save-bar');
+  const panel = queryDayPanel();
+  const bar = panel && within(panel).queryByTestId('save-bar'); // 일정 패널의 저장 줄 (두 번째 패널에도 같은 줄이 있다)
   const button = bar && within(bar).queryByRole('button', { name: '저장' });
   if (button) await user.click(button);
 };

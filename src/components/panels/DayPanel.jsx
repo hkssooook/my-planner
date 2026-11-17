@@ -8,6 +8,7 @@ import { SLOTS_PER_DAY, isRangeFree, makeTimeBlock, slotToTime, sortBlocks } fro
 import { todoProgress, todosOf } from '../../utils/todos';
 import StarIcon from '../icons/StarIcon';
 import TodoCount from '../common/TodoCount';
+import SaveBar from '../common/SaveBar';
 import TimeGrid from './TimeGrid';
 import DayTodos from './DayTodos';
 import SelectBox from '../common/SelectBox';
@@ -162,8 +163,10 @@ export default function DayPanel({
       <div data-testid="day-panel-pinned" className="sticky top-0 z-10 bg-card border-b border-border">
         <header className="flex items-center gap-1 px-4 py-3 border-b border-border">
           <Button variant="ghost" size="icon-sm" aria-label="전날" onClick={() => onMoveDay(-1)}><ChevronLeft /></Button>
-          <h2 ref={headingRef} tabIndex={-1} className="flex-1 text-center text-base font-semibold text-foreground focus:outline-hidden">
+          <h2 ref={headingRef} tabIndex={-1} className="flex-1 flex items-center justify-center gap-1.5 text-base font-semibold text-foreground focus:outline-hidden">
             {formatLongDate(date)}
+            {/* 저장 안 한 변경이 있으면 날짜 옆에 노란 점 */}
+            {changeCount > 0 && <span role="img" aria-label="저장 안 한 변경 있음" className="size-2 shrink-0 rounded-full bg-warning" />}
           </h2>
           <Button variant="ghost" size="icon-sm" aria-label="다음 날" onClick={() => onMoveDay(1)}><ChevronRight /></Button>
           <Button variant="ghost" size="icon-sm" aria-label="닫기" onClick={onClose} className="ml-1"><X /></Button>
@@ -258,20 +261,7 @@ export default function DayPanel({
       </section>
 
       {/* 저장 줄: 패널 맨 아래에 늘 붙어 있다. 고친 내용은 [저장]을 눌러야 저장되고 달력에 반영된다 (리디자인 기획서 "저장 규칙") */}
-      <div data-testid="save-bar" className="sticky bottom-0 z-10 shrink-0 flex items-center gap-2 border-t border-border bg-card px-4 py-3">
-        {changeCount > 0 ? (
-          <>
-            <span className="flex-1 text-xs text-foreground">저장 안 한 변경 {changeCount}개</span>
-            <Button variant="secondary" onClick={onRevert}>되돌리기</Button>
-            <Button onClick={onSave}>저장</Button>
-          </>
-        ) : (
-          <>
-            <span className="flex-1 text-xs text-muted-foreground">모두 저장됨</span>
-            <Button variant="secondary" disabled>저장됨</Button>
-          </>
-        )}
-      </div>
+      <SaveBar changeCount={changeCount} onSave={onSave} onRevert={onRevert} />
     </aside>
   );
 }
