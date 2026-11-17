@@ -399,3 +399,47 @@ describe('일정 막대·카드의 색 (연한 바탕 + 같은 계열 짙은 글
 });
 
 
+
+describe('날짜 칸의 할 일 알약 (시험 속 오늘은 2026-06-15)', () => {
+  const block = (id, todos) => ({ id, start: '09:00', end: '10:00', content: '공부', color: COLOR.blue, is_important: false, todos });
+  const todo = (id, done) => ({ id, text: `할 일 ${id}`, done });
+  const pill = (date) => within(cellOf(date)).queryByTestId('todo-pill');
+
+  it('오늘은 파랑 채움 "할 일 완료/전체", 앞으로의 날은 흰 바탕 "할 일 n", 지난 날에 남으면 "! n개 남음", 다 끝내면 "✓ 할 일 끝"', () => {
+    localStorage.setItem('planner_time_blocks', JSON.stringify({
+      '2026-06-15': [block('a', [todo(1, true), todo(2, false)])],
+      '2026-06-20': [block('b', [todo(3, false), todo(4, false)])],
+      '2026-06-10': [block('c', [todo(5, true), todo(6, false)])],
+      '2026-06-12': [block('d', [todo(7, true)])],
+      '2026-06-13': [block('e', [])],
+    }));
+    render(<App />);
+    expect(pill('2026-06-15')).toHaveTextContent('할 일 1/2');
+    expect(pill('2026-06-15')).toHaveClass('bg-primary', 'text-primary-foreground', 'rounded-full');
+    expect(pill('2026-06-20')).toHaveTextContent('할 일 2');
+    expect(pill('2026-06-20')).toHaveClass('bg-card', 'text-primary');
+    expect(pill('2026-06-10')).toHaveTextContent('! 1개 남음');
+    expect(pill('2026-06-10')).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.amber).background), color: hexToRgb(eventColors(COLOR.amber).text) });
+    expect(pill('2026-06-12')).toHaveTextContent('✓ 할 일 끝');
+    expect(pill('2026-06-12')).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.mint).background) });
+    expect(pill('2026-06-13')).toBeNull(); // 할 일이 없으면 알약도 없다
+  });
+
+  it('기간 일정의 할 일도 그 기간의 날마다 함께 센다', () => {
+    seedEvents([{ ...makeEvent(1, '여행 준비', '2026-06-19', '2026-06-21'), todos: [todo(1, false)] }]);
+    render(<App />);
+    for (const date of ['2026-06-19', '2026-06-20', '2026-06-21']) expect(pill(date)).toHaveTextContent('할 일 1');
+    expect(pill('2026-06-22')).toBeNull();
+  });
+
+  it('알약이 있는 날은 일정을 2개까지만 보이고 나머지는 "+N 더보기"로 넘긴다', () => {
+    seedEvents([
+      { ...makeEvent(1, '하나', '2026-06-20'), todos: [todo(1, false)] },
+      makeEvent(2, '둘', '2026-06-20'),
+      makeEvent(3, '셋', '2026-06-20'),
+    ]);
+    render(<App />);
+    expect(within(cellOf('2026-06-20')).getByText('+1 더보기')).toBeInTheDocument();
+    expect(within(cellOf('2026-06-20')).queryByText('셋')).toBeNull();
+  });
+});

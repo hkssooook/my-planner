@@ -145,6 +145,7 @@ export default function App() {
     selectionStart, selectionEnd,
     onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
     panelDate: panel?.date ?? null,
+    today: getTodayString(), // 할 일 알약이 오늘·지난 날·앞으로의 날을 가른다
     onOpenDay: openDayPanel,
     onShowMore: (dateString) => openDayPanel(null, dateString),
   };
