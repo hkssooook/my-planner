@@ -84,8 +84,8 @@ export default function NewEventPanel({ draft, blocks, onSave, onCancel }) {
     <aside
       aria-label="새 일정"
       onKeyDown={(e) => { if (e.key === 'Escape') onCancel(); }}
-      // 다른 상세 패널(카드·기간 일정)과 같은 높이·모양의 카드. 너비 320px, 오른쪽·아래 12px, 위 24px.
-      className="w-[320px] shrink-0 self-start mt-6 mb-3 mr-3 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-hidden flex flex-col"
+      // 일정 패널·달력 상자와 같은 높이·모양의 카드. 너비 320px. 높이는 달력과 같은 줄을 꽉 채운다(h-full, 줄은 App이 정한다).
+      className="w-[320px] shrink-0 h-full rounded-lg border border-border bg-card shadow-xs overflow-hidden flex flex-col"
     >
       <header className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <div className="flex-1 min-w-0">

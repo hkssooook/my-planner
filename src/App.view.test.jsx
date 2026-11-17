@@ -312,7 +312,7 @@ describe('머리말: 연도와 보기 방식', () => {
     expect(screen.getAllByTestId('empty-day')[0].className).not.toMatch(/\bbg-/);
     // 달력 상자는 남은 높이를 채우고 안에서 스크롤한다 (페이지는 스크롤되지 않아 상자의 둥근 모서리가 늘 보인다)
     expect(cell.closest('[data-testid="calendar-scroll"]')).toHaveClass('flex-1', 'min-h-0', 'rounded-lg', 'overflow-auto');
-    expect(cell.closest('main').parentElement).toHaveClass('h-screen', 'overflow-hidden');
+    expect(cell.closest('main').parentElement.parentElement).toHaveClass('h-screen', 'overflow-hidden'); // 화면 전체 > [상단 바, 아래 한 줄 > main]
     // 달력 상자 안쪽은 위만 4px, 좌우·아래는 0 (칸이 상자 양 끝과 바닥에 붙는다)
     expect(cell.closest('[data-testid="calendar-scroll"]').firstElementChild).toHaveClass('pt-1');
     expect(cell.closest('[data-testid="calendar-scroll"]').firstElementChild).not.toHaveClass('p-1', 'py-1', 'pb-1');

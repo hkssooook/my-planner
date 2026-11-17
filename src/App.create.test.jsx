@@ -265,11 +265,19 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(within(pinned).queryByRole('region', { name: '종일 일정 추가' })).toBeNull();
     });
 
-    it('패널은 너비 320px(두 번째 패널과 같은 너비)이고, 위는 화면 가장자리에서 24px, 오른쪽·아래는 12px 떨어진 둥근 카드다', async () => {
+    it('패널은 너비 320px(두 번째 패널과 같은 너비)의 둥근 카드이고, 달력 상자와 같은 줄에 서서 같은 높이에서 시작하고 끝난다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      expect(box).toHaveClass('w-[320px]', 'sticky', 'top-6', 'mt-6', 'mb-3', 'mr-3', 'h-[calc(100vh-36px)]', 'rounded-lg', 'border');
-      expect(box).not.toHaveClass('my-6', 'rounded-t-lg', 'border-b-0');
+      expect(box).toHaveClass('w-[320px]', 'h-full', 'rounded-lg', 'border');
+      expect(box).not.toHaveClass('mt-6', 'sticky', 'h-[calc(100vh-36px)]'); // 패널마다 따로 위 여백·높이를 계산하지 않는다
+      // 달력 상자(main)와 패널이 한 줄(flex, 사이 12px)에 나란히 있다
+      const row = box.parentElement;
+      expect(row).toHaveClass('flex', 'flex-1', 'min-h-0', 'gap-3');
+      expect(row.querySelector('main')).toContainElement(cellOf('2026-01-05'));
+      // 두 번째 패널도 같은 줄, 같은 높이
+      await user.click(buttonIn(box, '+ 일정 더하기'));
+      expect(newPanel().parentElement).toBe(row);
+      expect(newPanel()).toHaveClass('w-[320px]', 'h-full');
     });
 
     it('일정이 없으면 없다는 안내와 "+ 일정 더하기"가 보이고, 예전 "종일 일정 추가" 칸은 없다', async () => {

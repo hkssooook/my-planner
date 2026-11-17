@@ -152,9 +152,9 @@ export default function DayPanel({
   return (
     <aside
       aria-label="상세 일정 관리"
-      // 너비 320px (오른쪽 두 번째 패널과 같은 너비). 위쪽은 왼쪽 연도 카드처럼 화면 가장자리에서 24px, 오른쪽은 왼쪽 여백과 같은 12px, 아래쪽은 12px 떨어진다 (아래를 24px 띄우면 패널이 짧아 보여서 절반으로).
-      // 네 모서리 모두 둥글다(15px). 스크롤해도 그 자리에 머물고(sticky top-6), 높이는 화면 높이에서 위 24px + 아래 12px을 뺀 만큼이다.
-      className="w-[320px] shrink-0 self-start sticky top-6 mt-6 mb-3 mr-3 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
+      // 너비 320px (오른쪽 두 번째 패널과 같은 너비). 높이는 달력 상자와 같은 줄을 꽉 채워서(h-full) 달력과 같은 높이에서 시작하고 끝난다.
+      // 네 모서리 모두 둥글다(15px). 내용이 길면 패널 안에서 스크롤한다.
+      className="w-[320px] shrink-0 h-full rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
     >
       {/* 머리말과 "일정" 제목 줄([목록 | 시간표] 스위치)은 패널을 스크롤해도 위에 붙어 있다 */}
       <div data-testid="day-panel-pinned" className="sticky top-0 z-10 bg-card border-b border-border">

@@ -188,13 +188,12 @@ export default function App() {
   const openEvent = panel ? events.find(e => e.id === openEventId) ?? null : null;
 
   return (
-    // 왼쪽은 달력, 오른쪽은 (열려 있으면) 일정 패널. 달력은 패널이 열려도 계속 보인다.
-    // 화면 전체는 화면 높이에 딱 맞고 스크롤되지 않는다(h-screen overflow-hidden). 스크롤은 달력 상자와 일정 패널이 각자 안에서 한다.
-    <div className="flex bg-background h-screen overflow-hidden">
-      {/* 화면 바깥 여백: 위는 머리말 안쪽 여백과 같은 24px(pt-6), 좌우와 아래는 일정 패널과 같은 12px(px-3 pb-3).
-          세로로 머리말 → 보기 방식 버튼 → 달력 상자를 쌓고, 달력 상자가 남은 높이를 모두 채운다 */}
-      <main className="flex-1 min-w-0 px-3 pt-6 pb-3 flex flex-col">
-        {/* 상단 바 한 줄: 왼쪽은 기간(연도) 캡슐, 오른쪽 끝은 달력 보기 방식 탭과 "새 일정" 버튼. 달력 상자와는 12px 띄운다.
+    // 화면 짜임: 맨 위 상단 바(화면 전체 폭) 아래에 한 줄로 [달력 상자] [일정 패널] [두 번째 패널]이 나란히 선다.
+    // 그래서 달력과 패널들은 같은 높이에서 시작해 같은 높이에서 끝난다. 달력은 패널이 열려도 계속 보인다.
+    // 화면 전체는 화면 높이에 딱 맞고 스크롤되지 않는다(h-screen overflow-hidden). 스크롤은 달력 상자와 패널이 각자 안에서 한다.
+    // 화면 바깥 여백: 위 24px(pt-6), 좌우·아래 12px(px-3 pb-3). 상단 바와 아래 줄 사이, 줄 안의 상자 사이는 모두 12px.
+    <div className="flex flex-col bg-background h-screen overflow-hidden px-3 pt-6 pb-3">
+        {/* 상단 바 한 줄: 왼쪽은 기간(연도) 캡슐, 오른쪽 끝은 달력 보기 방식 탭과 "새 일정" 버튼.
             (나중에 연·월·주 탭도 이 줄 오른쪽에 들어온다) */}
         <div className="flex items-center gap-3 mb-3 shrink-0">
           <Header year={currentYear} onYearChange={setCurrentYear} years={yearOptions} onToday={goToToday} />
@@ -207,6 +206,9 @@ export default function App() {
           </div>
         </div>
 
+      {/* 아래 한 줄: 남은 높이를 모두 쓰고, 달력 상자와 패널들이 같은 높이로 선다 */}
+      <div className="flex-1 min-h-0 flex gap-3">
+      <main className="flex-1 min-w-0 flex flex-col">
         {/* 캘린더 섹션: 파랑 2단계 바탕(연도 구분선도 같은 색). 그 위에 월 이름 칸과 날짜 칸이 흰색(1단계)으로 떠 보인다. (리디자인 기획서 "달력 영역 = 2단계")
             남은 높이를 채우고(flex-1 min-h-0) 상자 안에서 스크롤한다. 그래서 스크롤해도 상자의 네 모서리(15px)가 늘 둥글게 보이고, 가로 스크롤 막대도 늘 상자 아래에 있다.
             가로 스크롤은 위아래·좌우 모두(overflow-auto), 화면 맞춤은 위아래만(overflow-y-auto overflow-x-hidden) */}
@@ -291,6 +293,7 @@ export default function App() {
       {showDeleteModal && (
         <DeleteConfirmModal onCancel={() => setShowDeleteModal(false)} onConfirm={deleteEvent} />
       )}
+      </div>
     </div>
   );
 }
