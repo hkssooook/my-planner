@@ -7,7 +7,7 @@ import { daysBetween, formatShortDate } from '../../utils/date';
 import { todosOf } from '../../utils/todos';
 
 // 기간·종일 일정 하나의 상세 패널. 일정 패널 오른쪽에 열린다. (시간 일정의 BlockPanel과 같은 모양)
-//   이름·기간·색·할 일을 고치면 바로 저장된다. 삭제 버튼은 부모(App)가 확인 팝업을 띄운다.
+//   이름·기간·색·할 일을 고치면 "고치는 중인 것"에 담기고, 일정 패널의 [저장]을 눌러야 저장된다. 삭제 버튼은 부모(App)가 확인 팝업을 띄운다.
 //   기간 일정은 이름이 꼭 있어야 해서, 이름을 다 지운 채 닫으면 패널을 열 때의 이름으로 되돌린다.
 //   Esc 키로도 닫힌다.
 //
@@ -99,7 +99,7 @@ export default function EventPanel({ event, onChange, onChangeTodos, onDelete, o
           <TodoList todos={todosOf(event)} onChange={onChangeTodos} />
         </div>
 
-        <p className="text-[11px] text-muted-foreground">입력하면 바로 저장돼요.</p>
+        <p className="text-[11px] text-muted-foreground">고친 내용은 일정 패널의 [저장]을 눌러야 저장돼요.</p>
 
         <Button variant="destructive" size="sm" className="self-start" onClick={onDelete}>이 기간 일정 삭제</Button>
       </div>

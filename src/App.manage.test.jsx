@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render, within, fireEvent } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, dayPanel, eventPanel, hexToRgb, makeEvent, popup, popupCount, queryBlockPanel, queryDayPanel, queryEventPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { setupTestEnvironment, saveChanges, COLOR, barIn, blockPanel, buttonIn, cellOf, dayButtonOf, dayPanel, eventPanel, newPanel, hexToRgb, makeEvent, popup, popupCount, queryBlockPanel, queryDayPanel, queryEventPanel, queryPopup, seedDaily, seedEvents, setup, stored } from './test/helpers';
 import { eventColors } from './utils/color';
 
 // 만들어 둔 일정을 보고(+N 더보기), 기간 일정 상세 패널에서 고치고, 지우는 동작을 확인하는 시험.
@@ -74,7 +74,7 @@ const openEvent = async (user, date, title) => {
 };
 
 describe('기간 일정 상세 패널', () => {
-  it('이름·기간·색을 바꾸면 저장 버튼 없이 바로 달력과 저장소에 반영되고, 이전 날짜 칸에서는 사라진다', async () => {
+  it('이름·기간·색을 바꾸고 저장을 누르면 달력과 저장소에 반영되고, 이전 날짜 칸에서는 사라진다', async () => {
     seedEvents([makeEvent(1, '원래 이름', '2026-01-05', '2026-01-06', COLOR.blue)]);
     const user = setup();
     const box = await openEvent(user, '2026-01-05', '원래 이름');
@@ -87,6 +87,7 @@ describe('기간 일정 상세 패널', () => {
     await user.click(within(within(box).getByRole('group', { name: '기간 일정 색' })).getByRole('button', { name: '앰버' }));
 
     expect(within(box).queryByRole('button', { name: /저장/ })).toBeNull();
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(within(cellOf('2026-01-05')).queryByText('바뀐 이름')).not.toBeInTheDocument();
     expect(barIn(cellOf('2026-02-03'), '바뀐 이름')).toHaveStyle({ backgroundColor: hexToRgb(eventColors(COLOR.amber).background) });
     expect(within(cellOf('2026-02-04')).getByText('바뀐 이름')).toBeInTheDocument();
@@ -101,8 +102,10 @@ describe('기간 일정 상세 패널', () => {
     const user = setup();
     const box = await openEvent(user, '2026-01-05', '기간');
     fireEvent.change(within(box).getByLabelText('시작일'), { target: { value: '2026-01-10' } });
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_events')[0]).toEqual(expect.objectContaining({ start_date: '2026-01-10', end_date: '2026-01-10' }));
     fireEvent.change(within(box).getByLabelText('종료일'), { target: { value: '2026-01-08' } });
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_events')[0]).toEqual(expect.objectContaining({ start_date: '2026-01-08', end_date: '2026-01-08' }));
   });
 
@@ -137,6 +140,7 @@ describe('기간 일정 상세 패널', () => {
     const box = await openEvent(user, '2026-01-06', '워크숍');
     await user.type(within(box).getByRole('textbox', { name: '새 할 일' }), '장소 예약{Enter}자료 준비{Enter}');
     await user.click(within(box).getByRole('checkbox', { name: '장소 예약 완료' }));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_events')[0].todos.map((t) => [t.text, t.done])).toEqual([['장소 예약', true], ['자료 준비', false]]);
     expect(within(box).getByLabelText('2개 중 1개 완료')).toHaveTextContent('1 / 2');
   });
@@ -170,9 +174,11 @@ describe('기간 일정 상세 패널', () => {
     const user = setup();
     const box = await openEvent(user, '2026-01-05', '옛날 종일 일정');
     await user.type(within(box).getByLabelText('이름'), ' (고침)');
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_events')[0]).toEqual(expect.objectContaining({ id: 1794558320889.4521, title: '옛날 종일 일정 (고침)' }));
     await user.click(buttonIn(box, '이 기간 일정 삭제'));
     await user.click(buttonIn(popup('일정 삭제'), '확인'));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_events')).toEqual([]);
   });
 });
@@ -220,5 +226,58 @@ describe('기간 일정 삭제 (확인 팝업)', () => {
     const box = popup('일정 삭제');
     expect(buttonIn(box, '취소')).toHaveClass('bg-secondary', 'text-secondary-foreground', 'h-8', 'rounded-lg');
     expect(buttonIn(box, '확인')).toHaveClass('bg-destructive/10', 'text-destructive', 'h-8', 'rounded-lg');
+  });
+});
+
+describe('저장 줄 (저장 버튼을 눌러야만 저장)', () => {
+  const bar = () => screen.getByTestId('save-bar');
+
+  it('처음에는 "모두 저장됨"이고, 고치면 "저장 안 한 변경 n개"와 [되돌리기] [저장]이 나온다. 저장 전에는 달력과 저장소가 그대로다', async () => {
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05')]);
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    expect(bar()).toHaveTextContent('모두 저장됨');
+    expect(within(bar()).getByRole('button', { name: '저장됨' })).toBeDisabled();
+
+    await user.click(within(dayPanel()).getByRole('button', { name: /^원래 이름/ }));
+    const title = within(eventPanel()).getByLabelText('이름');
+    await user.clear(title);
+    await user.type(title, '새 이름');
+    expect(bar()).toHaveTextContent('저장 안 한 변경 1개');
+    expect(within(cellOf('2026-01-05')).getByText('원래 이름')).toBeInTheDocument(); // 달력은 저장된 것
+    expect(stored('planner_events')[0].title).toBe('원래 이름');
+    expect(within(dayPanel()).getByRole('button', { name: /^새 이름/ })).toBeInTheDocument(); // 패널은 고치는 중인 것
+
+    await user.click(within(bar()).getByRole('button', { name: '저장' }));
+    expect(bar()).toHaveTextContent('모두 저장됨');
+    expect(within(cellOf('2026-01-05')).getByText('새 이름')).toBeInTheDocument();
+    expect(stored('planner_events')[0].title).toBe('새 이름');
+  });
+
+  it('[되돌리기]는 고치던 것을 모두 버리고 마지막으로 저장한 상태로 돌아간다', async () => {
+    seedEvents([makeEvent(1, '원래 이름', '2026-01-05')]);
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(within(dayPanel()).getByRole('button', { name: /^원래 이름/ }));
+    await user.type(within(eventPanel()).getByLabelText('이름'), ' 고침');
+    await user.click(within(dayPanel()).getByRole('button', { name: '+ 일정 더하기' }));
+    await user.click(within(newPanel()).getByRole('button', { name: '취소' }));
+    expect(bar()).toHaveTextContent('저장 안 한 변경 1개');
+
+    await user.click(within(bar()).getByRole('button', { name: '되돌리기' }));
+    expect(bar()).toHaveTextContent('모두 저장됨');
+    expect(within(dayPanel()).getByRole('button', { name: /^원래 이름/ })).toBeInTheDocument();
+    expect(stored('planner_events')[0].title).toBe('원래 이름');
+  });
+
+  it('할 일 체크도 저장을 눌러야 저장된다', async () => {
+    seedEvents([{ ...makeEvent(1, '준비', '2026-01-05'), todos: [{ id: 't', text: '자료', done: false }] }]);
+    const user = setup();
+    await user.click(dayButtonOf('2026-01-05'));
+    await user.click(within(dayPanel()).getByRole('checkbox', { name: /자료/ }));
+    expect(stored('planner_events')[0].todos[0].done).toBe(false);
+    expect(bar()).toHaveTextContent('저장 안 한 변경 1개');
+    await user.click(within(bar()).getByRole('button', { name: '저장' }));
+    expect(stored('planner_events')[0].todos[0].done).toBe(true);
   });
 });

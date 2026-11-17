@@ -36,6 +36,7 @@ function rangeLabel(evt, date) {
 //   selectedBlockId   카드 상세 패널에 열린 카드
 //   onNewEvent(kind)  새 일정 패널을 연다. kind는 'timed' | 'allday'
 //   view, onViewChange(view)  일정 보기 방식 'list' | 'timetable'
+//   changeCount, onSave(), onRevert()  저장 줄: 저장 안 한 변경 개수, [저장], [되돌리기]
 //   onToggleTodo(kind, sourceId, todoId, done)  할 일 구역에서 체크를 바꿨을 때. kind는 'event'(기간 일정) | 'block'(시간 카드)
 //   onAddBlock(block) 새 카드 저장,  onChangeBlock(id, changes) 카드 시각 등 고치기,  onSelectBlock(id) 카드 고르기(상세 패널 열기)
 export default function DayPanel({
@@ -45,6 +46,7 @@ export default function DayPanel({
   onAddBlock, onChangeBlock, onSelectBlock,
   view = 'list', onViewChange,
   onToggleTodo,
+  changeCount = 0, onSave, onRevert,
 }) {
   // 키보드로 추가하기: 시작·끝 칸 번호 (처음에는 09:00~10:00)
   const [addStart, setAddStart] = useState(18);
@@ -254,6 +256,22 @@ export default function DayPanel({
         )}
         {isTimetable && todoSection}
       </section>
+
+      {/* 저장 줄: 패널 맨 아래에 늘 붙어 있다. 고친 내용은 [저장]을 눌러야 저장되고 달력에 반영된다 (리디자인 기획서 "저장 규칙") */}
+      <div data-testid="save-bar" className="sticky bottom-0 z-10 shrink-0 flex items-center gap-2 border-t border-border bg-card px-4 py-3">
+        {changeCount > 0 ? (
+          <>
+            <span className="flex-1 text-xs text-foreground">저장 안 한 변경 {changeCount}개</span>
+            <Button variant="secondary" onClick={onRevert}>되돌리기</Button>
+            <Button onClick={onSave}>저장</Button>
+          </>
+        ) : (
+          <>
+            <span className="flex-1 text-xs text-muted-foreground">모두 저장됨</span>
+            <Button variant="secondary" disabled>저장됨</Button>
+          </>
+        )}
+      </div>
     </aside>
   );
 }

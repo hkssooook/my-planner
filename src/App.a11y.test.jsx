@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
-import { setupTestEnvironment, cellOf, makeEvent, seedEvents, setup, dayButtonOf, dayPanel, drag, blockPanel, eventPanel, dragTime, timeCard, showTimetable, newPanel } from './test/helpers';
+import { setupTestEnvironment, saveChanges, cellOf, makeEvent, seedEvents, setup, dayButtonOf, dayPanel, drag, blockPanel, eventPanel, dragTime, timeCard, showTimetable, newPanel } from './test/helpers';
 import { COLOR_PALETTE } from './constants/colors';
 
 // 화면을 눈으로 못 보는 사람(스크린 리더)이 버튼을 알아들을 수 있는지 확인하는 시험.
@@ -129,6 +129,7 @@ describe('접근성: 입력칸의 이름', () => {
     const detail = blockPanel();
     await user.type(within(detail).getByRole('textbox', { name: '이름' }), '열 시 회의');
     await user.click(within(detail).getByRole('checkbox', { name: '주요 일정 (달력에 ★ 표시)' }));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(JSON.parse(localStorage.getItem('planner_time_blocks'))['2026-01-05']).toEqual([
       expect.objectContaining({ start: '10:00', end: '10:30', content: '열 시 회의', is_important: true }),
     ]);

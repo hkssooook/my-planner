@@ -143,6 +143,7 @@ describe('addEvent (일정 추가)', () => {
     const { result } = renderHook(() => usePlannerData());
     act(() => result.current.addEvent(eventData('저장 확인')));
 
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_events')).toEqual([{ ...eventData('저장 확인'), id: NOW }]);
   });
 
@@ -188,6 +189,7 @@ describe('changeEvent (일정 수정)', () => {
   it('수정한 내용이 저장소에도 저장된다', () => {
     const { result } = setup();
     act(() => result.current.changeEvent({ id: 1, ...eventData('저장될 이름') }));
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_events')[0].title).toBe('저장될 이름');
   });
 
@@ -220,6 +222,7 @@ describe('removeEvent (일정 삭제)', () => {
   it('삭제한 결과가 저장소에도 반영된다', () => {
     const { result } = setup();
     act(() => result.current.removeEvent(2));
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_events').map((e) => e.title)).toEqual(['첫째']);
   });
 
@@ -237,6 +240,7 @@ describe('patchEvent · changeEventTodos (기간 일정 일부 고치기·할 �
     const { id } = result.current.events[0];
     act(() => result.current.patchEvent(id, { title: '여름 워크숍' }));
     expect(result.current.events[0]).toEqual({ ...eventData('여름 워크숍'), id });
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_events')[0].title).toBe('여름 워크숍');
   });
 
@@ -252,6 +256,7 @@ describe('patchEvent · changeEventTodos (기간 일정 일부 고치기·할 �
     });
     expect(result.current.events[0].todos.map((t) => [t.text, t.done])).toEqual([['장소 예약', true], ['자료 준비', false]]);
     expect(result.current.events[0].color).toBe('#FDCA59');
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_events')[0].todos).toHaveLength(2);
   });
 
@@ -279,6 +284,7 @@ describe('옛 형식의 id (소수)로 저장된 일정', () => {
     const { result } = setup();
     act(() => result.current.changeEvent({ id: OLD_ID, ...eventData('수정됨') }));
     expect(result.current.events[0].title).toBe('수정됨');
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_events')[0].id).toBe(OLD_ID); // 저장소를 거쳐도 id가 정확히 보존된다
   });
 
@@ -298,6 +304,7 @@ describe('saveDayBlocks (날짜별 시간 일정 카드 저장)', () => {
     act(() => result.current.saveDayBlocks('2026-01-05', [nine, ten]));
 
     expect(result.current.timeBlocks).toEqual({ '2026-01-05': [nine, ten] });
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_time_blocks')).toEqual({ '2026-01-05': [nine, ten] });
   });
 
@@ -334,6 +341,7 @@ describe('카드 하나씩 다루기 (addTimeBlock · changeTimeBlock · removeT
     act(() => result.current.addTimeBlock('2026-01-05', nine));
     act(() => result.current.addTimeBlock('2026-01-05', eight));
     expect(result.current.timeBlocks['2026-01-05'].map((b) => b.id)).toEqual(['e', 'n']);
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_time_blocks')['2026-01-05'].map((b) => b.id)).toEqual(['e', 'n']);
   });
 
@@ -351,6 +359,7 @@ describe('카드 하나씩 다루기 (addTimeBlock · changeTimeBlock · removeT
       result.current.changeTimeBlock('2026-01-05', 'e', { content: '아침 운동' });
     });
     expect(result.current.timeBlocks['2026-01-05']).toEqual([{ ...eight, content: '아침 운동' }]);
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_time_blocks')['2026-01-05'][0].content).toBe('아침 운동');
   });
 
@@ -378,6 +387,7 @@ describe('changeTodos (카드의 할 일 목록 고치기)', () => {
     act(() => result.current.addTimeBlock('2026-01-05', nine));
     act(() => result.current.changeTodos('2026-01-05', 'n', (todos) => addTodo(todos, '자료 출력')));
     expect(result.current.timeBlocks['2026-01-05'][0].todos).toEqual([{ id: expect.any(String), text: '자료 출력', done: false }]);
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_time_blocks')['2026-01-05'][0].todos.map((t) => t.text)).toEqual(['자료 출력']);
   });
 
@@ -423,7 +433,55 @@ describe('일정과 시간 일정을 한 번에 저장하는 경우', () => {
 
     expect(result.current.events.map((e) => e.title)).toEqual(['종일 일정']);
     expect(result.current.timeBlocks['2026-01-05']).toHaveLength(1);
+    act(() => result.current.save()); // 저장 버튼을 눌러야 저장소에 쓴다
     expect(saved('planner_events')).toHaveLength(1);
     expect(saved('planner_time_blocks')['2026-01-05']).toHaveLength(1);
+  });
+});
+
+describe('저장 버튼으로만 저장 (저장된 것 / 고치는 중인 것)', () => {
+  it('고치기만 하면 저장소와 "저장된 것"은 그대로이고, 고치는 중인 것만 바뀐다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addEvent(eventData('아직 저장 안 함')));
+    act(() => result.current.addTimeBlock('2026-01-05', { id: 'a', start: '09:00', end: '10:00', content: '회의', is_important: false, color: '#8DA5FD' }));
+    expect(result.current.events.map((e) => e.title)).toEqual(['아직 저장 안 함']);
+    expect(result.current.savedEvents).toEqual([]);
+    expect(result.current.savedTimeBlocks).toEqual({});
+    expect(localStorage.getItem('planner_events')).toBeNull();
+    expect(localStorage.getItem('planner_time_blocks')).toBeNull();
+    expect(result.current.changeCount).toBe(2);
+  });
+
+  it('save()를 부르면 저장소에 쓰고 "저장된 것"도 같아지며, 변경 개수는 0이 된다', () => {
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.addEvent(eventData('저장할 일정')));
+    act(() => result.current.save());
+    expect(saved('planner_events').map((e) => e.title)).toEqual(['저장할 일정']);
+    expect(result.current.savedEvents).toEqual(result.current.events);
+    expect(result.current.changeCount).toBe(0);
+  });
+
+  it('revert()는 고치던 것을 버리고 마지막으로 저장한 상태로 돌아간다', () => {
+    localStorage.setItem('planner_events', JSON.stringify([{ id: 1, ...eventData('원래 이름') }]));
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.patchEvent(1, { title: '고친 이름' }));
+    act(() => result.current.addEvent(eventData('새 일정')));
+    expect(result.current.changeCount).toBe(2);
+    act(() => result.current.revert());
+    expect(result.current.events).toEqual([{ id: 1, ...eventData('원래 이름') }]);
+    expect(result.current.changeCount).toBe(0);
+  });
+
+  it('commit 함수(새 일정 패널 저장, 삭제 확인)는 그 일정만 바로 저장하고, 고치던 다른 변경은 저장하지 않는다', () => {
+    localStorage.setItem('planner_events', JSON.stringify([{ id: 1, ...eventData('원래 이름') }, { id: 2, ...eventData('지울 일정') }]));
+    const { result } = renderHook(() => usePlannerData());
+    act(() => result.current.patchEvent(1, { title: '고친 이름' })); // 저장 안 한 변경
+    act(() => result.current.commitAddEvent(eventData('바로 저장')));
+    act(() => result.current.commitRemoveEvent(2));
+    act(() => result.current.commitAddTimeBlock('2026-01-05', { id: 'a', start: '09:00', end: '10:00', content: '회의', is_important: false, color: '#8DA5FD' }));
+    expect(saved('planner_events').map((e) => e.title)).toEqual(['원래 이름', '바로 저장']);
+    expect(saved('planner_time_blocks')['2026-01-05'].map((b) => b.id)).toEqual(['a']);
+    expect(result.current.events.map((e) => e.title)).toEqual(['고친 이름', '바로 저장']); // 고치던 것은 그대로 남는다
+    expect(result.current.changeCount).toBe(1);
   });
 });

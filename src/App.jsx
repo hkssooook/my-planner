@@ -29,9 +29,12 @@ function nextFreeHour(blocks, date) {
 }
 
 export default function App() {
+  // events·timeBlocks는 "고치는 중인 것"(패널에 보임), savedEvents·savedTimeBlocks는 "저장된 것"(달력에 보임).
+  // 패널에서 고친 내용은 일정 패널의 [저장]을 눌러야 저장되고 달력에 반영된다. (usePlannerData 설명 참고)
   const {
-    events, timeBlocks, addEvent, patchEvent, changeEventTodos, removeEvent,
-    addTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
+    events, timeBlocks, savedEvents, savedTimeBlocks, changeCount, save, revert,
+    commitAddEvent, patchEvent, changeEventTodos, commitRemoveEvent,
+    addTimeBlock, commitAddTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
   } = usePlannerData();
 
   // 앱을 연 해(올해)를 한 번 읽어 고정하고, 그 해로 시작한다. 선택 칸의 연도 목록도 이 해를 기준으로 만든다.
@@ -115,10 +118,11 @@ export default function App() {
     setNewDraft(prev => ({ kind, date, startDate: date, endDate: date, startSlot, endSlot, ...extra, openCount: (prev?.openCount ?? 0) + 1 }));
   };
 
-  // 새 일정 패널의 저장: 시간 일정은 그날 카드로, 종일 일정은 기간 일정으로 저장하고 패널을 닫는다
+  // 새 일정 패널의 저장: 시간 일정은 그날 카드로, 종일 일정은 기간 일정으로 바로 저장하고 패널을 닫는다.
+  // (새 일정 패널은 스스로 [저장]을 받으므로, 일정 패널의 저장 줄을 거치지 않고 그 일정 하나만 저장한다)
   const saveNewEvent = (result) => {
-    if (result.kind === 'timed') addTimeBlock(newDraft.date, result.block);
-    else addEvent(result.event);
+    if (result.kind === 'timed') commitAddTimeBlock(newDraft.date, result.block);
+    else commitAddEvent(result.event);
     closeNewEvent();
   };
 
@@ -162,7 +166,7 @@ export default function App() {
   };
 
   const deleteEvent = () => {
-    removeEvent(selectedEvent.id);
+    commitRemoveEvent(selectedEvent.id); // 삭제 확인 팝업에서 [확인]을 받았으므로 바로 저장한다
     if (selectedEvent.id === openEventId) setOpenEventId(null); // 지운 일정의 상세 패널도 닫는다
     setShowDeleteModal(false);
     setSelectedEvent(null);
@@ -172,8 +176,9 @@ export default function App() {
   const displayYears = [currentYear, currentYear + 1];
 
   // 달력 날짜 칸(DayCell)까지 전달할 값 묶음
+  // 달력은 "저장된 것"을 보여 준다 (저장해야 달력에 반영된다)
   const cellProps = {
-    events, timeBlocks,
+    events: savedEvents, timeBlocks: savedTimeBlocks,
     selectionStart, selectionEnd,
     onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
     panelDate: panel?.date ?? null,
@@ -244,6 +249,9 @@ export default function App() {
           onSelectBlock={selectBlock}
           view={panelView}
           onViewChange={setPanelView}
+          changeCount={changeCount}
+          onSave={save}
+          onRevert={revert}
           onToggleTodo={(kind, id, todoId, done) => {
             const toggle = (todos) => setTodoDone(todos, todoId, done);
             if (kind === 'event') changeEventTodos(id, toggle);

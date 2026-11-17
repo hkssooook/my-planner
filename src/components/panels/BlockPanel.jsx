@@ -11,7 +11,7 @@ import { todosOf } from '../../utils/todos';
 const range = (from, to) => Array.from({ length: to - from }, (_, i) => from + i); // [from, to)
 
 // 시간 일정 카드 하나의 상세 패널. 일정 패널 오른쪽에 열린다. (나중에 이 카드의 예산도 여기에 붙는다)
-//   이름·시간·색·주요(★)·할 일을 고치면 바로 저장된다. 삭제 버튼으로 카드를 지운다.
+//   이름·시간·색·주요(★)·할 일을 고치면 "고치는 중인 것"에 담기고, 일정 패널의 [저장]을 눌러야 저장된다. 삭제 버튼으로 카드를 지운다.
 //   이름도 할 일도 없이 닫으면 부모(App)가 그 카드를 지운다. (시간표를 실수로 눌러 생긴 카드를 남기지 않으려고)
 //   Esc 키로도 닫힌다.
 //
@@ -98,7 +98,7 @@ export default function BlockPanel({ date, block, blocks, onChange, onChangeTodo
           <TodoList todos={todosOf(block)} onChange={onChangeTodos} />
         </div>
 
-        <p className="text-[11px] text-muted-foreground">입력하면 바로 저장돼요. 이름도 할 일도 없이 닫으면 이 카드는 사라져요.</p>
+        <p className="text-[11px] text-muted-foreground">고친 내용은 일정 패널의 [저장]을 눌러야 저장돼요. 이름도 할 일도 없이 닫으면 이 카드는 사라져요.</p>
 
         <Button variant="destructive" size="sm" className="self-start" onClick={onDelete}>이 시간 일정 삭제</Button>
       </div>

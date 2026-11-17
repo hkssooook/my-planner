@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { screen, within, waitFor } from '@testing-library/react';
-import { setupTestEnvironment, COLOR, barIn, blockPanel, buttonIn, cellOf, showTimetable, newPanel, queryNewPanel, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popupCount, queryDayPanel, seedDaily, seedEvents, setup, stored } from './test/helpers';
+import { setupTestEnvironment, saveChanges, COLOR, barIn, blockPanel, buttonIn, cellOf, showTimetable, newPanel, queryNewPanel, dayPanel, drag, dragCard, dragTime, eventPanel, queryBlockPanel, timeCard, timeGrid, hexToRgb, dayButtonOf, makeEvent, popupCount, queryDayPanel, seedDaily, seedEvents, setup, stored } from './test/helpers';
 import { eventColors } from './utils/color';
 
 // 새 일정을 만드는 방법(새 일정 패널 / 날짜 칸을 눌러 오른쪽 일정 패널 열기 / 시간표 끌기)을 확인하는 시험.
@@ -323,13 +323,16 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       await openTimetable(user, '2026-01-05');
       dragTime(18, 20); // 09:00 칸 ~ 10:00 칸 → 09:00~10:30
 
-      expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
-        expect.objectContaining({ start: '09:00', end: '10:30', content: '', is_important: false, color: COLOR.blue }),
-      ]);
       const detail = blockPanel();
       expect(within(detail).getByText(/09:00–10:30/)).toBeInTheDocument();
       await waitFor(() => expect(within(detail).getByRole('textbox', { name: '이름' })).toHaveFocus());
       expect(timeCard('09:00')).toHaveAttribute('aria-pressed', 'true');
+      expect(localStorage.getItem('planner_time_blocks')).toBeNull(); // 끌기만 해서는 아직 저장되지 않는다
+
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
+      expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
+        expect.objectContaining({ start: '09:00', end: '10:30', content: '', is_important: false, color: COLOR.blue }),
+      ]);
     });
 
     it('카드는 시작 시각 줄 바로 아래에서 끝 시각 줄 바로 위까지 채운다 (위·아래 모두 줄에 딱 붙음)', async () => {
@@ -346,6 +349,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       dragTime(29, 27); // 14:30 칸에서 13:30 칸으로 → 13:30~15:00
       await user.type(within(blockPanel()).getByRole('textbox', { name: '이름' }), '오후');
       dragTime(40); // 20:00 칸 클릭 → 20:00~20:30
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.start, b.end])).toEqual([['13:30', '15:00'], ['20:00', '20:30']]);
     });
 
@@ -356,22 +360,25 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       dragTime(16, 24); // 08:00부터 12:00까지 끌었지만 10:00 회의 앞에서 멈춘다
       await user.type(within(blockPanel()).getByRole('textbox', { name: '이름' }), '준비');
       dragTime(21); // 10:30 칸은 회의(10:00~11:00) 안이라 아무 일도 없다
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.start, b.end, b.content])).toEqual([
         ['08:00', '10:00', '준비'],
         ['10:00', '11:00', '회의'],
       ]);
     });
 
-    it('카드 상세 패널에서 이름·색·주요를 바꾸면 바로 저장되고, 달력 칸과 시간표 카드에 반영된다 (같은 카드 id 유지)', async () => {
+    it('카드 상세 패널에서 이름·색·주요를 바꾸고 저장을 누르면 저장소와 달력 칸에 반영되고, 시간표 카드는 바로 바뀐다 (같은 카드 id 유지)', async () => {
       const user = setup();
       await openTimetable(user, '2026-01-05');
       dragTime(18, 19);
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       const id = stored('planner_time_blocks')['2026-01-05'][0].id;
       const detail = blockPanel();
       await user.type(within(detail).getByRole('textbox', { name: '이름' }), '아침 회의');
       await user.click(within(within(detail).getByRole('group', { name: '시간 일정 색' })).getByRole('button', { name: '앰버' }));
       await user.click(within(detail).getByRole('checkbox', { name: /주요 일정/ }));
 
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
         { id, start: '09:00', end: '10:00', content: '아침 회의', color: COLOR.amber, is_important: true },
       ]);
@@ -387,12 +394,14 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       dragTime(18);
       await user.click(buttonIn(blockPanel(), '시간 일정 상세 닫기'));
       expect(queryBlockPanel()).toBeNull();
-      expect(stored('planner_time_blocks')['2026-01-05']).toEqual([]);
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다 (빈 카드가 사라져 바뀐 것이 없으면 저장할 것도 없다)
+      expect(stored('planner_time_blocks')?.['2026-01-05'] ?? []).toEqual([]);
 
       dragTime(20);
       await user.type(within(blockPanel()).getByRole('textbox', { name: '이름' }), '남길 일정');
       await user.keyboard('{Escape}'); // Esc로도 닫힌다
       expect(queryBlockPanel()).toBeNull();
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => b.content)).toEqual(['남길 일정']);
     });
 
@@ -401,6 +410,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       await openTimetable(user, '2026-01-05');
       dragTime(18);
       dragTime(30);
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => b.start)).toEqual(['15:00']);
     });
 
@@ -415,6 +425,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
 
       await user.click(buttonIn(blockPanel(), '이 시간 일정 삭제'));
       expect(queryBlockPanel()).toBeNull();
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05']).toEqual([]);
       expect(within(cellOf('2026-01-05')).queryByText('아침 회의')).toBeNull();
     });
@@ -428,11 +439,13 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       await user.selectOptions(within(form).getByRole('combobox', { name: '끝 시각' }), '10:30');
       await user.click(buttonIn(form, '추가'));
       expect(within(box).getByRole('alert')).toHaveTextContent('겹쳐요');
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05']).toHaveLength(1);
 
       await user.selectOptions(within(form).getByRole('combobox', { name: '끝 시각' }), '10:00');
       await user.click(buttonIn(form, '추가'));
       expect(within(box).queryByRole('alert')).toBeNull();
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.start, b.end])).toEqual([['09:30', '10:00'], ['10:00', '11:00']]);
       expect(blockPanel()).toBeInTheDocument();
     });
@@ -455,6 +468,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       dragTime(18);
       await user.type(within(blockPanel()).getByRole('textbox', { name: '이름' }), '다음 날 일정');
 
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       const daily = stored('planner_time_blocks');
       expect(daily['2026-01-05'].map((b) => b.content)).toEqual(['이 날 일정']);
       expect(daily['2026-01-06'].map((b) => b.content)).toEqual(['다음 날 일정']);
@@ -473,8 +487,10 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       seedDaily({ '2026-01-05': [{ hour: 9, content: '회의', is_important: false, color: COLOR.blue }] });
       const user = setup();
       await openTimetable(user, '2026-01-05');
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       const id = stored('planner_time_blocks')['2026-01-05'][0].id;
       dragCard('09:00', 18, 21); // 09:00 칸을 잡고 10:30 칸으로 → 3칸 아래
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05']).toEqual([expect.objectContaining({ id, start: '10:30', end: '11:30', content: '회의' })]);
       expect(within(blockPanel()).getByText(/10:30–11:30/)).toBeInTheDocument();
       expect(within(cellOf('2026-01-05')).getByText('10:30')).toBeInTheDocument(); // 달력 칸에도 바뀐 시각
@@ -488,6 +504,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       const user = setup();
       await openTimetable(user, '2026-01-05');
       dragCard('09:00', 18, 28); // 회의를 잡고 14:00 칸으로 → 점심을 넘어간다
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
         ['점심', '12:00', '13:00'],
         ['회의', '14:00', '15:00'], // 저장 순서도 시작 시각 순서로 바뀐다
@@ -503,6 +520,7 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       const user = setup();
       await openTimetable(user, '2026-01-05');
       dragCard('09:00', 18, 25); // 회의를 12:30 칸(점심 한가운데)에 놓으면 → 점심 바로 뒤 13:00
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
         ['점심', '12:00', '13:00'],
         ['회의', '13:00', '14:00'],
@@ -515,9 +533,11 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       await openTimetable(user, '2026-01-05');
       dragCard('09:00', 19, 22, 'end'); // 끝을 11:00 칸까지 → 11:30 끝
       dragCard('09:00', 18, 16, 'start'); // 시작을 08:00 칸으로
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       const [block] = stored('planner_time_blocks')['2026-01-05'];
       expect([block.start, block.end]).toEqual(['08:00', '11:30']);
       dragCard('08:00', 22, 2, 'end'); // 끝을 시작보다 위로 끌어도 최소 30분은 남는다
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.start, b.end])).toEqual([['08:00', '08:30']]);
     });
 
@@ -555,12 +575,14 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(options(endBox)).toEqual(['10:30', '11:00', '11:30', '12:00']);
 
       await user.selectOptions(startBox, '15:00'); // 점심을 넘어 옮긴다
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].map((b) => [b.content, b.start, b.end])).toEqual([
         ['아침', '08:00', '09:00'],
         ['점심', '12:00', '13:00'],
         ['회의', '15:00', '16:00'],
       ]);
       await user.selectOptions(within(blockPanel()).getByRole('combobox', { name: '카드 끝 시각' }), '17:30');
+      await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
       expect(stored('planner_time_blocks')['2026-01-05'].at(-1)).toEqual(expect.objectContaining({ start: '15:00', end: '17:30' }));
     });
 
@@ -612,6 +634,7 @@ describe('카드 상세 패널의 할 일', () => {
     expect(input).toHaveValue('');
     expect(input).toHaveFocus();
     await user.keyboard('회의실 예약{Enter}');
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(savedTodos().map((t) => [t.text, t.done])).toEqual([['자료 출력', false], ['회의실 예약', false]]);
     expect(within(detail).getByRole('button', { name: '자료 출력 고치기' })).toBeInTheDocument();
   });
@@ -628,6 +651,7 @@ describe('카드 상세 패널의 할 일', () => {
     expect(within(detail).getByLabelText('2개 중 0개 완료')).toHaveTextContent('0 / 2');
 
     await user.click(within(detail).getByRole('checkbox', { name: '하나 완료' }));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(savedTodos().map((t) => t.done)).toEqual([true, false]);
     expect(within(detail).getByRole('button', { name: '하나 고치기' })).toHaveClass('line-through');
     expect(within(detail).getByLabelText('2개 중 1개 완료')).toHaveTextContent('1 / 2');
@@ -644,12 +668,14 @@ describe('카드 상세 패널의 할 일', () => {
     const edit = within(detail).getByRole('textbox', { name: '할 일 고치기' });
     await user.clear(edit);
     await user.type(edit, '자료 20부 출력{Enter}');
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(savedTodos().map((t) => t.text)).toEqual(['자료 20부 출력']);
 
     await user.click(within(detail).getByRole('button', { name: '자료 20부 출력 고치기' }));
     await user.type(within(detail).getByRole('textbox', { name: '할 일 고치기' }), ' 취소될 글자');
     await user.keyboard('{Escape}');
     expect(queryBlockPanel()).toBeInTheDocument();
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(savedTodos().map((t) => t.text)).toEqual(['자료 20부 출력']);
   });
 
@@ -659,9 +685,11 @@ describe('카드 상세 패널의 할 일', () => {
     await user.click(within(detail).getByRole('button', { name: '하나 고치기' }));
     await user.clear(within(detail).getByRole('textbox', { name: '할 일 고치기' }));
     await user.keyboard('{Enter}');
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(savedTodos().map((t) => t.text)).toEqual(['둘']);
 
     await user.click(within(detail).getByRole('button', { name: '둘 삭제' }));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(savedTodos()).toEqual([]);
     expect(within(detail).queryByLabelText(/개 완료$/)).toBeNull(); // 할 일이 없으면 "0/0"도 안 보인다
   });
@@ -712,6 +740,7 @@ describe('카드 상세 패널의 할 일', () => {
     dragTime(30); // 15:00 칸
     await user.type(within(blockPanel()).getByRole('textbox', { name: '새 할 일' }), '전화하기{Enter}');
     await user.click(buttonIn(blockPanel(), '시간 일정 상세 닫기'));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_time_blocks')['2026-01-05']).toEqual([
       expect.objectContaining({ start: '15:00', content: '', todos: [expect.objectContaining({ text: '전화하기' })] }),
     ]);
@@ -756,8 +785,10 @@ describe('일정 패널의 할 일 구역 (그날의 할 일을 한곳에)', () 
   it('여기서 체크하면 그 일정(시간 카드·기간 일정)의 할 일로 저장된다', async () => {
     const [user, todos] = await openWithTodos();
     await user.click(within(todos).getByRole('checkbox', { name: /문제 3번/ }));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_time_blocks')['2026-01-05'][0].todos.map((t) => t.done)).toEqual([true, false]);
     await user.click(within(todos).getByRole('checkbox', { name: /설명 줄이기/ }));
+    await saveChanges(user); // 저장을 눌러야 저장소·달력에 반영된다
     expect(stored('planner_events')[0].todos.map((t) => t.done)).toEqual([true, true]);
     expect(within(todos).getByLabelText('4개 중 3개 완료')).toBeInTheDocument();
   });
