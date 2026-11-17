@@ -27,6 +27,20 @@ const fromUtc = (ms) => new Date(ms).toISOString().slice(0, 10);
 // 며칠 앞뒤의 날짜. 예: addDays('2026-01-31', 1) → '2026-02-01'
 export const addDays = (dateString, days) => fromUtc(toUtc(dateString) + days * DAY_MS);
 
+// 그 날짜가 들어 있는 주의 일요일. 예: weekStartOf('2026-11-17') → '2026-11-15' (주 보기는 일요일부터 시작한다)
+export const weekStartOf = (dateString) => addDays(dateString, -new Date(toUtc(dateString)).getUTCDay());
+
+// 주 보기의 기간 이름. 같은 달이면 '2026년 11월 15–21일', 달이 바뀌면 '2026년 11월 29일–12월 5일',
+// 해가 바뀌면 '2026년 12월 27일–2027년 1월 2일'
+export const formatWeekRange = (start) => {
+  const end = addDays(start, 6);
+  const [y1, m1, d1] = start.split('-').map(Number);
+  const [y2, m2, d2] = end.split('-').map(Number);
+  if (y1 !== y2) return `${y1}년 ${m1}월 ${d1}일–${y2}년 ${m2}월 ${d2}일`;
+  if (m1 !== m2) return `${y1}년 ${m1}월 ${d1}일–${m2}월 ${d2}일`;
+  return `${y1}년 ${m1}월 ${d1}–${d2}일`;
+};
+
 // 두 날짜 사이가 며칠인지. 예: daysBetween('2026-01-05', '2026-01-07') → 2
 export const daysBetween = (from, to) => Math.round((toUtc(to) - toUtc(from)) / DAY_MS);
 

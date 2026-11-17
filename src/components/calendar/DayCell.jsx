@@ -17,7 +17,7 @@ const tint = (name) => {
   return { backgroundColor: background, borderColor: background, color: text };
 };
 // 칸 테두리: 달력 영역(보기 색 2단계)과 같은 색이라 보이지 않는다. 연 보기 파랑, 월 보기 앰버
-const CELL_BORDER = { blue: 'border-surface-blue-2', amber: 'border-surface-amber-2' };
+const CELL_BORDER = { blue: 'border-surface-blue-2', amber: 'border-surface-amber-2', mint: 'border-surface-mint-2' };
 
 const PILL = {
   today: { className: 'bg-primary text-primary-foreground border-primary' },
@@ -36,6 +36,7 @@ export default function DayCell({
   panelDate,
   today,
   theme = 'blue',
+  allDayOnly = false, // 주 보기 위쪽 칸: 시간 일정은 아래 시간표에 따로 나오므로 칸에는 기간·종일 일정만
   onMouseDown, onMouseEnter,
   onOpenDay, onShowMore,
 }) {
@@ -53,7 +54,7 @@ export default function DayCell({
   const isHoliday = holidayName || dayOfWeek === 0 || dayOfWeek === 6; // 공휴일·일요일(0)·토요일(6)은 쉬는 날
   
   const dayEvents = events.filter(e => e.start_date <= dateString && e.end_date >= dateString);
-  const daySchedules = [...(timeBlocks[dateString] || [])].sort((a, b) => a.start.localeCompare(b.start));
+  const daySchedules = allDayOnly ? [] : [...(timeBlocks[dateString] || [])].sort((a, b) => a.start.localeCompare(b.start));
 
   // 그날의 할 일: 그날에 걸친 기간·종일 일정과 그날 시간 카드의 할 일 (일정 패널의 할 일 구역과 같은 기준)
   const dayTodos = [...dayEvents.flatMap(todosOf), ...(timeBlocks[dateString] || []).flatMap(todosOf)];

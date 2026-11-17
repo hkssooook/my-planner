@@ -2,13 +2,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // 상단 바의 보기 탭 [● 연 | ● 월 | ● 주]. 점 색은 그 보기의 바탕 색(5단계)이다: 연 파랑 · 월 앰버 · 주 민트.
 // (리디자인 기획서 "보기별 색": 탭의 색 점이 "파랑 = 연, 앰버 = 월, 민트 = 주" 약속을 알려 준다)
-// 주 보기는 아직 만들지 않아서 "준비 중"으로 누를 수 없게 둔다.
+// ready가 false인 보기는 "준비 중"으로 누를 수 없게 둔다. (지금은 셋 다 준비됨)
 //
 //   view, onViewChange(view)  'year' | 'month' | 'week'
 const VIEWS = [
   { value: 'year', label: '연', dot: 'bg-surface-blue-5', active: 'data-active:bg-surface-blue-2', ready: true },
   { value: 'month', label: '월', dot: 'bg-surface-amber-5', active: 'data-active:bg-surface-amber-2', ready: true },
-  { value: 'week', label: '주', dot: 'bg-surface-mint-5', active: 'data-active:bg-surface-mint-2', ready: false },
+  { value: 'week', label: '주', dot: 'bg-surface-mint-5', active: 'data-active:bg-surface-mint-2', ready: true },
 ];
 
 export default function ViewTabs({ view, onViewChange }) {

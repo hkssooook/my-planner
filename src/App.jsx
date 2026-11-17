@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { YEAR_RANGE } from './constants/calendar';
-import { addDays, getCurrentYear, getDaysInMonth, getTodayString, getYearOptions } from './utils/date';
+import { addDays, formatShortDate, getCurrentYear, getDaysInMonth, getTodayString, getYearOptions, weekStartOf } from './utils/date';
 import { setTodoDone } from './utils/todos';
 import { isRangeFree } from './utils/timeBlocks';
 import { Plus } from 'lucide-react';
@@ -15,6 +15,7 @@ import { summarize } from './utils/summary';
 import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import MonthView from './components/calendar/MonthView';
+import WeekView from './components/calendar/WeekView';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import UnsavedCloseModal from './components/modals/UnsavedCloseModal';
 import DayPanel from './components/panels/DayPanel';
@@ -47,15 +48,32 @@ export default function App() {
   const [currentYear, setCurrentYear] = useState(thisYear);
   const yearOptions = getYearOptions(thisYear, YEAR_RANGE);
   const [isWrapMode, setIsWrapMode] = useState(false);
-  // 보기: 'year'(연) | 'month'(월) | 'week'(주). 주는 아직 준비 중이다
+  // 보기: 'year'(연) | 'month'(월) | 'week'(주)
   const [view, setView] = useState('year');
   // 월 보기에서 보는 달 (1~12). 해는 currentYear를 함께 쓴다. 처음에는 이번 달
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
+  // 주 보기에서 보는 주의 일요일 'YYYY-MM-DD'. 처음에는 이번 주
+  const [weekStart, setWeekStart] = useState(() => weekStartOf(getTodayString()));
   const isMonthView = view === 'month';
-  // 보기를 바꾼다. 월 보기로 갈 때 보는 해가 올해면 이번 달을 보여 준다
+  const isWeekView = view === 'week';
+  // 보기 색: 연 = 파랑, 월 = 앰버, 주 = 민트 (리디자인 기획서 "보기별 색")
+  const theme = isWeekView ? 'mint' : isMonthView ? 'amber' : 'blue';
+  // 보기를 바꾼다. 보는 해가 올해면 이번 달·이번 주를, 아니면 그 해 1월·첫 주를 보여 준다
   const changeView = (next) => {
-    if (next === 'month' && currentYear === thisYear) setCurrentMonth(new Date().getMonth() + 1);
+    const isThisYear = currentYear === thisYear;
+    if (next === 'month' && isThisYear) setCurrentMonth(new Date().getMonth() + 1);
+    if (next === 'week') setWeekStart(weekStartOf(isThisYear ? getTodayString() : `${currentYear}-01-01`));
     setView(next);
+  };
+  // 주를 옮긴다. 보는 해(요약 줄·연도 선택 기준)는 그 주의 가운데(수요일)가 속한 해로 맞춘다
+  const changeWeek = (start) => {
+    setWeekStart(start);
+    setCurrentYear(Number(addDays(start, 3).slice(0, 4)));
+  };
+  // 상단 바의 연도 선택: 주 보기에서는 그 해의 첫 주로 간다
+  const changeYear = (year) => {
+    setCurrentYear(year);
+    if (isWeekView) setWeekStart(weekStartOf(`${year}-01-01`));
   };
   // 일정 패널의 보기 방식: 'list'(목록) | 'timetable'(시간표). 날짜를 넘기거나 패널을 다시 열어도 고른 값을 유지한다
   const [panelView, setPanelView] = useState('list');
@@ -67,6 +85,7 @@ export default function App() {
     const today = getTodayString();
     setCurrentYear(thisYear);
     setCurrentMonth(Number(today.slice(5, 7)));
+    setWeekStart(weekStartOf(today));
     openDayPanel(null, today);
     requestAnimationFrame(() => {
       const cell = document.querySelector(`[data-date="${today}"]`);
@@ -206,12 +225,19 @@ export default function App() {
   // 요약 줄의 범위와 이름
   const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
   const isThisMonth = monthKey === getTodayString().slice(0, 7);
-  const summaryRange = isMonthView
-    ? { from: `${monthKey}-01`, to: `${monthKey}-${String(getDaysInMonth(currentYear, currentMonth)).padStart(2, '0')}` }
-    : { from: `${currentYear}-01-01`, to: `${currentYear}-12-31` };
-  const summaryScope = isMonthView
-    ? (isThisMonth ? '이달' : `${currentMonth}월`)
-    : (currentYear === thisYear ? '올해' : `${currentYear}년`);
+  const weekEnd = addDays(weekStart, 6);
+  const isThisWeek = getTodayString() >= weekStart && getTodayString() <= weekEnd;
+  let summaryRange; let summaryScope;
+  if (isWeekView) {
+    summaryRange = { from: weekStart, to: weekEnd };
+    summaryScope = isThisWeek ? '이번 주' : `${formatShortDate(weekStart)}–${formatShortDate(weekEnd)}`;
+  } else if (isMonthView) {
+    summaryRange = { from: `${monthKey}-01`, to: `${monthKey}-${String(getDaysInMonth(currentYear, currentMonth)).padStart(2, '0')}` };
+    summaryScope = isThisMonth ? '이달' : `${currentMonth}월`;
+  } else {
+    summaryRange = { from: `${currentYear}-01-01`, to: `${currentYear}-12-31` };
+    summaryScope = currentYear === thisYear ? '올해' : `${currentYear}년`;
+  }
 
   // 기준 연도와 그 다음 연도를 동시 렌더링하기 위한 배열
   const displayYears = [currentYear, currentYear + 1];
@@ -224,7 +250,7 @@ export default function App() {
     onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
     panelDate: panel?.date ?? null,
     today: getTodayString(), // 할 일 알약이 오늘·지난 날·앞으로의 날을 가른다
-    theme: isMonthView ? 'amber' : 'blue', // 칸 테두리 색 (달력 영역과 같은 보기 색 2단계)
+    theme, // 칸 테두리 색 (달력 영역과 같은 보기 색 2단계)
     onOpenDay: openDayPanel,
     onShowMore: (dateString) => openDayPanel(null, dateString),
   };
@@ -240,19 +266,21 @@ export default function App() {
     // 화면 전체는 화면 높이에 딱 맞고 스크롤되지 않는다(h-screen overflow-hidden). 스크롤은 달력 상자와 패널이 각자 안에서 한다.
     // 화면 바깥 여백: 위 24px(pt-6), 좌우·아래 12px(px-3 pb-3). 상단 바와 아래 줄 사이, 줄 안의 상자 사이는 모두 12px.
     // 화면 바탕은 보기 색 5단계: 연 = 파랑(background), 월 = 앰버 (리디자인 기획서 "보기별 색")
-    <div className={`flex flex-col ${isMonthView ? 'bg-surface-amber-5' : 'bg-background'} h-screen overflow-hidden px-3 pt-6 pb-3`}>
+    <div className={`flex flex-col ${{ blue: 'bg-background', amber: 'bg-surface-amber-5', mint: 'bg-surface-mint-5' }[theme]} h-screen overflow-hidden px-3 pt-6 pb-3`}>
         {/* 상단 바 한 줄: 왼쪽은 기간 캡슐, 오른쪽 끝은 연·월·주 탭, (연 보기만) 보기 방식 탭, "새 일정" 버튼 */}
         <div className="flex items-center gap-3 mb-3 shrink-0">
           <Header
-            year={currentYear} onYearChange={setCurrentYear} years={yearOptions} onToday={goToToday}
-            theme={isMonthView ? 'amber' : 'blue'}
+            year={currentYear} onYearChange={changeYear} years={yearOptions} onToday={goToToday}
+            theme={theme}
             month={isMonthView ? currentMonth : null}
             onMonthChange={(y, m) => { setCurrentYear(y); setCurrentMonth(m); }}
+            weekStart={isWeekView ? weekStart : null}
+            onWeekChange={changeWeek}
           />
           <div className="ml-auto flex items-center gap-3">
             <ViewTabs view={view} onViewChange={changeView} />
             {/* 가로 스크롤 / 화면 맞춤은 연 보기에만 있는 설정 */}
-            {!isMonthView && <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />}
+            {view === 'year' && <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />}
             {/* 새 일정: 열린 날(없으면 오늘)의 일정 패널 + 새 일정 패널(시간 일정) */}
             <Button className="h-10 rounded-full px-4 font-semibold" onClick={() => openNewEvent(panel?.date ?? getTodayString(), 'timed')}>
               <Plus aria-hidden="true" />새 일정
@@ -273,7 +301,16 @@ export default function App() {
         {/* 캘린더 섹션: 파랑 2단계 바탕(연도 구분선도 같은 색). 그 위에 월 이름 칸과 날짜 칸이 흰색(1단계)으로 떠 보인다. (리디자인 기획서 "달력 영역 = 2단계")
             남은 높이를 채우고(flex-1 min-h-0) 상자 안에서 스크롤한다. 그래서 스크롤해도 상자의 네 모서리(15px)가 늘 둥글게 보이고, 가로 스크롤 막대도 늘 상자 아래에 있다.
             가로 스크롤은 위아래·좌우 모두(overflow-auto), 화면 맞춤은 위아래만(overflow-y-auto overflow-x-hidden) */}
-        {isMonthView ? (
+        {isWeekView ? (
+          // 주 보기: 민트 2단계 달력 영역에 날짜 칸 7개 + 7일 시간표 (위아래로 스크롤)
+          <div data-testid="calendar-scroll" className="flex-1 min-h-0 rounded-lg shadow-xs bg-surface-mint-2 overflow-y-auto">
+            <WeekView
+              weekStart={weekStart} cellProps={cellProps} timeBlocks={savedTimeBlocks} today={getTodayString()}
+              onOpenBlock={(date, id) => openDayPanel(null, date, id)}
+              onCreate={(date, startSlot, endSlot) => openNewEvent(date, 'timed', { startSlot, endSlot })}
+            />
+          </div>
+        ) : isMonthView ? (
           // 월 보기: 앰버 2단계 달력 영역에 한 달 (위아래로만 스크롤)
           <div data-testid="calendar-scroll" className="flex-1 min-h-0 rounded-lg shadow-xs bg-surface-amber-2 overflow-y-auto">
             <MonthView year={currentYear} month={currentMonth} cellProps={cellProps} />

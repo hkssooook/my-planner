@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import App from './App';
 import { KR_HOLIDAYS } from './data/holidays';
-import { setupTestEnvironment, COLOR, cellOf, dayButtonOf, dayPanel, hexToRgb, makeEvent, seedDaily, seedEvents, setup } from './test/helpers';
+import { setupTestEnvironment, COLOR, cellOf, blockPanel, dayButtonOf, dayPanel, newPanel, hexToRgb, makeEvent, seedDaily, seedEvents, setup } from './test/helpers';
 import { eventColors } from './utils/color';
 
 // 앱의 첫 화면과 머리말(연도 선택, 보기 방식)을 확인하는 시험.
@@ -451,15 +451,11 @@ describe('날짜 칸의 할 일 알약 (시험 속 오늘은 2026-06-15)', () =>
 });
 
 describe('상단 바의 연·월·주 탭과 요약 줄 (시험 속 오늘은 2026-06-15)', () => {
-  it('[연 | 월 | 주] 탭이 있고 연이 골라져 있다. 주는 아직 준비 중이라 눌러도 바뀌지 않는다. 점 색은 보기 색이다', async () => {
-    const user = setup();
+  it('[연 | 월 | 주] 탭이 있고 처음에는 연이 골라져 있다. 셋 다 누를 수 있고, 점 색은 보기 색이다', () => {
+    render(<App />);
     const tabs = screen.getByRole('tablist', { name: '보기' });
     expect(within(tabs).getByRole('tab', { name: '연' })).toHaveAttribute('aria-selected', 'true');
-    expect(within(tabs).getByRole('tab', { name: '월' })).not.toHaveAttribute('aria-disabled', 'true');
-    expect(within(tabs).getByRole('tab', { name: /주/ })).toHaveAttribute('aria-disabled', 'true'); // 화면 낭독기에 "사용 불가"로 읽힌다
-    expect(within(tabs).getByRole('tab', { name: /주/ })).toHaveAccessibleName(/주\s*\(준비 중\)/);
-    await user.click(within(tabs).getByRole('tab', { name: /주/ }));
-    expect(within(tabs).getByRole('tab', { name: '연' })).toHaveAttribute('aria-selected', 'true');
+    for (const name of ['월', '주']) expect(within(tabs).getByRole('tab', { name })).not.toHaveAttribute('aria-disabled', 'true');
     const dots = within(tabs).getAllByRole('tab').map((tab) => tab.querySelector('[aria-hidden="true"]').className);
     expect(dots[0]).toContain('bg-surface-blue-5');
     expect(dots[1]).toContain('bg-surface-amber-5');
@@ -546,5 +542,72 @@ describe('월 보기 (앰버, 시험 속 오늘은 2026-06-15)', () => {
     await user.click(screen.getByRole('tab', { name: '연' }));
     expect(screen.getByTestId('calendar-scroll')).toHaveClass('bg-surface-blue-2');
     expect(screen.getByRole('tablist', { name: '보기 방식' })).toBeInTheDocument();
+  });
+});
+
+describe('주 보기 (민트, 시험 속 오늘은 2026-06-15 월요일)', () => {
+  const openWeek = async () => {
+    const user = setup();
+    await user.click(screen.getByRole('tab', { name: '주' }));
+    return user;
+  };
+  const title = () => screen.getByRole('button', { name: /^연도 선택/ });
+
+  it('[주]를 누르면 이번 주(일요일 6/14 ~ 토요일 6/20)가 보이고, 위에는 날짜 칸 7개, 아래에는 7일 시간표가 있다', async () => {
+    await openWeek();
+    expect(title()).toHaveTextContent('2026년 6월 14–20일');
+    expect(screen.getAllByTitle('상세 일정 관리')).toHaveLength(7);
+    expect(cellOf('2026-06-14')).toBeInTheDocument();
+    expect(cellOf('2026-06-20')).toBeInTheDocument();
+    expect(screen.getByTestId('week-column-2026-06-14')).toBeInTheDocument();
+    expect(screen.getByTestId('week-column-2026-06-15')).toHaveStyle({ boxShadow: 'inset 0 0 0 2px var(--primary)' }); // 오늘 칸
+    expect(within(screen.getByTestId('week-column-2026-06-15')).getByTestId('week-now')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: '요약' })).getByText('이번 주 할 일')).toBeInTheDocument();
+    expect(screen.queryByRole('tablist', { name: '보기 방식' })).toBeNull();
+  });
+
+  it('보기 색이 민트다: 화면 바탕 5단계, 달력 영역 2단계, ‹ ›·오늘 버튼 2단계, 칸 테두리 2단계', async () => {
+    await openWeek();
+    expect(screen.getByTestId('calendar-scroll')).toHaveClass('bg-surface-mint-2');
+    expect(screen.getByTestId('calendar-scroll').closest('.h-screen')).toHaveClass('bg-surface-mint-5');
+    expect(screen.getByRole('button', { name: '지난주' })).toHaveClass('bg-surface-mint-2');
+    expect(cellOf('2026-06-16')).toHaveClass('border-surface-mint-2');
+  });
+
+  it('위쪽 날짜 칸에는 기간·종일 일정만, 시간 일정은 아래 시간표에 카드로 보인다. 카드를 누르면 그날 패널과 카드 상세가 열린다', async () => {
+    seedEvents([makeEvent(1, '워크숍', '2026-06-16', '2026-06-17')]);
+    localStorage.setItem('planner_time_blocks', JSON.stringify({
+      '2026-06-16': [{ id: 'a', start: '09:00', end: '10:30', content: '회의', color: COLOR.blue, is_important: true }],
+    }));
+    const user = await openWeek();
+    expect(within(cellOf('2026-06-16')).getByText('워크숍')).toBeInTheDocument();
+    expect(within(cellOf('2026-06-16')).queryByText('회의')).toBeNull();
+    const card = within(screen.getByTestId('week-column-2026-06-16')).getByRole('button', { name: '2026-06-16 09:00–10:30 회의 (주요)' });
+    expect(card).toHaveStyle({ top: `${18 * 20 + 1}px`, height: `${3 * 20 - 1}px` });
+    await user.click(card);
+    expect(within(dayPanel()).getByRole('heading', { name: '2026년 6월 16일 (화)' })).toBeInTheDocument();
+    expect(blockPanel()).toBeInTheDocument();
+  });
+
+  it('시간표의 빈 칸을 끌면 그날·그 시간으로 새 일정 패널(시간 일정)이 열린다. 저장해야 생긴다', async () => {
+    await openWeek();
+    const column = screen.getByTestId('week-column-2026-06-18');
+    fireEvent.mouseDown(column, { button: 0, clientY: 28 * 20 + 5 }); // 14:00 칸
+    fireEvent.mouseMove(window, { clientY: 31 * 20 + 5 }); // 15:30 칸
+    fireEvent.mouseUp(window, { clientY: 31 * 20 + 5 });
+    expect(within(newPanel()).getByText('6/18 · 14:00–16:00')).toBeInTheDocument();
+    expect(within(newPanel()).getByRole('tab', { name: '시간 일정' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(dayPanel()).getByRole('heading', { name: '2026년 6월 18일 (목)' })).toBeInTheDocument();
+    expect(localStorage.getItem('planner_time_blocks')).toBeNull();
+  });
+
+  it('‹ ›는 한 주씩 넘기고 달이 바뀌는 주는 이름에 두 달이 나온다. "오늘"은 이번 주로 돌아온다', async () => {
+    const user = await openWeek();
+    for (let i = 0; i < 2; i += 1) await user.click(screen.getByRole('button', { name: '다음 주' }));
+    expect(title()).toHaveTextContent('2026년 6월 28일–7월 4일');
+    expect(within(screen.getByRole('region', { name: '요약' })).getByText('6/28–7/4 할 일')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '오늘' }));
+    expect(title()).toHaveTextContent('2026년 6월 14–20일');
+    expect(cellOf('2026-06-15')).toHaveAttribute('aria-current', 'date');
   });
 });

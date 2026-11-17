@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getDaysInMonth, getDayOfWeek, getCurrentYear, getTodayString, getYearOptions, addDays, daysBetween, formatLongDate, formatShortDate } from './date';
+import { getDaysInMonth, getDayOfWeek, getCurrentYear, getTodayString, weekStartOf, formatWeekRange, getYearOptions, addDays, daysBetween, formatLongDate, formatShortDate } from './date';
 
 describe('getDaysInMonth (한 달의 일수)', () => {
   it('31일인 달과 30일인 달을 구분한다', () => {
@@ -97,5 +97,23 @@ describe('날짜 글자 계산', () => {
     expect(formatLongDate('2026-01-05')).toBe('2026년 1월 5일 (월)');
     expect(formatLongDate('2026-11-15')).toBe('2026년 11월 15일 (일)');
     expect(formatShortDate('2026-01-05')).toBe('1/5');
+  });
+});
+
+describe('weekStartOf (그 주의 일요일)', () => {
+  it('일요일은 그대로, 다른 요일은 그 주 일요일로. 달·해가 바뀌어도 맞다', () => {
+    expect(weekStartOf('2026-11-15')).toBe('2026-11-15'); // 일요일
+    expect(weekStartOf('2026-11-17')).toBe('2026-11-15'); // 화요일
+    expect(weekStartOf('2026-11-21')).toBe('2026-11-15'); // 토요일
+    expect(weekStartOf('2026-12-01')).toBe('2026-11-29'); // 달이 바뀜
+    expect(weekStartOf('2027-01-01')).toBe('2026-12-27'); // 해가 바뀜
+  });
+});
+
+describe('formatWeekRange (주 보기 기간 이름)', () => {
+  it('같은 달 / 달이 바뀜 / 해가 바뀜', () => {
+    expect(formatWeekRange('2026-11-15')).toBe('2026년 11월 15–21일');
+    expect(formatWeekRange('2026-11-29')).toBe('2026년 11월 29일–12월 5일');
+    expect(formatWeekRange('2026-12-27')).toBe('2026년 12월 27일–2027년 1월 2일');
   });
 });

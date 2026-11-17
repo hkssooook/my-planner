@@ -3,6 +3,7 @@ import { ChevronDownIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { addDays, formatWeekRange } from '../../utils/date';
 
 // 화면 맨 위 상단 바: "무엇을 볼지" 고르는 곳. (리디자인 기획서 ① 상단 바)
 //   흰 캡슐 하나에 [‹] 2026년 ⌄ [›] [오늘] 을 담는다. 캡슐이 흰색이라 진한 화면 바탕(파랑 5단계) 위에서도 연도 글자가 잘 읽힌다.
@@ -17,13 +18,16 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 //
 //   theme  보기 색 'blue'(연) | 'amber'(월): ‹ ›·오늘 버튼 바탕이 그 색 2단계가 된다
 //   month, onMonthChange(year, month)  월 보기일 때만
+//   weekStart, onWeekChange(start)  주 보기일 때만. weekStart는 그 주 일요일 'YYYY-MM-DD'. ‹ ›는 한 주씩
+//   theme에 'mint'(주)도 있다
 // Tailwind는 완성된 클래스 이름이 코드에 글자 그대로 있어야 하므로 보기 색마다 통째로 적어 둔다.
 const THEME = {
   blue: { button: 'bg-surface-blue-2 hover:bg-surface-blue-3', title: 'text-primary hover:bg-surface-blue-2' },
   amber: { button: 'bg-surface-amber-2 hover:bg-surface-amber-3', title: 'text-foreground hover:bg-surface-amber-2' },
+  mint: { button: 'bg-surface-mint-2 hover:bg-surface-mint-3', title: 'text-foreground hover:bg-surface-mint-2' },
 };
 
-export default function Header({ year, years, onYearChange, onToday, theme = 'blue', month = null, onMonthChange }) {
+export default function Header({ year, years, onYearChange, onToday, theme = 'blue', month = null, onMonthChange, weekStart = null, onWeekChange }) {
   const [open, setOpen] = useState(false);
   const selectedTabRef = useRef(null); // 상자가 열리면 지금 연도 탭에 커서를 둔다 (키보드로 바로 ↑↓)
 
@@ -37,15 +41,29 @@ export default function Header({ year, years, onYearChange, onToday, theme = 'bl
   const nextYear = index >= 0 && index < years.length - 1 ? years[index + 1] : null;
   const colors = THEME[theme];
 
-  // ‹ ›: 연 보기는 한 해, 월 보기는 한 달. 고를 수 있는 연도 목록을 벗어나면 null(누를 수 없음)
+  // ‹ ›: 연 보기는 한 해, 월 보기는 한 달, 주 보기는 한 주. 고를 수 있는 연도 목록을 벗어나면 null(누를 수 없음)
   const isMonth = month !== null;
-  const prev = isMonth
-    ? (month > 1 ? [year, month - 1] : prevYear !== null ? [prevYear, 12] : null)
-    : (prevYear !== null ? [prevYear] : null);
-  const next = isMonth
-    ? (month < 12 ? [year, month + 1] : nextYear !== null ? [nextYear, 1] : null)
-    : (nextYear !== null ? [nextYear] : null);
-  const go = (target) => (isMonth ? onMonthChange(target[0], target[1]) : onYearChange(target[0]));
+  const isWeek = weekStart !== null;
+  const inYears = (dateString) => years.includes(Number(dateString.slice(0, 4)));
+  let prev; let next;
+  if (isWeek) {
+    const before = addDays(weekStart, -7);
+    const after = addDays(weekStart, 7);
+    prev = inYears(addDays(before, 6)) ? [before] : null; // 그 주의 마지막 날이 목록 안이면 된다
+    next = inYears(after) ? [after] : null;
+  } else if (isMonth) {
+    prev = month > 1 ? [year, month - 1] : prevYear !== null ? [prevYear, 12] : null;
+    next = month < 12 ? [year, month + 1] : nextYear !== null ? [nextYear, 1] : null;
+  } else {
+    prev = prevYear !== null ? [prevYear] : null;
+    next = nextYear !== null ? [nextYear] : null;
+  }
+  const go = (target) => {
+    if (isWeek) onWeekChange(target[0]);
+    else if (isMonth) onMonthChange(target[0], target[1]);
+    else onYearChange(target[0]);
+  };
+  const unit = isWeek ? ['지난주', '다음 주'] : isMonth ? ['지난달', '다음 달'] : ['지난해', '다음 해'];
 
   // ‹ › 버튼: 보기 색 2단계 바탕의 동그란 버튼 (흰 캡슐 위에서 누를 수 있는 곳임을 알린다)
   const arrowClass = `rounded-full text-foreground ${colors.button}`;
@@ -57,7 +75,7 @@ export default function Header({ year, years, onYearChange, onToday, theme = 'bl
       <div data-testid="period-capsule" className="flex items-center gap-2 bg-card rounded-full p-1.5 shadow-xs">
         <Button
           variant="ghost" size="icon" className={arrowClass}
-          aria-label={isMonth ? '지난달' : '지난해'} disabled={prev === null}
+          aria-label={unit[0]} disabled={prev === null}
           onClick={() => go(prev)}
         >
           <ChevronLeft />
@@ -74,7 +92,7 @@ export default function Header({ year, years, onYearChange, onToday, theme = 'bl
               aria-label={`연도 선택 (지금 ${year}년)`}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-0.5 text-2xl font-semibold ${colors.title} outline-none focus-visible:ring-3 focus-visible:ring-ring/50`}
             >
-              {year}년{isMonth && ` ${month}월`}
+              {isWeek ? formatWeekRange(weekStart) : `${year}년${isMonth ? ` ${month}월` : ''}`}
               <ChevronDownIcon aria-hidden="true" className="size-4 text-muted-foreground" />
             </PopoverTrigger>
             <PopoverContent align="center" className="w-auto p-1" initialFocus={selectedTabRef}>
@@ -95,7 +113,7 @@ export default function Header({ year, years, onYearChange, onToday, theme = 'bl
 
         <Button
           variant="ghost" size="icon" className={arrowClass}
-          aria-label={isMonth ? '다음 달' : '다음 해'} disabled={next === null}
+          aria-label={unit[1]} disabled={next === null}
           onClick={() => go(next)}
         >
           <ChevronRight />
