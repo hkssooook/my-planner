@@ -265,10 +265,10 @@ describe('일정 패널 (날짜 칸 누르기)', () => {
       expect(within(pinned).queryByRole('region', { name: '종일 일정 추가' })).toBeNull();
     });
 
-    it('패널은 너비 460px이고, 위는 화면 가장자리에서 24px, 오른쪽·아래는 12px 떨어진 둥근 카드다', async () => {
+    it('패널은 너비 320px(두 번째 패널과 같은 너비)이고, 위는 화면 가장자리에서 24px, 오른쪽·아래는 12px 떨어진 둥근 카드다', async () => {
       const user = setup();
       const box = await openPanel(user, '2026-01-05');
-      expect(box).toHaveClass('w-[460px]', 'sticky', 'top-6', 'mt-6', 'mb-3', 'mr-3', 'h-[calc(100vh-36px)]', 'rounded-lg', 'border');
+      expect(box).toHaveClass('w-[320px]', 'sticky', 'top-6', 'mt-6', 'mb-3', 'mr-3', 'h-[calc(100vh-36px)]', 'rounded-lg', 'border');
       expect(box).not.toHaveClass('my-6', 'rounded-t-lg', 'border-b-0');
     });
 

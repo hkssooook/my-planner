@@ -96,8 +96,9 @@ export default function DayPanel({
           style={{ backgroundColor: colors.background, color: colors.text }}
           className={`flex-1 text-left text-[13px] px-2.5 py-1.5 rounded-sm flex items-center gap-2 font-semibold min-w-0 cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-ring ${evt.id === selectedEventId ? 'ring-2 ring-inset ring-primary' : ''}`}
         >
-          <span className="truncate flex-1">{evt.title}</span>
-          <span className="shrink-0 font-normal opacity-90">{rangeLabel(evt, date)}</span>
+          {/* 좁을 때는 기간 글자가 먼저 줄어들고(…), 이름은 최소 4.5rem을 지킨다 */}
+          <span className="truncate flex-1 min-w-[4.5rem]">{evt.title}</span>
+          <span className="min-w-0 truncate font-normal opacity-90">{rangeLabel(evt, date)}</span>
         </button>
       </li>
     );
@@ -151,9 +152,9 @@ export default function DayPanel({
   return (
     <aside
       aria-label="상세 일정 관리"
-      // 너비 460px. 위쪽은 왼쪽 연도 카드처럼 화면 가장자리에서 24px, 오른쪽은 왼쪽 여백과 같은 12px, 아래쪽은 12px 떨어진다 (아래를 24px 띄우면 패널이 짧아 보여서 절반으로).
+      // 너비 320px (오른쪽 두 번째 패널과 같은 너비). 위쪽은 왼쪽 연도 카드처럼 화면 가장자리에서 24px, 오른쪽은 왼쪽 여백과 같은 12px, 아래쪽은 12px 떨어진다 (아래를 24px 띄우면 패널이 짧아 보여서 절반으로).
       // 네 모서리 모두 둥글다(15px). 스크롤해도 그 자리에 머물고(sticky top-6), 높이는 화면 높이에서 위 24px + 아래 12px을 뺀 만큼이다.
-      className="w-[460px] shrink-0 self-start sticky top-6 mt-6 mb-3 mr-3 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
+      className="w-[320px] shrink-0 self-start sticky top-6 mt-6 mb-3 mr-3 h-[calc(100vh-36px)] rounded-lg border border-border bg-card shadow-xs overflow-y-auto flex flex-col"
     >
       {/* 머리말과 "일정" 제목 줄([목록 | 시간표] 스위치)은 패널을 스크롤해도 위에 붙어 있다 */}
       <div data-testid="day-panel-pinned" className="sticky top-0 z-10 bg-card border-b border-border">
