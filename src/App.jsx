@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { CALENDAR_BACKGROUND, PAGE_BACKGROUND } from './constants/themes';
+import { PAGE_BACKGROUND } from './constants/themes';
 import { getNowTime, getTodayString } from './utils/date';
 import { setTodoDone } from './utils/todos';
 import usePlannerData from './hooks/usePlannerData';
@@ -9,9 +9,7 @@ import useCalendarNav from './hooks/useCalendarNav';
 import TopBar from './components/layout/TopBar';
 import SummaryRow from './components/layout/SummaryRow';
 import { summarize, summaryRange } from './utils/summary';
-import YearSection from './components/calendar/YearSection';
-import MonthView from './components/calendar/MonthView';
-import WeekView from './components/calendar/WeekView';
+import CalendarArea from './components/calendar/CalendarArea';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import UnsavedCloseModal from './components/modals/UnsavedCloseModal';
 import DayPanel from './components/panels/DayPanel';
@@ -37,7 +35,7 @@ export default function App() {
 
   // 달력에서 지금 어디를 보고 있나: 보기(연·월·주)와 보는 해·달·주 (useCalendarNav 설명 참고)
   const nav = useCalendarNav();
-  const { view, isMonthView, isWeekView, theme, thisYear, currentYear, currentMonth, weekStart } = nav;
+  const { view, theme, thisYear, currentYear, currentMonth, weekStart } = nav;
 
   // 연 보기의 가로 스크롤 / 화면 맞춤
   const [isWrapMode, setIsWrapMode] = useState(false);
@@ -70,22 +68,6 @@ export default function App() {
     view, year: currentYear, month: currentMonth, weekStart, today: getTodayString(), thisYear,
   });
 
-  // 기준 연도와 그 다음 연도를 동시 렌더링하기 위한 배열
-  const displayYears = [currentYear, currentYear + 1];
-
-  // 달력 날짜 칸(DayCell)까지 전달할 값 묶음
-  // 달력은 "저장된 것"을 보여 준다 (저장해야 달력에 반영된다)
-  const cellProps = {
-    events: savedEvents, timeBlocks: savedTimeBlocks,
-    selectionStart: drag.selectionStart, selectionEnd: drag.selectionEnd,
-    onMouseDown: drag.handleMouseDown, onMouseEnter: drag.handleMouseEnter,
-    panelDate: panel?.date ?? null,
-    today: getTodayString(), // 할 일 알약이 오늘·지난 날·앞으로의 날을 가른다
-    theme, // 칸 테두리 색 (달력 영역과 같은 보기 색 2단계)
-    onOpenDay: openDayPanel,
-    onShowMore: (dateString) => openDayPanel(null, dateString),
-  };
-
   return (
     // 화면 짜임: 맨 위 상단 바(화면 전체 폭) 아래에 한 줄로 [달력 상자] [일정 패널] [두 번째 패널]이 나란히 선다.
     // 그래서 달력과 패널들은 같은 높이에서 시작해 같은 높이에서 끝난다. 달력은 패널이 열려도 계속 보인다.
@@ -112,40 +94,17 @@ export default function App() {
 
       {/* 아래 한 줄: 남은 높이를 모두 쓰고, 달력 상자와 패널들이 같은 높이로 선다 */}
       <div className="flex-1 min-h-0 flex gap-3">
-      <main className="flex-1 min-w-0 flex flex-col">
-        {/* 캘린더 섹션: 파랑 2단계 바탕(연도 구분선도 같은 색). 그 위에 월 이름 칸과 날짜 칸이 흰색(1단계)으로 떠 보인다. (리디자인 기획서 "달력 영역 = 2단계")
-            남은 높이를 채우고(flex-1 min-h-0) 상자 안에서 스크롤한다. 그래서 스크롤해도 상자의 네 모서리(15px)가 늘 둥글게 보이고, 가로 스크롤 막대도 늘 상자 아래에 있다.
-            가로 스크롤은 위아래·좌우 모두(overflow-auto), 화면 맞춤은 위아래만(overflow-y-auto overflow-x-hidden) */}
-        {isWeekView ? (
-          // 주 보기(보드형): 민트 2단계 달력 영역에 요일마다 한 칸. 칸이 영역 높이를 채우고, 넘치면 그 칸만 스크롤한다
-          <div data-testid="calendar-scroll" className={`flex-1 min-h-0 rounded-lg shadow-xs ${CALENDAR_BACKGROUND[theme]} overflow-hidden`}>
-            <WeekView
-              weekStart={weekStart} events={savedEvents} timeBlocks={savedTimeBlocks}
-              today={getTodayString()} panelDate={panel?.date ?? null}
-              onOpenDay={(date, blockId = null, eventId = null) => openDayPanel(null, date, blockId, eventId)}
-              onAddEvent={(date) => openNewEvent(date, 'timed')}
-            />
-          </div>
-        ) : isMonthView ? (
-          // 월 보기: 앰버 2단계 달력 영역에 한 달 (위아래로만 스크롤)
-          <div data-testid="calendar-scroll" className={`flex-1 min-h-0 rounded-lg shadow-xs ${CALENDAR_BACKGROUND[theme]} overflow-y-auto`}>
-            <MonthView year={currentYear} month={currentMonth} cellProps={cellProps} />
-          </div>
-        ) : (
-        <div
-          data-testid="calendar-scroll"
-          className={`flex-1 min-h-0 rounded-lg shadow-xs ${CALENDAR_BACKGROUND[theme]} relative ${isWrapMode ? 'overflow-y-auto overflow-x-hidden' : 'overflow-auto'}`}
-        >
-          {/* 칸 사이에 4px 틈(gap-1)을 둬서 둥근 칸들이 떠 보이게 한다. 상자 안쪽 여백은 위 4px(pt-1, 첫 연도 띠가 -mt-1로 덮음)뿐이라 좌우·아래는 칸이 상자 끝에 붙는다 */}
-          <div className={`flex flex-col gap-1 pt-1 ${isWrapMode ? '' : 'min-w-max'}`}>
-            {/* 기준 연도와 다음 연도를 순차적으로 렌더링 */}
-            {displayYears.map((year, i) => (
-              <YearSection key={year} year={year} isFirst={i === 0} isWrapMode={isWrapMode} cellProps={cellProps} />
-            ))}
-          </div>
-        </div>
-        )}
-      </main>
+      {/* 달력: 보기에 따라 연·월·주 (저장된 것을 보여 준다) */}
+      <CalendarArea
+        nav={nav}
+        isWrapMode={isWrapMode}
+        events={savedEvents}
+        timeBlocks={savedTimeBlocks}
+        drag={drag}
+        panelDate={panel?.date ?? null}
+        onOpenDay={openDayPanel}
+        onAddEvent={(date) => openNewEvent(date, 'timed')}
+      />
 
       {/* --- 오른쪽 일정 패널 (이 날의 일정 + 시간 일정) --- */}
       {panel && (
