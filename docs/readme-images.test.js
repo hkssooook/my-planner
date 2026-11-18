@@ -19,10 +19,10 @@ const images = [...markdownImages, ...htmlImages].filter((img) => !/^https?:/.te
 describe('README의 스크린샷', () => {
   it('스크린샷이 4장 들어 있다', () => {
     expect(images.map((i) => i.src).sort()).toEqual([
-      'docs/images/detail-popup.png',
-      'docs/images/fit-mode.png',
-      'docs/images/overview.png',
-      'docs/images/period-popup.png',
+      'docs/images/month-view.png',
+      'docs/images/panels.png',
+      'docs/images/week-view.png',
+      'docs/images/year-view.png',
     ]);
   });
 
