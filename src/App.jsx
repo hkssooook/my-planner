@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { YEAR_RANGE } from './constants/calendar';
-import { CALENDAR_BACKGROUND, PAGE_BACKGROUND, VIEW_THEME } from './constants/themes';
-import { addDays, getCurrentYear, getNowTime, getTodayString, getYearOptions, weekStartOf } from './utils/date';
+import { CALENDAR_BACKGROUND, PAGE_BACKGROUND } from './constants/themes';
+import { getNowTime, getTodayString } from './utils/date';
 import { setTodoDone } from './utils/todos';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import usePlannerData from './hooks/usePlannerData';
 import usePanels from './hooks/usePanels';
+import useCalendarNav from './hooks/useCalendarNav';
 import Header from './components/layout/Header';
 import ViewTabs from './components/layout/ViewTabs';
 import SummaryRow from './components/layout/SummaryRow';
@@ -39,38 +39,12 @@ export default function App() {
     openDayPanel, openNewEvent, closeConfirm, deleteConfirm,
   } = panels;
 
-  // 앱을 연 해(올해)를 한 번 읽어 고정하고, 그 해로 시작한다. 선택 칸의 연도 목록도 이 해를 기준으로 만든다.
-  const [thisYear] = useState(getCurrentYear);
-  const [currentYear, setCurrentYear] = useState(thisYear);
-  const yearOptions = getYearOptions(thisYear, YEAR_RANGE);
+  // 달력에서 지금 어디를 보고 있나: 보기(연·월·주)와 보는 해·달·주 (useCalendarNav 설명 참고)
+  const nav = useCalendarNav();
+  const { view, isMonthView, isWeekView, theme, thisYear, currentYear, currentMonth, weekStart } = nav;
+
+  // 연 보기의 가로 스크롤 / 화면 맞춤
   const [isWrapMode, setIsWrapMode] = useState(false);
-  // 보기: 'year'(연) | 'month'(월) | 'week'(주)
-  const [view, setView] = useState('year');
-  // 월 보기에서 보는 달 (1~12). 해는 currentYear를 함께 쓴다. 처음에는 이번 달
-  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
-  // 주 보기에서 보는 주의 일요일 'YYYY-MM-DD'. 처음에는 이번 주
-  const [weekStart, setWeekStart] = useState(() => weekStartOf(getTodayString()));
-  const isMonthView = view === 'month';
-  const isWeekView = view === 'week';
-  // 보기 색: 연 = 파랑, 월 = 앰버, 주 = 민트 (constants/themes.js)
-  const theme = VIEW_THEME[view];
-  // 보기를 바꾼다. 보는 해가 올해면 이번 달·이번 주를, 아니면 그 해 1월·첫 주를 보여 준다
-  const changeView = (next) => {
-    const isThisYear = currentYear === thisYear;
-    if (next === 'month' && isThisYear) setCurrentMonth(new Date().getMonth() + 1);
-    if (next === 'week') setWeekStart(weekStartOf(isThisYear ? getTodayString() : `${currentYear}-01-01`));
-    setView(next);
-  };
-  // 주를 옮긴다. 보는 해(요약 줄·연도 선택 기준)는 그 주의 가운데(수요일)가 속한 해로 맞춘다
-  const changeWeek = (start) => {
-    setWeekStart(start);
-    setCurrentYear(Number(addDays(start, 3).slice(0, 4)));
-  };
-  // 상단 바의 연도 선택: 주 보기에서는 그 해의 첫 주로 간다
-  const changeYear = (year) => {
-    setCurrentYear(year);
-    if (isWeekView) setWeekStart(weekStartOf(`${year}-01-01`));
-  };
   // 일정 패널의 보기 방식: 'list'(목록) | 'timetable'(시간표). 날짜를 넘기거나 패널을 다시 열어도 고른 값을 유지한다
   const [panelView, setPanelView] = useState('list');
 
@@ -79,9 +53,7 @@ export default function App() {
   // 연도가 바뀌거나 패널이 열리면 달력이 다시 그려진 뒤에 칸을 찾아야 하므로, 다음 화면 그리기 때(requestAnimationFrame) 스크롤한다.
   const goToToday = () => {
     const today = getTodayString();
-    setCurrentYear(thisYear);
-    setCurrentMonth(Number(today.slice(5, 7)));
-    setWeekStart(weekStartOf(today));
+    nav.jumpToToday(today);
     openDayPanel(null, today);
     requestAnimationFrame(() => {
       const cell = document.querySelector(`[data-date="${today}"]`);
@@ -128,15 +100,15 @@ export default function App() {
         {/* 상단 바 한 줄: 왼쪽은 기간 캡슐, 오른쪽 끝은 연·월·주 탭, (연 보기만) 보기 방식 탭, "새 일정" 버튼 */}
         <div className="flex items-center gap-3 mb-3 shrink-0">
           <Header
-            year={currentYear} onYearChange={changeYear} years={yearOptions} onToday={goToToday}
+            year={currentYear} onYearChange={nav.changeYear} years={nav.yearOptions} onToday={goToToday}
             theme={theme}
             month={isMonthView ? currentMonth : null}
-            onMonthChange={(y, m) => { setCurrentYear(y); setCurrentMonth(m); }}
+            onMonthChange={nav.changeMonth}
             weekStart={isWeekView ? weekStart : null}
-            onWeekChange={changeWeek}
+            onWeekChange={nav.changeWeek}
           />
           <div className="ml-auto flex items-center gap-3">
-            <ViewTabs view={view} onViewChange={changeView} />
+            <ViewTabs view={view} onViewChange={nav.changeView} />
             {/* 가로 스크롤 / 화면 맞춤은 연 보기에만 있는 설정 */}
             {view === 'year' && <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />}
             {/* 새 일정: 열린 날(없으면 오늘)의 일정 패널 + 새 일정 패널(시간 일정) */}
