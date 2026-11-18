@@ -4,11 +4,10 @@ import { YEAR_RANGE } from './constants/calendar';
 import { CALENDAR_BACKGROUND, PAGE_BACKGROUND, VIEW_THEME } from './constants/themes';
 import { addDays, getCurrentYear, getNowTime, getTodayString, getYearOptions, weekStartOf } from './utils/date';
 import { setTodoDone } from './utils/todos';
-import { nextFreeHour } from './utils/timeBlocks';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import useDragSelect from './hooks/useDragSelect';
 import usePlannerData from './hooks/usePlannerData';
+import usePanels from './hooks/usePanels';
 import Header from './components/layout/Header';
 import ViewTabs from './components/layout/ViewTabs';
 import SummaryRow from './components/layout/SummaryRow';
@@ -27,11 +26,18 @@ import NewEventPanel from './components/panels/NewEventPanel';
 export default function App() {
   // events·timeBlocks는 "고치는 중인 것"(패널에 보임), savedEvents·savedTimeBlocks는 "저장된 것"(달력에 보임).
   // 패널에서 고친 내용은 일정 패널의 [저장]을 눌러야 저장되고 달력에 반영된다. (usePlannerData 설명 참고)
+  const data = usePlannerData();
   const {
-    events, timeBlocks, savedEvents, savedTimeBlocks, changeCount, save, revert,
-    commitAddEvent, patchEvent, changeEventTodos, commitRemoveEvent,
-    addTimeBlock, commitAddTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
-  } = usePlannerData();
+    timeBlocks, savedEvents, savedTimeBlocks, changeCount, save, revert,
+    patchEvent, changeEventTodos, addTimeBlock, changeTimeBlock, changeTodos,
+  } = data;
+
+  // 오른쪽 패널들과 확인 팝업이 언제 열리고 닫히는지 (usePanels 설명 참고)
+  const panels = usePanels(data);
+  const {
+    panel, panelEvents, panelBlocks, selectedBlockId, selectedBlock, openEventId, openEvent, newDraft, drag,
+    openDayPanel, openNewEvent, closeConfirm, deleteConfirm,
+  } = panels;
 
   // 앱을 연 해(올해)를 한 번 읽어 고정하고, 그 해로 시작한다. 선택 칸의 연도 목록도 이 해를 기준으로 만든다.
   const [thisYear] = useState(getCurrentYear);
@@ -83,117 +89,6 @@ export default function App() {
     });
   };
 
-  // 새 일정 패널(오른쪽 두 번째 패널)의 처음 값. null이면 닫혀 있다. (NewEventPanel의 draft 설명 참고)
-  //   openCount를 key로 써서, 새로 열 때마다 입력칸을 비운 새 패널을 그린다.
-  const [newDraft, setNewDraft] = useState(null);
-
-  // 날짜를 두 칸 이상 끌어서 고르면: 시작한 날의 일정 패널 + 새 일정 패널(종일, 고른 기간 채움)을 연다.
-  // 고른 칸의 모양(파랑 테두리)은 새 일정을 저장하거나 취소할 때까지 남겨 둔다. (어디에 생길지 보이게)
-  const { selectionStart, selectionEnd, handleMouseDown, handleMouseEnter, clearSelection } = useDragSelect({
-    onSelect: (start, end) => openNewEvent(start, 'allday', { startDate: start, endDate: end }, { keepSelection: true }),
-  });
-
-  // 오른쪽 일정 패널. null이면 닫힘.
-  //   date       열린 날짜
-  //   openCount  열 때마다 1씩 늘린다. 같은 날짜를 다시 눌러도 패널을 새로 그려 커서·스크롤을 다시 잡게 한다.
-  const [panel, setPanel] = useState(null);
-  // 카드 상세 패널에 열린 시간 일정 카드의 id (패널 날짜의 카드). null이면 카드 상세 패널이 닫혀 있다.
-  const [selectedBlockId, setSelectedBlockId] = useState(null);
-
-  // 카드 상세 패널을 닫거나 다른 카드로 바꿀 때: 지금 고른 카드가 이름도 할 일도 없이 남아 있으면 지운다.
-  // (시간표를 실수로 눌러 생긴 빈 카드가 쌓이지 않게)
-  const releaseBlock = () => {
-    if (panel && selectedBlockId) removeTimeBlockIfEmpty(panel.date, selectedBlockId);
-  };
-
-  // 기간 일정 상세 패널에 열린 기간·종일 일정의 id. null이면 닫혀 있다.
-  // 오른쪽 두 번째 패널은 한 번에 하나만 연다: 시간 일정 카드(selectedBlockId)나 기간 일정(openEventId) 중 하나.
-  const [openEventId, setOpenEventId] = useState(null);
-
-  // 카드를 고른다(카드 상세 패널을 연다). id가 null이면 닫는다.
-  const selectBlock = (id) => {
-    if (id !== selectedBlockId) releaseBlock();
-    setSelectedBlockId(id);
-    if (id !== null) { setOpenEventId(null); closeNewEvent(); }
-  };
-
-  // 기간 일정을 고른다(기간 일정 상세 패널을 연다). id가 null이면 닫는다. 열려 있던 시간 카드 상세 패널은 닫는다.
-  const selectEvent = (id) => {
-    releaseBlock();
-    setSelectedBlockId(null);
-    setOpenEventId(id);
-    if (id !== null) closeNewEvent();
-  };
-
-  // 새 일정 패널을 닫는다. 끌어서 고른 칸의 모양도 지운다.
-  const closeNewEvent = () => {
-    setNewDraft(null);
-    clearSelection();
-  };
-
-  // 새 일정 패널을 연다. date의 일정 패널도 함께 연다(이미 그 날이 열려 있으면 그대로 둔다). 열려 있던 카드·기간 일정 상세 패널은 닫는다.
-  //   kind: 'timed'(시간 일정) | 'allday'(종일 일정),  extra: 처음 값 덮어쓰기 (예: 끈 기간 { startDate, endDate })
-  const openNewEvent = (date, kind, extra = {}, { keepSelection = false } = {}) => {
-    if (!keepSelection) clearSelection();
-    releaseBlock();
-    setSelectedBlockId(null);
-    setOpenEventId(null);
-    if (panel?.date !== date) setPanel(prev => ({ date, openCount: (prev?.openCount ?? 0) + 1 }));
-    const [startSlot, endSlot] = nextFreeHour(timeBlocks[date] || [], {
-      isToday: date === getTodayString(),
-      nowHour: new Date().getHours(),
-    });
-    setNewDraft(prev => ({ kind, date, startDate: date, endDate: date, startSlot, endSlot, ...extra, openCount: (prev?.openCount ?? 0) + 1 }));
-  };
-
-  // 새 일정 패널의 저장: 시간 일정은 그날 카드로, 종일 일정은 기간 일정으로 바로 저장하고 패널을 닫는다.
-  // (새 일정 패널은 스스로 [저장]을 받으므로, 일정 패널의 저장 줄을 거치지 않고 그 일정 하나만 저장한다)
-  const saveNewEvent = (result) => {
-    if (result.kind === 'timed') commitAddTimeBlock(newDraft.date, result.block);
-    else commitAddEvent(result.event);
-    closeNewEvent();
-  };
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-
-  // 그날의 일정 패널을 연다. (날짜 칸을 누르거나, 날짜 버튼에서 Enter, 또는 +N 더보기)
-  // blockId를 주면(칸의 시간 일정을 눌렀을 때) 그 카드를 골라 카드 상세 패널까지 함께 열고,
-  // eventId를 주면(칸의 기간 일정 막대를 눌렀을 때) 그 일정의 기간 일정 상세 패널까지 함께 연다.
-  // e는 달력 칸에서 누른 경우에만 있다.
-  const openDayPanel = (e, dateString, blockId = null, eventId = null) => {
-    if (e) e.stopPropagation();
-    closeNewEvent();
-    releaseBlock();
-    setSelectedBlockId(blockId);
-    setOpenEventId(eventId);
-    setPanel(prev => ({ date: dateString, openCount: (prev?.openCount ?? 0) + 1 }));
-  };
-
-  // 패널의 ‹ › 버튼: 전날·다음 날로 넘긴다. 카드·기간 일정 상세 패널은 닫는다.
-  const moveDayPanel = (days) => {
-    releaseBlock();
-    setSelectedBlockId(null);
-    setOpenEventId(null);
-    closeNewEvent();
-    setPanel(prev => ({ date: addDays(prev.date, days), openCount: prev.openCount + 1 }));
-  };
-
-  const closePanelNow = () => {
-    releaseBlock();
-    setSelectedBlockId(null);
-    setOpenEventId(null);
-    closeNewEvent();
-    setPanel(null);
-  };
-
-  // 일정 패널의 X: 저장 안 한 변경이 있으면 먼저 묻는다 (닫으면 고치던 내용이 화면에서 사라져 보이므로).
-  // 날짜·카드를 옮길 때는 묻지 않는다. 고치던 내용은 옮겨도 그대로 남고 저장 줄에 계속 보이기 때문이다.
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
-  const closeDayPanel = () => {
-    if (changeCount > 0) setShowCloseConfirm(true);
-    else closePanelNow();
-  };
   // 저장 안 한 변경이 있으면 창을 닫거나 새로 고칠 때 브라우저가 "사이트에서 나가시겠습니까?"로 한 번 막는다
   useEffect(() => {
     if (changeCount === 0) return undefined;
@@ -201,19 +96,6 @@ export default function App() {
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [changeCount]);
-
-  // 기간 일정 상세 패널의 "삭제"를 누르면 확인 팝업을 띄운다.
-  const openDeleteModal = (eventItem) => {
-    setSelectedEvent(eventItem);
-    setShowDeleteModal(true);
-  };
-
-  const deleteEvent = () => {
-    commitRemoveEvent(selectedEvent.id); // 삭제 확인 팝업에서 [확인]을 받았으므로 바로 저장한다
-    if (selectedEvent.id === openEventId) setOpenEventId(null); // 지운 일정의 상세 패널도 닫는다
-    setShowDeleteModal(false);
-    setSelectedEvent(null);
-  };
 
   // 요약 줄의 범위(from~to)와 이름(scope). 보기에 따라 그 해·그달·그 주 (utils/summary.js)
   const { from: summaryFrom, to: summaryTo, scope: summaryScope } = summaryRange({
@@ -227,19 +109,14 @@ export default function App() {
   // 달력은 "저장된 것"을 보여 준다 (저장해야 달력에 반영된다)
   const cellProps = {
     events: savedEvents, timeBlocks: savedTimeBlocks,
-    selectionStart, selectionEnd,
-    onMouseDown: handleMouseDown, onMouseEnter: handleMouseEnter,
+    selectionStart: drag.selectionStart, selectionEnd: drag.selectionEnd,
+    onMouseDown: drag.handleMouseDown, onMouseEnter: drag.handleMouseEnter,
     panelDate: panel?.date ?? null,
     today: getTodayString(), // 할 일 알약이 오늘·지난 날·앞으로의 날을 가른다
     theme, // 칸 테두리 색 (달력 영역과 같은 보기 색 2단계)
     onOpenDay: openDayPanel,
     onShowMore: (dateString) => openDayPanel(null, dateString),
   };
-
-  const panelEvents = panel ? events.filter(e => e.start_date <= panel.date && e.end_date >= panel.date) : [];
-  const panelBlocks = panel ? timeBlocks[panel.date] || [] : [];
-  const selectedBlock = panelBlocks.find(b => b.id === selectedBlockId) ?? null;
-  const openEvent = panel ? events.find(e => e.id === openEventId) ?? null : null;
 
   return (
     // 화면 짜임: 맨 위 상단 바(화면 전체 폭) 아래에 한 줄로 [달력 상자] [일정 패널] [두 번째 패널]이 나란히 선다.
@@ -321,14 +198,14 @@ export default function App() {
           dayEvents={panelEvents}
           blocks={panelBlocks}
           selectedBlockId={selectedBlockId}
-          onClose={closeDayPanel}
-          onMoveDay={moveDayPanel}
+          onClose={panels.closeDayPanel}
+          onMoveDay={panels.moveDayPanel}
           onNewEvent={(kind) => openNewEvent(panel.date, kind)}
           selectedEventId={openEventId}
-          onSelectEvent={selectEvent}
+          onSelectEvent={panels.selectEvent}
           onAddBlock={(block) => addTimeBlock(panel.date, block)}
           onChangeBlock={(id, changes) => changeTimeBlock(panel.date, id, changes)}
-          onSelectBlock={selectBlock}
+          onSelectBlock={panels.selectBlock}
           view={panelView}
           onViewChange={setPanelView}
           changeCount={changeCount}
@@ -349,8 +226,8 @@ export default function App() {
           event={openEvent}
           onChange={(changes) => patchEvent(openEvent.id, changes)}
           onChangeTodos={(change) => changeEventTodos(openEvent.id, change)}
-          onDelete={() => openDeleteModal(openEvent)}
-          onClose={() => selectEvent(null)}
+          onDelete={() => deleteConfirm.ask(openEvent)}
+          onClose={() => panels.selectEvent(null)}
           changeCount={changeCount}
           onSave={() => save()}
           onRevert={revert}
@@ -366,8 +243,8 @@ export default function App() {
           blocks={panelBlocks}
           onChange={(changes) => changeTimeBlock(panel.date, selectedBlock.id, changes)}
           onChangeTodos={(change) => changeTodos(panel.date, selectedBlock.id, change)}
-          onDelete={() => { removeTimeBlock(panel.date, selectedBlock.id); setSelectedBlockId(null); }}
-          onClose={() => selectBlock(null)}
+          onDelete={panels.deleteSelectedBlock}
+          onClose={() => panels.selectBlock(null)}
           changeCount={changeCount}
           onSave={() => save()}
           onRevert={revert}
@@ -380,25 +257,24 @@ export default function App() {
           key={newDraft.openCount}
           draft={newDraft}
           blocks={timeBlocks[newDraft.date] || []}
-          onSave={saveNewEvent}
-          onCancel={closeNewEvent}
+          onSave={panels.saveNewEvent}
+          onCancel={panels.closeNewEvent}
         />
       )}
 
       {/* --- 저장 안 한 채 패널을 닫을 때 묻는 팝업 --- */}
-      {showCloseConfirm && (
+      {closeConfirm.open && (
         <UnsavedCloseModal
           changeCount={changeCount}
-          // [저장하고 닫기]: 열려 있던 빈 카드(이름도 할 일도 없음)는 치우고 저장한 뒤 닫는다
-          onSave={() => { setShowCloseConfirm(false); save(selectedBlockId ? { date: panel.date, id: selectedBlockId } : null); closePanelNow(); }}
-          onDiscard={() => { setShowCloseConfirm(false); closePanelNow(); revert(); }}
-          onCancel={() => setShowCloseConfirm(false)}
+          onSave={closeConfirm.saveAndClose}
+          onDiscard={closeConfirm.discardAndClose}
+          onCancel={closeConfirm.cancel}
         />
       )}
 
       {/* --- 삭제 확인 모달 --- */}
-      {showDeleteModal && (
-        <DeleteConfirmModal onCancel={() => setShowDeleteModal(false)} onConfirm={deleteEvent} />
+      {deleteConfirm.open && (
+        <DeleteConfirmModal onCancel={deleteConfirm.cancel} onConfirm={deleteConfirm.confirm} />
       )}
       </div>
     </div>
