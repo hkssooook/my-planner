@@ -6,7 +6,7 @@ import { getDayOfWeek, getDaysInMonth } from '../../utils/date';
 // 날짜 칸은 연 보기와 같은 DayCell을 그대로 쓴다. 그래서 일정 막대·할 일 알약·쉬는 날·누르기·끌기가 모두 같다.
 // 그달이 아닌 앞뒤 자리는 앰버 3단계 점선 빈칸이다. (리디자인 기획서 "빈 칸 점선 = 3단계")
 //   year, month  보여 줄 해와 달 (1~12)
-//   cellProps    날짜 칸에 넘길 값 묶음 (App의 cellProps)
+//   cellProps    날짜 칸에 넘길 값 묶음 (CalendarArea가 만든다)
 export default function MonthView({ year, month, cellProps }) {
   const days = getDaysInMonth(year, month);
   const lead = getDayOfWeek(year, month, 1); // 1일의 요일 (0 = 일요일) = 앞 빈칸 수
