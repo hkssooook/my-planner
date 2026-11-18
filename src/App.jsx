@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { YEAR_RANGE } from './constants/calendar';
+import { CALENDAR_BACKGROUND, PAGE_BACKGROUND, VIEW_THEME } from './constants/themes';
 import { addDays, formatShortDate, getCurrentYear, getDaysInMonth, getNowTime, getTodayString, getYearOptions, weekStartOf } from './utils/date';
 import { setTodoDone } from './utils/todos';
 import { nextFreeHour } from './utils/timeBlocks';
@@ -45,8 +46,8 @@ export default function App() {
   const [weekStart, setWeekStart] = useState(() => weekStartOf(getTodayString()));
   const isMonthView = view === 'month';
   const isWeekView = view === 'week';
-  // 보기 색: 연 = 파랑, 월 = 앰버, 주 = 민트 (리디자인 기획서 "보기별 색")
-  const theme = isWeekView ? 'mint' : isMonthView ? 'amber' : 'blue';
+  // 보기 색: 연 = 파랑, 월 = 앰버, 주 = 민트 (constants/themes.js)
+  const theme = VIEW_THEME[view];
   // 보기를 바꾼다. 보는 해가 올해면 이번 달·이번 주를, 아니면 그 해 1월·첫 주를 보여 준다
   const changeView = (next) => {
     const isThisYear = currentYear === thisYear;
@@ -257,8 +258,8 @@ export default function App() {
     // 그래서 달력과 패널들은 같은 높이에서 시작해 같은 높이에서 끝난다. 달력은 패널이 열려도 계속 보인다.
     // 화면 전체는 화면 높이에 딱 맞고 스크롤되지 않는다(h-screen overflow-hidden). 스크롤은 달력 상자와 패널이 각자 안에서 한다.
     // 화면 바깥 여백: 위 24px(pt-6), 좌우·아래 12px(px-3 pb-3). 상단 바와 아래 줄 사이, 줄 안의 상자 사이는 모두 12px.
-    // 화면 바탕은 보기 색 5단계: 연 = 파랑(background), 월 = 앰버 (리디자인 기획서 "보기별 색")
-    <div className={`flex flex-col ${{ blue: 'bg-background', amber: 'bg-surface-amber-5', mint: 'bg-surface-mint-5' }[theme]} h-screen overflow-hidden px-3 pt-6 pb-3`}>
+    // 화면 바탕은 보기 색 5단계 (constants/themes.js의 PAGE_BACKGROUND)
+    <div className={`flex flex-col ${PAGE_BACKGROUND[theme]} h-screen overflow-hidden px-3 pt-6 pb-3`}>
         {/* 상단 바 한 줄: 왼쪽은 기간 캡슐, 오른쪽 끝은 연·월·주 탭, (연 보기만) 보기 방식 탭, "새 일정" 버튼 */}
         <div className="flex items-center gap-3 mb-3 shrink-0">
           <Header
@@ -295,7 +296,7 @@ export default function App() {
             가로 스크롤은 위아래·좌우 모두(overflow-auto), 화면 맞춤은 위아래만(overflow-y-auto overflow-x-hidden) */}
         {isWeekView ? (
           // 주 보기(보드형): 민트 2단계 달력 영역에 요일마다 한 칸. 칸이 영역 높이를 채우고, 넘치면 그 칸만 스크롤한다
-          <div data-testid="calendar-scroll" className="flex-1 min-h-0 rounded-lg shadow-xs bg-surface-mint-2 overflow-hidden">
+          <div data-testid="calendar-scroll" className={`flex-1 min-h-0 rounded-lg shadow-xs ${CALENDAR_BACKGROUND[theme]} overflow-hidden`}>
             <WeekView
               weekStart={weekStart} events={savedEvents} timeBlocks={savedTimeBlocks}
               today={getTodayString()} panelDate={panel?.date ?? null}
@@ -305,13 +306,13 @@ export default function App() {
           </div>
         ) : isMonthView ? (
           // 월 보기: 앰버 2단계 달력 영역에 한 달 (위아래로만 스크롤)
-          <div data-testid="calendar-scroll" className="flex-1 min-h-0 rounded-lg shadow-xs bg-surface-amber-2 overflow-y-auto">
+          <div data-testid="calendar-scroll" className={`flex-1 min-h-0 rounded-lg shadow-xs ${CALENDAR_BACKGROUND[theme]} overflow-y-auto`}>
             <MonthView year={currentYear} month={currentMonth} cellProps={cellProps} />
           </div>
         ) : (
         <div
           data-testid="calendar-scroll"
-          className={`flex-1 min-h-0 rounded-lg shadow-xs bg-surface-blue-2 relative ${isWrapMode ? 'overflow-y-auto overflow-x-hidden' : 'overflow-auto'}`}
+          className={`flex-1 min-h-0 rounded-lg shadow-xs ${CALENDAR_BACKGROUND[theme]} relative ${isWrapMode ? 'overflow-y-auto overflow-x-hidden' : 'overflow-auto'}`}
         >
           {/* 칸 사이에 4px 틈(gap-1)을 둬서 둥근 칸들이 떠 보이게 한다. 상자 안쪽 여백은 위 4px(pt-1, 첫 연도 띠가 -mt-1로 덮음)뿐이라 좌우·아래는 칸이 상자 끝에 붙는다 */}
           <div className={`flex flex-col gap-1 pt-1 ${isWrapMode ? '' : 'min-w-max'}`}>
