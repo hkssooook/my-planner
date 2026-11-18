@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { YEAR_RANGE } from './constants/calendar';
 import { addDays, formatShortDate, getCurrentYear, getDaysInMonth, getNowTime, getTodayString, getYearOptions, weekStartOf } from './utils/date';
 import { setTodoDone } from './utils/todos';
-import { isRangeFree } from './utils/timeBlocks';
+import { nextFreeHour } from './utils/timeBlocks';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useDragSelect from './hooks/useDragSelect';
@@ -22,17 +22,6 @@ import DayPanel from './components/panels/DayPanel';
 import BlockPanel from './components/panels/BlockPanel';
 import EventPanel from './components/panels/EventPanel';
 import NewEventPanel from './components/panels/NewEventPanel';
-
-// 새 시간 일정의 처음 시각: 1시간짜리 빈자리 중 가장 이른 곳 [시작 칸, 끝 칸).
-// 오늘이면 지금 다음 정각부터, 다른 날이면 09:00부터 찾는다. 빈자리가 없으면 09:00~10:00(저장할 때 겹친다고 알린다)
-function nextFreeHour(blocks, date) {
-  const now = new Date();
-  const from = date === getTodayString() ? Math.min(46, (now.getHours() + 1) * 2) : 18;
-  for (let slot = from; slot + 2 <= 48; slot += 1) {
-    if (isRangeFree(blocks, slot, slot + 2)) return [slot, slot + 2];
-  }
-  return [18, 20];
-}
 
 export default function App() {
   // events·timeBlocks는 "고치는 중인 것"(패널에 보임), savedEvents·savedTimeBlocks는 "저장된 것"(달력에 보임).
@@ -149,7 +138,10 @@ export default function App() {
     setSelectedBlockId(null);
     setOpenEventId(null);
     if (panel?.date !== date) setPanel(prev => ({ date, openCount: (prev?.openCount ?? 0) + 1 }));
-    const [startSlot, endSlot] = nextFreeHour(timeBlocks[date] || [], date);
+    const [startSlot, endSlot] = nextFreeHour(timeBlocks[date] || [], {
+      isToday: date === getTodayString(),
+      nowHour: new Date().getHours(),
+    });
     setNewDraft(prev => ({ kind, date, startDate: date, endDate: date, startSlot, endSlot, ...extra, openCount: (prev?.openCount ?? 0) + 1 }));
   };
 

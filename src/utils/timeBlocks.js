@@ -80,6 +80,22 @@ export function isRangeFree(blocks, start, end) {
   return true;
 }
 
+const SLOTS_PER_HOUR = 60 / SLOT_MINUTES; // 1시간 = 30분 칸 2개
+const DEFAULT_START_SLOT = timeToSlot('09:00'); // 18
+
+// 새 시간 일정의 처음 시각: 1시간짜리 빈자리 중 가장 이른 곳 [시작 칸, 끝 칸).
+// 오늘이면(isToday) 지금 시(nowHour) 다음 정각부터, 다른 날이면 09:00부터 찾는다.
+// 빈자리가 없으면 09:00~10:00을 준다 (저장할 때 겹친다고 알린다).
+export function nextFreeHour(blocks, { isToday, nowHour }) {
+  const from = isToday
+    ? Math.min(SLOTS_PER_DAY - SLOTS_PER_HOUR, (nowHour + 1) * SLOTS_PER_HOUR)
+    : DEFAULT_START_SLOT;
+  for (let slot = from; slot + SLOTS_PER_HOUR <= SLOTS_PER_DAY; slot += 1) {
+    if (isRangeFree(blocks, slot, slot + SLOTS_PER_HOUR)) return [slot, slot + SLOTS_PER_HOUR];
+  }
+  return [DEFAULT_START_SLOT, DEFAULT_START_SLOT + SLOTS_PER_HOUR];
+}
+
 // 드래그: 처음 누른 칸(anchor)에서 지금 마우스가 있는 칸(target) 쪽으로 늘리되,
 // 이미 카드가 있는 칸을 만나면 그 바로 앞에서 멈춘다. 결과는 [시작 칸, 끝 칸).
 // 위로 끌어도(target < anchor) 된다. anchor 칸은 비어 있다고 본다.

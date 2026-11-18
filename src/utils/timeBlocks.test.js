@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   hourToTime, timeToHour, slotToBlock, migrateDailyToBlocks,
   slotToTime, timeToSlot, blockSlotRange, isSlotTaken, isRangeFree, freeRangeFrom, makeTimeBlock, sortBlocks,
-  freeGapAround, freeStartsFor, movedRange, resizedRange,
+  freeGapAround, freeStartsFor, movedRange, resizedRange, nextFreeHour,
 } from './timeBlocks';
 
 const BLUE = '#3B82F6';
@@ -91,6 +91,32 @@ describe('겹침 검사', () => {
     expect(isRangeFree(blocks, 20, 24)).toBe(true); // 10:00~12:00
     expect(isRangeFree(blocks, 20, 25)).toBe(false); // 12:00 칸과 겹침
     expect(isRangeFree(blocks, 16, 19)).toBe(false);
+  });
+});
+
+describe('nextFreeHour (새 일정의 처음 시각)', () => {
+  const otherDay = { isToday: false, nowHour: 15 };
+
+  it('다른 날이면 09:00부터 찾는다', () => {
+    expect(nextFreeHour([], otherDay)).toEqual([18, 20]); // 09:00~10:00
+  });
+
+  it('오늘이면 지금 다음 정각부터 찾는다', () => {
+    expect(nextFreeHour([], { isToday: true, nowHour: 15 })).toEqual([32, 34]); // 16:00~17:00
+  });
+
+  it('밤 11시 이후의 오늘은 23:00~24:00', () => {
+    expect(nextFreeHour([], { isToday: true, nowHour: 23 })).toEqual([46, 48]);
+  });
+
+  it('찬 시간은 건너뛰고 1시간이 비는 첫 자리를 준다', () => {
+    const blocks = [{ start: '09:00', end: '10:30' }]; // 18~20 칸
+    expect(nextFreeHour(blocks, otherDay)).toEqual([21, 23]); // 10:30~11:30
+  });
+
+  it('빈자리가 없으면 09:00~10:00', () => {
+    const full = [{ start: '00:00', end: '24:00' }];
+    expect(nextFreeHour(full, otherDay)).toEqual([18, 20]);
   });
 });
 
