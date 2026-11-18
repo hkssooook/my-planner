@@ -1,5 +1,36 @@
 import { describe, it, expect } from 'vitest';
-import { summarize } from './summary';
+import { summarize, summaryRange } from './summary';
+
+describe('summaryRange (요약 줄이 셀 범위와 이름)', () => {
+  const base = { year: 2026, month: 11, weekStart: '2026-11-15', today: '2026-11-18', thisYear: 2026 };
+
+  it('연: 그 해 전체, 올해면 "올해"', () => {
+    expect(summaryRange({ ...base, view: 'year' })).toEqual({ from: '2026-01-01', to: '2026-12-31', scope: '올해' });
+  });
+  it('연: 올해가 아니면 "2027년"', () => {
+    expect(summaryRange({ ...base, view: 'year', year: 2027 }).scope).toBe('2027년');
+  });
+
+  it('월: 그달 1일~말일, 이번 달이면 "이달"', () => {
+    expect(summaryRange({ ...base, view: 'month' })).toEqual({ from: '2026-11-01', to: '2026-11-30', scope: '이달' });
+  });
+  it('월: 다른 달이면 "3월", 윤년 2월은 29일까지', () => {
+    expect(summaryRange({ ...base, view: 'month', month: 3 }).scope).toBe('3월');
+    expect(summaryRange({ ...base, view: 'month', year: 2028, month: 2 }).to).toBe('2028-02-29');
+  });
+  it('월: 같은 달이라도 해가 다르면 "이달"이 아니다', () => {
+    expect(summaryRange({ ...base, view: 'month', year: 2027 }).scope).toBe('11월');
+  });
+
+  it('주: 일요일~토요일, 오늘이 들어 있으면 "이번 주"', () => {
+    expect(summaryRange({ ...base, view: 'week' })).toEqual({ from: '2026-11-15', to: '2026-11-21', scope: '이번 주' });
+  });
+  it('주: 다른 주면 날짜로 부른다', () => {
+    const r = summaryRange({ ...base, view: 'week', weekStart: '2026-11-22' });
+    expect(r).toMatchObject({ from: '2026-11-22', to: '2026-11-28' });
+    expect(r.scope).not.toBe('이번 주');
+  });
+});
 
 const todo = (done) => ({ id: Math.random().toString(), text: '할 일', done });
 const evt = (title, start, end = start, todos) => ({ id: title, title, start_date: start, end_date: end, color: '#8DA5FD', ...(todos ? { todos } : {}) });

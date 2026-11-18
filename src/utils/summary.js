@@ -16,10 +16,45 @@
 //             next는 가장 가까운 하나 { date, title } (없으면 null).
 //   overdue   오늘 이전 날에 남은(끝내지 않은) 할 일 개수. 범위 안에서만 센다.
 //             기간 일정은 끝나는 날이 오늘 이전일 때만 "지난 일"로 본다.
-import { addDays } from './date';
+import { addDays, formatShortDate, getDaysInMonth } from './date';
 import { todosOf } from './todos';
 
 const UPCOMING_DAYS = 7;
+
+const pad = (n) => String(n).padStart(2, '0');
+
+// 요약 줄이 셀 범위와 그 이름. 보기마다 다르다.
+//   view       'year' | 'month' | 'week'
+//   year       보는 해,  month  보는 달(1~12, 월 보기),  weekStart  보는 주의 일요일 'YYYY-MM-DD' (주 보기)
+//   today      오늘 'YYYY-MM-DD',  thisYear  앱을 연 해
+// 돌려주는 값: { from, to, scope }  from·to는 summarize에 넘길 범위, scope는 카드에 보일 이름
+//   연: 그 해 1월 1일 ~ 12월 31일, '올해' 또는 '2027년'
+//   월: 그달 1일 ~ 말일, '이달' 또는 '3월'
+//   주: 일요일 ~ 토요일, '이번 주' 또는 '11/15–11/21'
+export function summaryRange({ view, year, month, weekStart, today, thisYear }) {
+  if (view === 'week') {
+    const weekEnd = addDays(weekStart, 6);
+    const isThisWeek = today >= weekStart && today <= weekEnd;
+    return {
+      from: weekStart,
+      to: weekEnd,
+      scope: isThisWeek ? '이번 주' : `${formatShortDate(weekStart)}–${formatShortDate(weekEnd)}`,
+    };
+  }
+  if (view === 'month') {
+    const monthKey = `${year}-${pad(month)}`;
+    return {
+      from: `${monthKey}-01`,
+      to: `${monthKey}-${pad(getDaysInMonth(year, month))}`,
+      scope: monthKey === today.slice(0, 7) ? '이달' : `${month}월`,
+    };
+  }
+  return {
+    from: `${year}-01-01`,
+    to: `${year}-12-31`,
+    scope: year === thisYear ? '올해' : `${year}년`,
+  };
+}
 
 export function summarize({ events, timeBlocks, from, to, today, now = '00:00' }) {
   const inRange = (date) => date >= from && date <= to;

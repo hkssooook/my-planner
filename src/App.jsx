@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { YEAR_RANGE } from './constants/calendar';
 import { CALENDAR_BACKGROUND, PAGE_BACKGROUND, VIEW_THEME } from './constants/themes';
-import { addDays, formatShortDate, getCurrentYear, getDaysInMonth, getNowTime, getTodayString, getYearOptions, weekStartOf } from './utils/date';
+import { addDays, getCurrentYear, getNowTime, getTodayString, getYearOptions, weekStartOf } from './utils/date';
 import { setTodoDone } from './utils/todos';
 import { nextFreeHour } from './utils/timeBlocks';
 import { Plus } from 'lucide-react';
@@ -12,7 +12,7 @@ import usePlannerData from './hooks/usePlannerData';
 import Header from './components/layout/Header';
 import ViewTabs from './components/layout/ViewTabs';
 import SummaryRow from './components/layout/SummaryRow';
-import { summarize } from './utils/summary';
+import { summarize, summaryRange } from './utils/summary';
 import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import MonthView from './components/calendar/MonthView';
@@ -215,22 +215,10 @@ export default function App() {
     setSelectedEvent(null);
   };
 
-  // 요약 줄의 범위와 이름
-  const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-  const isThisMonth = monthKey === getTodayString().slice(0, 7);
-  const weekEnd = addDays(weekStart, 6);
-  const isThisWeek = getTodayString() >= weekStart && getTodayString() <= weekEnd;
-  let summaryRange; let summaryScope;
-  if (isWeekView) {
-    summaryRange = { from: weekStart, to: weekEnd };
-    summaryScope = isThisWeek ? '이번 주' : `${formatShortDate(weekStart)}–${formatShortDate(weekEnd)}`;
-  } else if (isMonthView) {
-    summaryRange = { from: `${monthKey}-01`, to: `${monthKey}-${String(getDaysInMonth(currentYear, currentMonth)).padStart(2, '0')}` };
-    summaryScope = isThisMonth ? '이달' : `${currentMonth}월`;
-  } else {
-    summaryRange = { from: `${currentYear}-01-01`, to: `${currentYear}-12-31` };
-    summaryScope = currentYear === thisYear ? '올해' : `${currentYear}년`;
-  }
+  // 요약 줄의 범위(from~to)와 이름(scope). 보기에 따라 그 해·그달·그 주 (utils/summary.js)
+  const { from: summaryFrom, to: summaryTo, scope: summaryScope } = summaryRange({
+    view, year: currentYear, month: currentMonth, weekStart, today: getTodayString(), thisYear,
+  });
 
   // 기준 연도와 그 다음 연도를 동시 렌더링하기 위한 배열
   const displayYears = [currentYear, currentYear + 1];
@@ -285,7 +273,7 @@ export default function App() {
       {/* 범위만 보기에 따라 바뀐다: 연 = 그 해, 월 = 그달 */}
       <SummaryRow
         scope={summaryScope}
-        summary={summarize({ events: savedEvents, timeBlocks: savedTimeBlocks, ...summaryRange, today: getTodayString(), now: getNowTime() })}
+        summary={summarize({ events: savedEvents, timeBlocks: savedTimeBlocks, from: summaryFrom, to: summaryTo, today: getTodayString(), now: getNowTime() })}
       />
 
       {/* 아래 한 줄: 남은 높이를 모두 쓰고, 달력 상자와 패널들이 같은 높이로 선다 */}
