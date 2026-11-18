@@ -3,16 +3,12 @@ import { useEffect, useState } from 'react';
 import { CALENDAR_BACKGROUND, PAGE_BACKGROUND } from './constants/themes';
 import { getNowTime, getTodayString } from './utils/date';
 import { setTodoDone } from './utils/todos';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import usePlannerData from './hooks/usePlannerData';
 import usePanels from './hooks/usePanels';
 import useCalendarNav from './hooks/useCalendarNav';
-import Header from './components/layout/Header';
-import ViewTabs from './components/layout/ViewTabs';
+import TopBar from './components/layout/TopBar';
 import SummaryRow from './components/layout/SummaryRow';
 import { summarize, summaryRange } from './utils/summary';
-import ViewModeToggle from './components/calendar/ViewModeToggle';
 import YearSection from './components/calendar/YearSection';
 import MonthView from './components/calendar/MonthView';
 import WeekView from './components/calendar/WeekView';
@@ -97,26 +93,15 @@ export default function App() {
     // 화면 바깥 여백: 위 24px(pt-6), 좌우·아래 12px(px-3 pb-3). 상단 바와 아래 줄 사이, 줄 안의 상자 사이는 모두 12px.
     // 화면 바탕은 보기 색 5단계 (constants/themes.js의 PAGE_BACKGROUND)
     <div className={`flex flex-col ${PAGE_BACKGROUND[theme]} h-screen overflow-hidden px-3 pt-6 pb-3`}>
-        {/* 상단 바 한 줄: 왼쪽은 기간 캡슐, 오른쪽 끝은 연·월·주 탭, (연 보기만) 보기 방식 탭, "새 일정" 버튼 */}
-        <div className="flex items-center gap-3 mb-3 shrink-0">
-          <Header
-            year={currentYear} onYearChange={nav.changeYear} years={nav.yearOptions} onToday={goToToday}
-            theme={theme}
-            month={isMonthView ? currentMonth : null}
-            onMonthChange={nav.changeMonth}
-            weekStart={isWeekView ? weekStart : null}
-            onWeekChange={nav.changeWeek}
-          />
-          <div className="ml-auto flex items-center gap-3">
-            <ViewTabs view={view} onViewChange={nav.changeView} />
-            {/* 가로 스크롤 / 화면 맞춤은 연 보기에만 있는 설정 */}
-            {view === 'year' && <ViewModeToggle isWrapMode={isWrapMode} onWrapModeChange={setIsWrapMode} />}
-            {/* 새 일정: 열린 날(없으면 오늘)의 일정 패널 + 새 일정 패널(시간 일정) */}
-            <Button className="h-10 rounded-full px-4 font-semibold" onClick={() => openNewEvent(panel?.date ?? getTodayString(), 'timed')}>
-              <Plus aria-hidden="true" />새 일정
-            </Button>
-          </div>
-        </div>
+      {/* 상단 바: 기간 캡슐 · 연·월·주 탭 · 화면 맞춤 · 새 일정 */}
+      <TopBar
+        nav={nav}
+        isWrapMode={isWrapMode}
+        onWrapModeChange={setIsWrapMode}
+        onToday={goToToday}
+        // 새 일정: 열린 날(없으면 오늘)의 일정 패널 + 새 일정 패널(시간 일정)
+        onNewEvent={() => openNewEvent(panel?.date ?? getTodayString(), 'timed')}
+      />
 
       {/* 요약 줄: 지금 보는 범위의 할 일 · 7일 이내 주요 일정 · 못 끝낸 일 (저장된 일정 기준) */}
       {/* 범위만 보기에 따라 바뀐다: 연 = 그 해, 월 = 그달 */}
