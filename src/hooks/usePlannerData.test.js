@@ -485,3 +485,45 @@ describe('저장 버튼으로만 저장 (저장된 것 / 고치는 중인 것)',
     expect(result.current.changeCount).toBe(1);
   });
 });
+
+describe('수파베이스에 저장 (initialData · persist를 넘긴 경우)', () => {
+  const block = { id: 'a', start: '09:00', end: '10:00', content: '회의', is_important: false, color: '#8DA5FD' };
+
+  it('initialData로 시작하고, 브라우저 저장소는 읽지도 쓰지도 않는다', async () => {
+    localStorage.setItem('planner_events', JSON.stringify([{ id: 9, ...eventData('서랍 속 일정') }]));
+    const persist = vi.fn(async () => {});
+    const initialData = { events: [{ id: 1, ...eventData('수파베이스 일정') }], timeBlocks: {} };
+    const { result } = renderHook(() => usePlannerData({ initialData, persist }));
+    expect(result.current.events.map((e) => e.title)).toEqual(['수파베이스 일정']);
+
+    act(() => result.current.addEvent(eventData('새 일정')));
+    await act(async () => result.current.save());
+    expect(persist).toHaveBeenCalledWith({ events: result.current.events, timeBlocks: {} });
+    expect(saved('planner_events').map((e) => e.title)).toEqual(['서랍 속 일정']); // 서랍은 그대로
+    expect(result.current.saveFailed).toBe(false);
+  });
+
+  it('commit 함수는 바꾼 칸만 보낸다', async () => {
+    const persist = vi.fn(async () => {});
+    const { result } = renderHook(() => usePlannerData({ initialData: { events: [], timeBlocks: {} }, persist }));
+    await act(async () => result.current.commitAddTimeBlock('2026-01-05', block));
+    expect(persist).toHaveBeenLastCalledWith({ timeBlocks: { '2026-01-05': [block] } });
+    await act(async () => result.current.commitAddEvent(eventData('바로 저장')));
+    expect(persist).toHaveBeenLastCalledWith({ events: [expect.objectContaining({ title: '바로 저장' })] });
+  });
+
+  it('저장에 실패하면 saveFailed가 켜지고, retrySave()는 저장된 것을 통째로 다시 보낸다', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const persist = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(undefined);
+    const { result } = renderHook(() => usePlannerData({ initialData: { events: [], timeBlocks: {} }, persist }));
+
+    act(() => result.current.addEvent(eventData('올릴 일정')));
+    await act(async () => result.current.save());
+    expect(result.current.saveFailed).toBe(true);
+
+    await act(async () => result.current.retrySave());
+    expect(persist).toHaveBeenLastCalledWith({ events: result.current.savedEvents, timeBlocks: {} });
+    expect(result.current.savedEvents.map((e) => e.title)).toEqual(['올릴 일정']);
+    expect(result.current.saveFailed).toBe(false);
+  });
+});

@@ -30,7 +30,7 @@ function loadSavedTimeBlocks() {
 // 화면(팝업 열고 닫기, 입력창 등)은 알지 못한다. 저장 방식이 바뀌면 이 파일만 고치면 된다.
 //
 // 데이터는 두 벌이다. (리디자인 기획서 "저장 규칙": 저장 버튼을 눌러야만 저장)
-//   저장된 것(saved)       브라우저 저장소에 있는 것. 달력에 보인다.
+//   저장된 것(saved)       저장소(로그인했으면 수파베이스, 아니면 브라우저)에 있는 것. 달력에 보인다.
 //   고치는 중인 것(working)  패널에서 고친 것. 패널에 보인다. save()를 부르기 전에는 저장소에 쓰지 않는다.
 //   save()    고치는 중인 것을 저장소에 쓰고 "저장된 것"으로 삼는다
 //   revert()  고치는 중인 것을 버리고 마지막으로 저장한 상태로 돌아간다
@@ -42,14 +42,40 @@ function loadSavedTimeBlocks() {
 //   timeBlocks: { '2026-01-05': [{ id, start: '09:00', end: '10:00', content, color, is_important, todos? }] } (날짜마다 시작 시각 순서)
 //               todos는 할 일 목록 [{ id, text, done }]. 예전에 만든 카드에는 없다. (utils/todos.js 참고)
 //               (카드 모양은 utils/timeBlocks.js 설명 참고)
-export default function usePlannerData() {
+//
+// 어디에 저장하나 (로그인했으면 수파베이스, 아니면 브라우저 저장소):
+//   initialData  { events, timeBlocks }  수파베이스에서 미리 읽어 온 값 (PlannerLoader가 넘긴다)
+//   persist      (changes) => Promise    수파베이스에 쓰는 함수. changes = { events?, timeBlocks? }
+//   둘 다 없으면(시험 등) 예전처럼 브라우저 저장소(localStorage)를 쓴다.
+//   saveFailed   수파베이스에 쓰지 못했다 (인터넷 끊김 등). retrySave()로 "저장된 것"을 다시 보낸다
+export default function usePlannerData({ initialData = null, persist = null } = {}) {
   // useState에 함수를 넘기면 맨 처음 한 번만 실행되어 그 결과가 초기값이 된다.
   // 그래서 저장된 일정으로 곧바로 시작할 수 있고, 빈 화면이 먼저 뜨는 일이 없다.
-  const [savedEvents, setSavedEvents] = useState(loadSavedEvents);
-  const [savedTimeBlocks, setSavedTimeBlocks] = useState(loadSavedTimeBlocks);
+  const [savedEvents, setSavedEvents] = useState(() => (initialData ? initialData.events : loadSavedEvents()));
+  const [savedTimeBlocks, setSavedTimeBlocks] = useState(() => (initialData ? initialData.timeBlocks : loadSavedTimeBlocks()));
   // 고치는 중인 것: 처음에는 저장된 것과 같다
   const [events, setEvents] = useState(savedEvents);
   const [timeBlocks, setTimeBlocks] = useState(savedTimeBlocks);
+  const [saveFailed, setSaveFailed] = useState(false);
+
+  // 저장소에 쓴다. changes에 넣은 것만 쓴다. 예: write({ events: 새목록 })
+  // 수파베이스는 인터넷을 거치므로 결과를 기다리지 않고 화면은 바로 "저장됨"으로 바꾼다.
+  // 실패하면 saveFailed를 켜서 화면이 "다시 저장"을 보여 주게 한다.
+  const write = (changes) => {
+    if (!persist) {
+      if ('events' in changes) saveJSON(STORAGE_KEYS.events, changes.events);
+      if ('timeBlocks' in changes) saveJSON(STORAGE_KEYS.timeBlocks, changes.timeBlocks);
+      return;
+    }
+    setSaveFailed(false);
+    persist(changes).catch((error) => {
+      console.error('수파베이스에 저장하지 못했습니다.', error);
+      setSaveFailed(true);
+    });
+  };
+
+  // [다시 저장]: 마지막으로 "저장된 것"(달력에 보이는 것)을 통째로 다시 보낸다
+  const retrySave = () => write({ events: savedEvents, timeBlocks: savedTimeBlocks });
 
   // 기간·종일 일정 목록을 고친다. change는 "지금 목록 → 새 목록" 함수다.
   // 화면이 들고 있던 옛 목록이 아니라 늘 가장 최신 목록(prev)을 받아서 고치므로, 연달아 고쳐도 앞의 변경이 사라지지 않는다.
@@ -60,7 +86,7 @@ export default function usePlannerData() {
     setEvents((prev) => change(prev));
     setSavedEvents((prev) => {
       const updated = change(prev);
-      saveJSON(STORAGE_KEYS.events, updated);
+      write({ events: updated });
       return updated;
     });
   };
@@ -118,7 +144,7 @@ export default function usePlannerData() {
     setTimeBlocks(add);
     setSavedTimeBlocks((prev) => {
       const updated = add(prev);
-      saveJSON(STORAGE_KEYS.timeBlocks, updated);
+      write({ timeBlocks: updated });
       return updated;
     });
   };
@@ -150,8 +176,7 @@ export default function usePlannerData() {
       blocksToSave = { ...timeBlocks, [date]: (timeBlocks[date] || []).filter((block) => block.id !== id || !isEmptyBlock(block)) };
       setTimeBlocks(blocksToSave);
     }
-    saveJSON(STORAGE_KEYS.events, events);
-    saveJSON(STORAGE_KEYS.timeBlocks, blocksToSave);
+    write({ events, timeBlocks: blocksToSave });
     setSavedEvents(events);
     setSavedTimeBlocks(blocksToSave);
   };
@@ -165,7 +190,7 @@ export default function usePlannerData() {
   const changeCount = countChanges({ events: savedEvents, timeBlocks: savedTimeBlocks }, { events, timeBlocks });
 
   return {
-    events, timeBlocks, savedEvents, savedTimeBlocks, changeCount, save, revert,
+    events, timeBlocks, savedEvents, savedTimeBlocks, changeCount, save, revert, saveFailed, retrySave,
     addEvent, commitAddEvent, changeEvent, patchEvent, changeEventTodos, removeEvent, commitRemoveEvent,
     saveDayBlocks, addTimeBlock, commitAddTimeBlock, changeTimeBlock, removeTimeBlock, removeTimeBlockIfEmpty, changeTodos,
   };

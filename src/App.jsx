@@ -7,6 +7,7 @@ import usePlannerData from './hooks/usePlannerData';
 import usePanels from './hooks/usePanels';
 import useCalendarNav from './hooks/useCalendarNav';
 import TopBar from './components/layout/TopBar';
+import { Button } from '@/components/ui/button';
 import SummaryRow from './components/layout/SummaryRow';
 import { summarize, summaryRange } from './utils/summary';
 import CalendarArea from './components/calendar/CalendarArea';
@@ -18,12 +19,14 @@ import EventPanel from './components/panels/EventPanel';
 import NewEventPanel from './components/panels/NewEventPanel';
 
 // account = { email, onSignOut }: 로그인한 사람 (main.jsx의 AuthGate가 넘긴다). 시험처럼 없으면 상단 바에 계정 칸을 그리지 않는다.
-export default function App({ account = null }) {
+// initialData, persist: 수파베이스에서 읽어 온 일정과 수파베이스에 쓰는 함수 (main.jsx의 PlannerLoader가 넘긴다).
+//   없으면(시험 등) 브라우저 저장소를 쓴다. (usePlannerData 설명 참고)
+export default function App({ account = null, initialData = null, persist = null }) {
   // events·timeBlocks는 "고치는 중인 것"(패널에 보임), savedEvents·savedTimeBlocks는 "저장된 것"(달력에 보임).
   // 패널에서 고친 내용은 일정 패널의 [저장]을 눌러야 저장되고 달력에 반영된다. (usePlannerData 설명 참고)
-  const data = usePlannerData();
+  const data = usePlannerData({ initialData, persist });
   const {
-    timeBlocks, savedEvents, savedTimeBlocks, changeCount, save, revert,
+    timeBlocks, savedEvents, savedTimeBlocks, changeCount, save, revert, saveFailed, retrySave,
     patchEvent, changeEventTodos, addTimeBlock, changeTimeBlock, changeTodos,
   } = data;
 
@@ -56,17 +59,19 @@ export default function App({ account = null }) {
     });
   };
 
-  // 저장 안 한 변경이 있으면 창을 닫거나 새로 고칠 때 브라우저가 "사이트에서 나가시겠습니까?"로 한 번 막는다
+  // 저장 안 한 변경이 있거나 수파베이스 저장에 실패했으면, 창을 닫거나 새로 고칠 때 브라우저가 "사이트에서 나가시겠습니까?"로 한 번 막는다
+  const hasUnsaved = changeCount > 0 || saveFailed;
   useEffect(() => {
-    if (changeCount === 0) return undefined;
+    if (!hasUnsaved) return undefined;
     const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [changeCount]);
+  }, [hasUnsaved]);
 
   // 로그아웃: 저장 안 한 변경이 있으면 사라지므로 한 번 묻는다
   const signOut = () => {
     if (changeCount > 0 && !window.confirm(`저장 안 한 변경 ${changeCount}개가 사라져요. 그래도 로그아웃할까요?`)) return;
+    if (saveFailed && !window.confirm('마지막 저장이 수파베이스에 올라가지 않았어요. 그래도 로그아웃할까요?')) return;
     account.onSignOut();
   };
 
@@ -92,6 +97,14 @@ export default function App({ account = null }) {
         onNewEvent={() => openNewEvent(panel?.date ?? getTodayString(), 'timed')}
         account={account && { email: account.email, onSignOut: signOut }}
       />
+
+      {/* 수파베이스 저장 실패 안내: 인터넷이 끊겼을 때 등. [다시 저장]은 달력에 보이는 "저장된 것"을 다시 보낸다 */}
+      {saveFailed && (
+        <div role="alert" className="mb-3 shrink-0 flex items-center gap-3 rounded-xl bg-card px-4 py-2 text-sm text-destructive">
+          <span className="flex-1">저장하지 못했어요. 인터넷 연결을 확인하고 다시 저장해 주세요.</span>
+          <Button variant="destructive" className="rounded-full" onClick={retrySave}>다시 저장</Button>
+        </div>
+      )}
 
       {/* 요약 줄: 지금 보는 범위의 할 일 · 7일 이내 주요 일정 · 못 끝낸 일 (저장된 일정 기준) */}
       {/* 범위만 보기에 따라 바뀐다: 연 = 그 해, 월 = 그달 */}

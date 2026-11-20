@@ -3,7 +3,7 @@ import useAuth from '@/hooks/useAuth';
 import LoginScreen from './LoginScreen';
 
 // 문지기: 로그인했으면 children(플래너)을, 안 했으면 로그인 화면을 보여 준다.
-//   children   로그인한 뒤 보여 줄 화면을 그리는 함수. ({ email, onSignOut })를 받는다
+//   children   로그인한 뒤 보여 줄 화면을 그리는 함수. ({ userId, email, onSignOut })를 받는다
 //              예: <AuthGate>{(account) => <App account={account} />}</AuthGate>
 //   client     시험할 때만 넘기는 가짜 수파베이스. 보통은 넘기지 않는다 (useAuth 참고)
 // 시험(App.*.test.jsx)은 App을 바로 그리므로 로그인 없이 돌아간다.
@@ -24,7 +24,7 @@ export default function AuthGate({ children, client = supabase }) {
 
   if (!auth.user) return <LoginScreen onSignIn={auth.signIn} onSignUp={auth.signUp} />;
 
-  return children({ email: auth.user.email, onSignOut: auth.signOut });
+  return children({ userId: auth.user.id, email: auth.user.email, onSignOut: auth.signOut });
 }
 
 function Centered({ children }) {
