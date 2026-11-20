@@ -7,7 +7,7 @@ import { countChanges } from '../utils/changes';
 const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
 
 // 저장된 값이 기대한 모양(목록 / 일반 객체)이 아니면 빈 값으로 시작해서, 엉뚱한 데이터 때문에 앱이 멈추지 않게 한다.
-function loadSavedEvents() {
+export function loadSavedEvents() {
   const saved = loadJSON(STORAGE_KEYS.events);
   return Array.isArray(saved) ? saved : [];
 }
@@ -15,7 +15,7 @@ function loadSavedEvents() {
 // 시간 일정(카드)을 읽는다.
 // 새 모양으로 저장된 게 아직 없으면, 옛 모양(시간 칸)을 새 모양으로 바꿔 한 번 저장해 둔다.
 // 옛 데이터는 지우지 않는다. 문제가 생겼을 때 되돌릴 수 있는 백업이 된다.
-function loadSavedTimeBlocks() {
+export function loadSavedTimeBlocks() {
   const saved = loadJSON(STORAGE_KEYS.timeBlocks);
   if (isPlainObject(saved)) return saved;
 
