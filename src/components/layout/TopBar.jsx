@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { LogOut, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import ViewModeToggle from '../calendar/ViewModeToggle';
@@ -10,7 +10,8 @@ import ViewTabs from './ViewTabs';
 //   isWrapMode        연 보기의 화면 맞춤 여부,  onWrapModeChange  바꿀 때
 //   onToday           "오늘" 버튼
 //   onNewEvent        "새 일정" 버튼
-export default function TopBar({ nav, isWrapMode, onWrapModeChange, onToday, onNewEvent }) {
+//   account           로그인한 사람 { email, onSignOut }. 있으면 맨 오른쪽에 이메일과 [로그아웃]을 보여 준다
+export default function TopBar({ nav, isWrapMode, onWrapModeChange, onToday, onNewEvent, account = null }) {
   const { view, isMonthView, isWeekView, theme, currentYear, currentMonth, weekStart } = nav;
 
   return (
@@ -31,6 +32,15 @@ export default function TopBar({ nav, isWrapMode, onWrapModeChange, onToday, onN
         <Button className="h-10 rounded-full px-4 font-semibold" onClick={onNewEvent}>
           <Plus aria-hidden="true" />새 일정
         </Button>
+        {/* 계정: 이메일(길면 줄여서, 마우스를 올리면 전체) + 로그아웃 */}
+        {account && (
+          <div className="flex items-center gap-2 rounded-full bg-card pl-4 pr-1 h-10">
+            <span className="max-w-48 truncate text-sm text-foreground" title={account.email}>{account.email}</span>
+            <Button variant="secondary" className="h-8 rounded-full px-3" onClick={account.onSignOut}>
+              <LogOut aria-hidden="true" />로그아웃
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

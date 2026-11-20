@@ -17,7 +17,8 @@ import BlockPanel from './components/panels/BlockPanel';
 import EventPanel from './components/panels/EventPanel';
 import NewEventPanel from './components/panels/NewEventPanel';
 
-export default function App() {
+// account = { email, onSignOut }: 로그인한 사람 (main.jsx의 AuthGate가 넘긴다). 시험처럼 없으면 상단 바에 계정 칸을 그리지 않는다.
+export default function App({ account = null }) {
   // events·timeBlocks는 "고치는 중인 것"(패널에 보임), savedEvents·savedTimeBlocks는 "저장된 것"(달력에 보임).
   // 패널에서 고친 내용은 일정 패널의 [저장]을 눌러야 저장되고 달력에 반영된다. (usePlannerData 설명 참고)
   const data = usePlannerData();
@@ -63,6 +64,12 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', warn);
   }, [changeCount]);
 
+  // 로그아웃: 저장 안 한 변경이 있으면 사라지므로 한 번 묻는다
+  const signOut = () => {
+    if (changeCount > 0 && !window.confirm(`저장 안 한 변경 ${changeCount}개가 사라져요. 그래도 로그아웃할까요?`)) return;
+    account.onSignOut();
+  };
+
   // 요약 줄의 범위(from~to)와 이름(scope). 보기에 따라 그 해·그달·그 주 (utils/summary.js)
   const { from: summaryFrom, to: summaryTo, scope: summaryScope } = summaryRange({
     view, year: currentYear, month: currentMonth, weekStart, today: getTodayString(), thisYear,
@@ -83,6 +90,7 @@ export default function App() {
         onToday={goToToday}
         // 새 일정: 열린 날(없으면 오늘)의 일정 패널 + 새 일정 패널(시간 일정)
         onNewEvent={() => openNewEvent(panel?.date ?? getTodayString(), 'timed')}
+        account={account && { email: account.email, onSignOut: signOut }}
       />
 
       {/* 요약 줄: 지금 보는 범위의 할 일 · 7일 이내 주요 일정 · 못 끝낸 일 (저장된 일정 기준) */}
